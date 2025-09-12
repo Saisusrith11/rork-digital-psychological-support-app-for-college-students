@@ -1,0 +1,281 @@
+import React, { useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  Platform,
+} from 'react-native';
+import { router, Stack } from 'expo-router';
+import { ChevronLeft, CheckCircle } from 'lucide-react-native';
+import { Colors } from '@/constants/colors';
+import { ASSESSMENT_QUESTIONS } from '@/constants/assessment-questions';
+import { AssessmentResponse } from '@/types/assessment';
+import { useAssessment } from '@/hooks/assessment-store';
+
+export default function AssessmentScreen() {
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
+  const [responses, setResponses] = useState<AssessmentResponse[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const { saveAssessment } = useAssessment();
+
+  const currentQuestion = ASSESSMENT_QUESTIONS[currentQuestionIndex];
+  const isLastQuestion = currentQuestionIndex === ASSESSMENT_QUESTIONS.length - 1;
+  const progress = ((currentQuestionIndex + 1) / ASSESSMENT_QUESTIONS.length) * 100;
+
+  const handleOptionSelect = useCallback((optionValue: string, score: number) => {
+    const newResponse: AssessmentResponse = {
+      questionId: currentQuestion.id,
+      selectedValue: optionValue,
+      score,
+    };
+
+    const updatedResponses = responses.filter(r => r.questionId !== currentQuestion.id);
+    updatedResponses.push(newResponse);
+    setResponses(updatedResponses);
+  }, [currentQuestion.id, responses]);
+
+  const handleNext = useCallback(() => {
+    if (currentQuestionIndex < ASSESSMENT_QUESTIONS.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    }
+  }, [currentQuestionIndex]);
+
+  const handlePrevious = useCallback(() => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+    }
+  }, [currentQuestionIndex]);
+
+  const handleSubmit = useCallback(async () => {
+    if (responses.length !== ASSESSMENT_QUESTIONS.length) {
+      if (Platform.OS !== 'web') {
+        Alert.alert('Incomplete Assessment', 'Please answer all questions before submitting.');
+      } else {
+        console.log('Incomplete Assessment: Please answer all questions before submitting.');
+      }
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const savedAssessment = await saveAssessment(responses);
+      
+      if (Platform.OS !== 'web') {
+        Alert.alert(
+          'Assessment Complete',
+          'Your mental health assessment has been completed. You can view your results and recommendations.',
+          [
+            {
+              text: 'View Results',
+              onPress: () => router.push(`/assessment-result?id=${savedAssessment.id}` as any),
+            },
+          ]
+        );
+      } else {
+        router.push(`/assessment-result?id=${savedAssessment.id}` as any);
+      }
+    } catch (error) {
+      console.error('Assessment save error:', error);
+      if (Platform.OS !== 'web') {
+        Alert.alert('Error', 'Failed to save assessment. Please try again.');
+      } else {
+        console.error('Failed to save assessment. Please try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [responses, saveAssessment]);
+
+  const getCurrentResponse = useCallback(() => {
+    return responses.find(r => r.questionId === currentQuestion.id);
+  }, [responses, currentQuestion.id]);
+
+  const canProceed = getCurrentResponse() !== undefined;
+
+  return (
+    <View style={styles.container}>
+      <Stack.Screen
+        options={{
+          title: 'Mental Health Assessment',
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <ChevronLeft size={24} color={Colors.text.primary} />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+      
+      <View style={styles.progressContainer}>
+        <View style={styles.progressBar}>
+          <View style={[styles.progressFill, { width: `${progress}%` }]} />
+        </View>
+        <Text style={styles.progressText}>
+          {currentQuestionIndex + 1} of {ASSESSMENT_QUESTIONS.length}
+        </Text>
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.questionContainer}>
+          <Text style={styles.questionText}>{currentQuestion.question}</Text>
+          
+          <View style={styles.optionsContainer}>
+            {currentQuestion.options.map((option) => {
+              const isSelected = getCurrentResponse()?.selectedValue === option.value;
+              
+              return (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[styles.optionButton, isSelected && styles.selectedOption]}
+                  onPress={() => handleOptionSelect(option.value, option.score)}
+                  testID={`option-${option.value}`}
+                >
+                  <View style={styles.optionContent}>
+                    <Text style={[styles.optionText, isSelected && styles.selectedOptionText]}>
+                      {option.label}
+                    </Text>
+                    {isSelected && (
+                      <CheckCircle size={20} color={Colors.primary} />
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      </ScrollView>
+
+      <View style={styles.navigationContainer}>
+        <TouchableOpacity
+          style={[styles.navButton, styles.previousButton]}
+          onPress={handlePrevious}
+          disabled={currentQuestionIndex === 0}
+        >
+          <Text style={[
+            styles.navButtonText,
+            currentQuestionIndex === 0 && styles.disabledButtonText
+          ]}>
+            Previous
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.navButton, styles.nextButton, !canProceed && styles.disabledButton]}
+          onPress={isLastQuestion ? handleSubmit : handleNext}
+          disabled={!canProceed || isSubmitting}
+        >
+          <Text style={[styles.navButtonText, styles.nextButtonText]}>
+            {isSubmitting ? 'Submitting...' : isLastQuestion ? 'Complete' : 'Next'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  backButton: {
+    padding: 8,
+  },
+  progressContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: Colors.surfaceLight,
+    borderRadius: 2,
+    marginBottom: 8,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: 2,
+  },
+  progressText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  questionContainer: {
+    paddingVertical: 24,
+  },
+  questionText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    lineHeight: 28,
+    marginBottom: 32,
+  },
+  optionsContainer: {
+    gap: 12,
+  },
+  optionButton: {
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: Colors.surfaceLight,
+  },
+  selectedOption: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primaryLight + '10',
+  },
+  optionContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  optionText: {
+    fontSize: 16,
+    color: Colors.text.primary,
+    flex: 1,
+  },
+  selectedOptionText: {
+    color: Colors.primary,
+    fontWeight: '500',
+  },
+  navigationContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: Colors.surfaceLight,
+  },
+  navButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  previousButton: {
+    backgroundColor: Colors.surfaceLight,
+  },
+  nextButton: {
+    backgroundColor: Colors.primary,
+  },
+  disabledButton: {
+    backgroundColor: Colors.surfaceLight,
+  },
+  navButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  nextButtonText: {
+    color: Colors.text.white,
+  },
+  disabledButtonText: {
+    color: Colors.text.light,
+  },
+});
