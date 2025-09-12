@@ -2,6 +2,7 @@ import { AssessmentQuestion } from '@/types/assessment';
 
 // Standardized Mental Health Assessment Questions
 // Based on PHQ-9, GAD-7, and GHQ-12 clinical screening tools
+// Introduction: "The following questions ask about how often you have been bothered by any of the following problems over the last two weeks."
 // All questions use consistent 0-3 scoring system
 
 export const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [

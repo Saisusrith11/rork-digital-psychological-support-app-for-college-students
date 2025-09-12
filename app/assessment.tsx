@@ -16,6 +16,7 @@ import { AssessmentResponse } from '@/types/assessment';
 import { useAssessment } from '@/hooks/assessment-store';
 
 export default function AssessmentScreen() {
+  const [showIntroduction, setShowIntroduction] = useState<boolean>(true);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [responses, setResponses] = useState<AssessmentResponse[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -94,6 +95,61 @@ export default function AssessmentScreen() {
   }, [responses, currentQuestion.id]);
 
   const canProceed = getCurrentResponse() !== undefined;
+
+  const handleStartAssessment = () => {
+    setShowIntroduction(false);
+  };
+
+  if (showIntroduction) {
+    return (
+      <View style={styles.container}>
+        <Stack.Screen
+          options={{
+            title: 'Mental Health Assessment',
+            headerLeft: () => (
+              <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                <ChevronLeft size={24} color={Colors.text.primary} />
+              </TouchableOpacity>
+            ),
+          }}
+        />
+        
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.introContainer}>
+            <Text style={styles.introTitle}>Mental Health Check-In</Text>
+            <Text style={styles.introDescription}>
+              The following questions ask about how often you have been bothered by any of the following problems over the last two weeks.
+            </Text>
+            <Text style={styles.introNote}>
+              This assessment is based on standardized clinical screening tools (PHQ-9, GAD-7, and GHQ-12) and will help us understand your current mental health status.
+            </Text>
+            <Text style={styles.privacyNote}>
+              🔒 Your responses are completely confidential and will only be used to provide you with personalized recommendations and support.
+            </Text>
+            
+            <View style={styles.optionsInfo}>
+              <Text style={styles.optionsTitle}>Response Options:</Text>
+              <Text style={styles.optionItem}>• Not at all (0 points)</Text>
+              <Text style={styles.optionItem}>• Several days (1 point)</Text>
+              <Text style={styles.optionItem}>• More than half the days (2 points)</Text>
+              <Text style={styles.optionItem}>• Nearly every day (3 points)</Text>
+            </View>
+          </View>
+        </ScrollView>
+
+        <View style={styles.navigationContainer}>
+          <TouchableOpacity
+            style={[styles.navButton, styles.nextButton]}
+            onPress={handleStartAssessment}
+          >
+            <Text style={[styles.navButtonText, styles.nextButtonText]}>
+              Start Assessment
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -277,5 +333,52 @@ const styles = StyleSheet.create({
   },
   disabledButtonText: {
     color: Colors.text.light,
+  },
+  introContainer: {
+    paddingVertical: 24,
+  },
+  introTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  introDescription: {
+    fontSize: 16,
+    color: Colors.text.primary,
+    lineHeight: 24,
+    marginBottom: 20,
+  },
+  introNote: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  privacyNote: {
+    fontSize: 14,
+    color: Colors.primary,
+    lineHeight: 20,
+    marginBottom: 24,
+    backgroundColor: Colors.primaryLight + '20',
+    padding: 12,
+    borderRadius: 8,
+  },
+  optionsInfo: {
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: 16,
+  },
+  optionsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 12,
+  },
+  optionItem: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginBottom: 4,
   },
 });

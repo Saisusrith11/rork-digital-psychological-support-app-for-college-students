@@ -29,7 +29,7 @@ export default function ProfileScreen() {
   const confirmLogout = async () => {
     setShowLogoutModal(false);
     await logout();
-    router.replace('/auth');
+    router.replace('/');
   };
 
   const progressData = {

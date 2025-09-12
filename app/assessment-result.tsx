@@ -91,7 +91,7 @@ export default function AssessmentResultScreen() {
           <View style={styles.scoreContainer}>
             <Text style={styles.scoreLabel}>Your Score</Text>
             <Text style={[styles.scoreValue, { color: getCategoryColor(assessment.result.category) }]}>
-              {assessment.result.totalScore}/30
+              {assessment.result.totalScore}/45
             </Text>
           </View>
           
