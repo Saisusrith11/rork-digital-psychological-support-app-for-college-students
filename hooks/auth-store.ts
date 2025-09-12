@@ -39,16 +39,54 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         return { success: false, error: 'Invalid credentials' };
       }
       
-      const mockUser: User = {
-        id: '1',
-        username: username.trim(),
-        email: `${username.trim()}@example.com`,
-        fullName: 'Test Student',
-        college: 'Demo College',
-        year: '2',
-        course: 'Computer Science',
-        createdAt: new Date().toISOString(),
-      };
+      let mockUser: User;
+      
+      // Counselor login credentials
+      if (username === 'counselor' && password === 'counselor123') {
+        mockUser = {
+          id: 'counselor_1',
+          username: 'Dr. Sarah Johnson',
+          email: 'sarah.johnson@college.edu',
+          fullName: 'Dr. Sarah Johnson',
+          college: 'Demo College',
+          year: '',
+          course: '',
+          createdAt: new Date().toISOString(),
+          role: 'counselor',
+          specialization: 'Clinical Psychology',
+          languages: ['English', 'Tamil', 'Hindi'],
+          isOnline: true,
+        };
+      }
+      // Admin login credentials
+      else if (username === 'admin' && password === 'admin123') {
+        mockUser = {
+          id: 'admin_1',
+          username: 'Admin User',
+          email: 'admin@college.edu',
+          fullName: 'System Administrator',
+          college: 'Demo College',
+          year: '',
+          course: '',
+          createdAt: new Date().toISOString(),
+          role: 'admin',
+        };
+      }
+      // Student login
+      else {
+        mockUser = {
+          id: '1',
+          username: username.trim(),
+          email: `${username.trim()}@example.com`,
+          fullName: 'Test Student',
+          college: 'Demo College',
+          year: '2',
+          course: 'Computer Science',
+          createdAt: new Date().toISOString(),
+          role: 'student',
+          showUsername: true,
+        };
+      }
       
       await AsyncStorage.setItem('user', JSON.stringify(mockUser));
       setUser(mockUser);

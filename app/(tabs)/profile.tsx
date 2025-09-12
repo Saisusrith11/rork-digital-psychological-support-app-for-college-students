@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, Switch, TextInput } from 'react-native';
 import { 
   Calendar, 
   TrendingUp, 
@@ -11,19 +11,35 @@ import {
   Heart, 
   Phone, 
   LogOut,
-  ChevronRight 
+  ChevronRight,
+  User,
+  Send,
+  Eye,
+  EyeOff
 } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
+import { useNotifications } from '@/hooks/notification-store';
+import { useFeedback } from '@/hooks/feedback-store';
+import { useLanguage } from '@/hooks/language-store';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
+  const { notifications, unreadCount } = useNotifications();
+  const { submitFeedback } = useFeedback();
+  const { currentLanguage, setLanguage } = useLanguage();
   const insets = useSafeAreaInsets();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState('English');
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showUsernameSettings, setShowUsernameSettings] = useState(user?.showUsername ?? true);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [feedbackCategory, setFeedbackCategory] = useState<'bug' | 'feature' | 'general' | 'complaint'>('general');
 
   const languages = [
     { code: 'en', name: 'English' },
@@ -42,10 +58,31 @@ export default function ProfileScreen() {
     router.replace('/auth');
   };
 
-  const handleLanguageSelect = (language: string) => {
-    setSelectedLanguage(language);
+  const handleLanguageSelect = (languageCode: string, languageName: string) => {
+    setLanguage(languageCode);
     setShowLanguageModal(false);
   };
+
+  const handleSubmitFeedback = () => {
+    if (feedbackText.trim()) {
+      submitFeedback({
+        userId: user?.id || 'anonymous',
+        userName: user?.showUsername ? user.fullName : 'Anonymous User',
+        message: feedbackText.trim(),
+        category: feedbackCategory,
+      });
+      setFeedbackText('');
+      setShowFeedbackModal(false);
+    }
+  };
+
+  const emergencyContacts = [
+    { name: 'Campus Counseling Center', number: '011-2766-7080' },
+    { name: 'National Suicide Prevention', number: '9152987821' },
+    { name: 'NIMHANS Helpline', number: '080-46110007' },
+    { name: 'Vandrevala Foundation', number: '9999666555' },
+    { name: 'iCall Psychosocial Helpline', number: '9152987821' },
+  ];
 
   const progressData = {
     daysActive: 1,
@@ -119,14 +156,33 @@ export default function ProfileScreen() {
         <View style={styles.settingsSection}>
           <Text style={styles.sectionTitle}>Settings & Support</Text>
           
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => setShowNotificationsModal(true)}
+          >
             <Bell size={20} color={Colors.text.secondary} />
-            <Text style={styles.settingText}>Notifications</Text>
+            <View style={styles.settingContent}>
+              <Text style={styles.settingText}>Notifications</Text>
+              <View style={styles.settingValueContainer}>
+                {unreadCount > 0 && (
+                  <View style={styles.notificationBadge}>
+                    <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
+                  </View>
+                )}
+                <ChevronRight size={16} color={Colors.text.secondary} />
+              </View>
+            </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => setShowPrivacyModal(true)}
+          >
             <Shield size={20} color={Colors.text.secondary} />
-            <Text style={styles.settingText}>Privacy & Data</Text>
+            <View style={styles.settingContent}>
+              <Text style={styles.settingText}>Privacy & Data</Text>
+              <ChevronRight size={16} color={Colors.text.secondary} />
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -137,21 +193,48 @@ export default function ProfileScreen() {
             <View style={styles.settingContent}>
               <Text style={styles.settingText}>Language</Text>
               <View style={styles.settingValueContainer}>
-                <Text style={styles.settingValue}>{selectedLanguage}</Text>
+                <Text style={styles.settingValue}>
+                  {languages.find(l => l.code === currentLanguage)?.name || 'English'}
+                </Text>
                 <ChevronRight size={16} color={Colors.text.secondary} />
               </View>
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => setShowHelpModal(true)}
+          >
             <HelpCircle size={20} color={Colors.text.secondary} />
-            <Text style={styles.settingText}>Help & Support</Text>
+            <View style={styles.settingContent}>
+              <Text style={styles.settingText}>Help & Support</Text>
+              <ChevronRight size={16} color={Colors.text.secondary} />
+            </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => setShowFeedbackModal(true)}
+          >
             <MessageSquare size={20} color={Colors.text.secondary} />
-            <Text style={styles.settingText}>Send Feedback</Text>
+            <View style={styles.settingContent}>
+              <Text style={styles.settingText}>Send Feedback</Text>
+              <ChevronRight size={16} color={Colors.text.secondary} />
+            </View>
           </TouchableOpacity>
+
+          <View style={styles.settingItem}>
+            <User size={20} color={Colors.text.secondary} />
+            <View style={styles.settingContent}>
+              <Text style={styles.settingText}>Show Username</Text>
+              <Switch
+                value={showUsernameSettings}
+                onValueChange={setShowUsernameSettings}
+                trackColor={{ false: Colors.surfaceLight, true: Colors.primary + '40' }}
+                thumbColor={showUsernameSettings ? Colors.primary : Colors.text.light}
+              />
+            </View>
+          </View>
         </View>
 
         <View style={styles.emergencySection}>
@@ -160,20 +243,12 @@ export default function ProfileScreen() {
             <Text style={styles.emergencyTitle}>Emergency Contacts</Text>
           </View>
           
-          <TouchableOpacity style={styles.emergencyContact}>
-            <Phone size={16} color={Colors.error} />
-            <Text style={styles.emergencyText}>Campus Counseling Center: 011-2766-7080</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.emergencyContact}>
-            <Phone size={16} color={Colors.error} />
-            <Text style={styles.emergencyText}>National Suicide Prevention: 9152987821</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.emergencyContact}>
-            <Phone size={16} color={Colors.error} />
-            <Text style={styles.emergencyText}>NIMHANS Helpline: 080-46110007</Text>
-          </TouchableOpacity>
+          {emergencyContacts.map((contact, index) => (
+            <TouchableOpacity key={index} style={styles.emergencyContact}>
+              <Phone size={16} color={Colors.error} />
+              <Text style={styles.emergencyText}>{contact.name}: {contact.number}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -224,17 +299,17 @@ export default function ProfileScreen() {
                 key={language.code}
                 style={[
                   styles.languageOption,
-                  selectedLanguage === language.name && styles.selectedLanguageOption
+                  currentLanguage === language.code && styles.selectedLanguageOption
                 ]}
-                onPress={() => handleLanguageSelect(language.name)}
+                onPress={() => handleLanguageSelect(language.code, language.name)}
               >
                 <Text style={[
                   styles.languageOptionText,
-                  selectedLanguage === language.name && styles.selectedLanguageOptionText
+                  currentLanguage === language.code && styles.selectedLanguageOptionText
                 ]}>
                   {language.name}
                 </Text>
-                {selectedLanguage === language.name && (
+                {currentLanguage === language.code && (
                   <View style={styles.checkmark}>
                     <Text style={styles.checkmarkText}>✓</Text>
                   </View>
@@ -246,6 +321,219 @@ export default function ProfileScreen() {
               onPress={() => setShowLanguageModal(false)}
             >
               <Text style={styles.closeLanguageModalText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Notifications Modal */}
+      <Modal
+        visible={showNotificationsModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowNotificationsModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.notificationsModalContent}>
+            <Text style={styles.modalTitle}>Notifications</Text>
+            <ScrollView style={styles.notificationsList}>
+              {notifications.length > 0 ? (
+                notifications.slice(0, 10).map((notification) => (
+                  <View key={notification.id} style={styles.notificationItem}>
+                    <View style={styles.notificationHeader}>
+                      <Text style={styles.notificationTitle}>{notification.title}</Text>
+                      {!notification.isRead && <View style={styles.unreadDot} />}
+                    </View>
+                    <Text style={styles.notificationMessage}>{notification.message}</Text>
+                    <Text style={styles.notificationTime}>
+                      {new Date(notification.createdAt).toLocaleDateString()}
+                    </Text>
+                  </View>
+                ))
+              ) : (
+                <View style={styles.emptyNotifications}>
+                  <Bell size={48} color={Colors.text.light} />
+                  <Text style={styles.emptyNotificationsText}>No notifications</Text>
+                </View>
+              )}
+            </ScrollView>
+            <TouchableOpacity 
+              style={styles.closeModalButton}
+              onPress={() => setShowNotificationsModal(false)}
+            >
+              <Text style={styles.closeModalButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Privacy Modal */}
+      <Modal
+        visible={showPrivacyModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowPrivacyModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.privacyModalContent}>
+            <Text style={styles.modalTitle}>Privacy & Data</Text>
+            <ScrollView style={styles.privacyContent}>
+              <View style={styles.privacySection}>
+                <Text style={styles.privacySectionTitle}>Data Collection</Text>
+                <Text style={styles.privacyText}>
+                  We collect minimal data necessary for app functionality including mood entries, 
+                  assessment responses, and usage analytics. All data is stored locally on your device.
+                </Text>
+              </View>
+              
+              <View style={styles.privacySection}>
+                <Text style={styles.privacySectionTitle}>Data Sharing</Text>
+                <Text style={styles.privacyText}>
+                  Your personal data is never shared with third parties. Assessment results are only 
+                  shared with counselors if you explicitly provide consent.
+                </Text>
+              </View>
+              
+              <View style={styles.privacySection}>
+                <Text style={styles.privacySectionTitle}>Data Security</Text>
+                <Text style={styles.privacyText}>
+                  All conversations and personal information are encrypted and stored securely. 
+                  We follow industry-standard security practices.
+                </Text>
+              </View>
+              
+              <View style={styles.privacySection}>
+                <Text style={styles.privacySectionTitle}>Your Rights</Text>
+                <Text style={styles.privacyText}>
+                  You can request data deletion, modify your information, or withdraw consent at any time. 
+                  Contact support for assistance.
+                </Text>
+              </View>
+            </ScrollView>
+            <TouchableOpacity 
+              style={styles.closeModalButton}
+              onPress={() => setShowPrivacyModal(false)}
+            >
+              <Text style={styles.closeModalButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Feedback Modal */}
+      <Modal
+        visible={showFeedbackModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowFeedbackModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.feedbackModalContent}>
+            <Text style={styles.modalTitle}>Send Feedback</Text>
+            
+            <View style={styles.categorySelector}>
+              <Text style={styles.categoryLabel}>Category:</Text>
+              <View style={styles.categoryButtons}>
+                {(['general', 'bug', 'feature', 'complaint'] as const).map((category) => (
+                  <TouchableOpacity
+                    key={category}
+                    style={[
+                      styles.categoryButton,
+                      feedbackCategory === category && styles.selectedCategoryButton
+                    ]}
+                    onPress={() => setFeedbackCategory(category)}
+                  >
+                    <Text style={[
+                      styles.categoryButtonText,
+                      feedbackCategory === category && styles.selectedCategoryButtonText
+                    ]}>
+                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <TextInput
+              style={styles.feedbackInput}
+              placeholder="Share your thoughts, report bugs, or suggest improvements..."
+              placeholderTextColor={Colors.text.light}
+              value={feedbackText}
+              onChangeText={setFeedbackText}
+              multiline
+              numberOfLines={6}
+              textAlignVertical="top"
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.cancelButton]} 
+                onPress={() => setShowFeedbackModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.sendFeedbackButton]} 
+                onPress={handleSubmitFeedback}
+                disabled={!feedbackText.trim()}
+              >
+                <Send size={16} color={Colors.text.white} />
+                <Text style={styles.sendFeedbackButtonText}>Send</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Help Modal */}
+      <Modal
+        visible={showHelpModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowHelpModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.helpModalContent}>
+            <Text style={styles.modalTitle}>Help & Support</Text>
+            <ScrollView style={styles.helpContent}>
+              <View style={styles.helpSection}>
+                <Text style={styles.helpSectionTitle}>Getting Started</Text>
+                <Text style={styles.helpText}>
+                  • Complete the mental health assessment to get personalized recommendations\n
+                  • Explore resources for stress management and wellness\n
+                  • Book confidential counseling sessions when needed
+                </Text>
+              </View>
+              
+              <View style={styles.helpSection}>
+                <Text style={styles.helpSectionTitle}>Emergency Support</Text>
+                <Text style={styles.helpText}>
+                  If you're experiencing a mental health crisis, please contact emergency services 
+                  or use the helpline numbers provided in the Emergency Contacts section.
+                </Text>
+              </View>
+              
+              <View style={styles.helpSection}>
+                <Text style={styles.helpSectionTitle}>Privacy & Confidentiality</Text>
+                <Text style={styles.helpText}>
+                  All your conversations and data are kept confidential. You control what information 
+                  is shared with counselors through explicit consent.
+                </Text>
+              </View>
+              
+              <View style={styles.helpSection}>
+                <Text style={styles.helpSectionTitle}>Technical Support</Text>
+                <Text style={styles.helpText}>
+                  For technical issues, use the feedback feature to report bugs or contact 
+                  our support team through the app.
+                </Text>
+              </View>
+            </ScrollView>
+            <TouchableOpacity 
+              style={styles.closeModalButton}
+              onPress={() => setShowHelpModal(false)}
+            >
+              <Text style={styles.closeModalButtonText}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -369,6 +657,20 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 8,
+  },
+  notificationBadge: {
+    backgroundColor: Colors.error,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  notificationBadgeText: {
+    color: Colors.text.white,
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   settingContent: {
     flex: 1,
@@ -542,5 +844,176 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     fontSize: 16,
     fontWeight: '500',
+  },
+  notificationsModalContent: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 24,
+    marginHorizontal: 16,
+    maxHeight: '80%',
+  },
+  notificationsList: {
+    maxHeight: 400,
+  },
+  notificationItem: {
+    backgroundColor: Colors.surfaceLight,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  notificationTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text.primary,
+  },
+  notificationMessage: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    marginBottom: 4,
+  },
+  notificationTime: {
+    fontSize: 11,
+    color: Colors.text.light,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.primary,
+  },
+  emptyNotifications: {
+    alignItems: 'center',
+    paddingVertical: 32,
+  },
+  emptyNotificationsText: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    marginTop: 12,
+  },
+  closeModalButton: {
+    backgroundColor: Colors.surfaceLight,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  closeModalButtonText: {
+    color: Colors.text.secondary,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  privacyModalContent: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 24,
+    marginHorizontal: 16,
+    maxHeight: '80%',
+  },
+  privacyContent: {
+    maxHeight: 400,
+  },
+  privacySection: {
+    marginBottom: 16,
+  },
+  privacySectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  privacyText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    lineHeight: 20,
+  },
+  feedbackModalContent: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 24,
+    marginHorizontal: 16,
+    maxHeight: '80%',
+  },
+  categorySelector: {
+    marginBottom: 16,
+  },
+  categoryLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  categoryButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  categoryButton: {
+    backgroundColor: Colors.surfaceLight,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  selectedCategoryButton: {
+    backgroundColor: Colors.primary,
+  },
+  categoryButtonText: {
+    fontSize: 12,
+    color: Colors.text.primary,
+    fontWeight: '500',
+  },
+  selectedCategoryButtonText: {
+    color: Colors.text.white,
+  },
+  feedbackInput: {
+    borderWidth: 1,
+    borderColor: Colors.surfaceLight,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    color: Colors.text.primary,
+    backgroundColor: Colors.background,
+    minHeight: 120,
+    marginBottom: 16,
+  },
+  sendFeedbackButton: {
+    backgroundColor: Colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  sendFeedbackButtonText: {
+    color: Colors.text.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  helpModalContent: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 24,
+    marginHorizontal: 16,
+    maxHeight: '80%',
+  },
+  helpContent: {
+    maxHeight: 400,
+  },
+  helpSection: {
+    marginBottom: 16,
+  },
+  helpSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  helpText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    lineHeight: 20,
   },
 });

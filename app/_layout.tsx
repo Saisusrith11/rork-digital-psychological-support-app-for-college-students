@@ -8,6 +8,8 @@ import { AuthProvider } from "@/hooks/auth-store";
 import { MoodProvider } from "@/hooks/mood-store";
 import { AssessmentProvider } from "@/hooks/assessment-store";
 import { LanguageProvider } from "@/hooks/language-store";
+import { NotificationProvider } from "@/hooks/notification-store";
+import { FeedbackProvider } from "@/hooks/feedback-store";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -17,11 +19,14 @@ function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerBackTitle: "Back" }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="(counselor)" options={{ headerShown: false }} />
+      <Stack.Screen name="(admin)" options={{ headerShown: false }} />
       <Stack.Screen name="auth" options={{ headerShown: false }} />
       <Stack.Screen name="booking" options={{ headerShown: false }} />
       <Stack.Screen name="assessment" options={{ headerShown: true }} />
       <Stack.Screen name="assessment-result" options={{ headerShown: true }} />
       <Stack.Screen name="weekly-report" options={{ headerShown: true }} />
+      <Stack.Screen name="resource-detail" options={{ headerShown: true }} />
     </Stack>
   );
 }
@@ -42,11 +47,15 @@ export default function RootLayout() {
       <GestureHandlerRootView style={styles.container}>
         <LanguageProvider>
           <AuthProvider>
-            <MoodProvider>
-              <AssessmentProvider>
-                <RootLayoutNav />
-              </AssessmentProvider>
-            </MoodProvider>
+            <NotificationProvider>
+              <FeedbackProvider>
+                <MoodProvider>
+                  <AssessmentProvider>
+                    <RootLayoutNav />
+                  </AssessmentProvider>
+                </MoodProvider>
+              </FeedbackProvider>
+            </NotificationProvider>
           </AuthProvider>
         </LanguageProvider>
       </GestureHandlerRootView>
