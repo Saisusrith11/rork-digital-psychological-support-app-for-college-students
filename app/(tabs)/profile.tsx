@@ -14,14 +14,13 @@ import {
   ChevronRight,
   User,
   Send,
-  Eye,
-  EyeOff
+
 } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
 import { useNotifications } from '@/hooks/notification-store';
 import { useFeedback } from '@/hooks/feedback-store';
-import { useLanguage } from '@/hooks/language-store';
+import { useLanguage, type SupportedLanguage } from '@/hooks/language-store';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
@@ -59,7 +58,7 @@ export default function ProfileScreen() {
   };
 
   const handleLanguageSelect = (languageCode: string, languageName: string) => {
-    setLanguage(languageCode);
+    setLanguage(languageCode as SupportedLanguage);
     setShowLanguageModal(false);
   };
 
@@ -243,8 +242,8 @@ export default function ProfileScreen() {
             <Text style={styles.emergencyTitle}>Emergency Contacts</Text>
           </View>
           
-          {emergencyContacts.map((contact, index) => (
-            <TouchableOpacity key={index} style={styles.emergencyContact}>
+          {emergencyContacts.map((contact) => (
+            <TouchableOpacity key={contact.name} style={styles.emergencyContact}>
               <Phone size={16} color={Colors.error} />
               <Text style={styles.emergencyText}>{contact.name}: {contact.number}</Text>
             </TouchableOpacity>
@@ -499,8 +498,8 @@ export default function ProfileScreen() {
               <View style={styles.helpSection}>
                 <Text style={styles.helpSectionTitle}>Getting Started</Text>
                 <Text style={styles.helpText}>
-                  • Complete the mental health assessment to get personalized recommendations\n
-                  • Explore resources for stress management and wellness\n
+                  • Complete the mental health assessment to get personalized recommendations{"\n"}
+                  • Explore resources for stress management and wellness{"\n"}
                   • Book confidential counseling sessions when needed
                 </Text>
               </View>
@@ -508,7 +507,7 @@ export default function ProfileScreen() {
               <View style={styles.helpSection}>
                 <Text style={styles.helpSectionTitle}>Emergency Support</Text>
                 <Text style={styles.helpText}>
-                  If you're experiencing a mental health crisis, please contact emergency services 
+                  If you&apos;re experiencing a mental health crisis, please contact emergency services 
                   or use the helpline numbers provided in the Emergency Contacts section.
                 </Text>
               </View>
