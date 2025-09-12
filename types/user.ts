@@ -8,6 +8,7 @@ export interface User {
   course: string;
   avatar?: string;
   createdAt: string;
+  isAnonymous?: boolean;
 }
 
 export interface UserProgress {

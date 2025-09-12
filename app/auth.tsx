@@ -16,7 +16,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function AuthScreen() {
-  const { login, register } = useAuth();
+  const { login, register, loginAnonymous } = useAuth();
   const insets = useSafeAreaInsets();
   const [isLogin, setIsLogin] = useState(true);
   const [showErrorModal, setShowErrorModal] = useState(false);
@@ -206,6 +206,19 @@ export default function AuthScreen() {
             <Text style={styles.submitButtonText}>
               {isLogin ? 'Sign In' : 'Create Account'}
             </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.anonymousButton} 
+            onPress={async () => {
+              const result = await loginAnonymous();
+              if (result.success) {
+                router.replace('/(tabs)/home');
+              }
+            }}
+          >
+            <Text style={styles.anonymousButtonText}>Continue Anonymously</Text>
+            <Text style={styles.anonymousSubtext}>For offline students - No registration required</Text>
           </TouchableOpacity>
         </View>
 
@@ -412,5 +425,25 @@ const styles = StyleSheet.create({
     color: Colors.text.white,
     fontSize: 16,
     fontWeight: '600',
+  },
+  anonymousButton: {
+    backgroundColor: Colors.surfaceLight,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  anonymousButtonText: {
+    color: Colors.primary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  anonymousSubtext: {
+    color: Colors.text.secondary,
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: 'center',
   },
 });

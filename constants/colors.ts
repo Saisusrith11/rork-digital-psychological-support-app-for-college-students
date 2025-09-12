@@ -32,6 +32,14 @@ export const Colors = {
     text: '#C53030',
   },
   
+  coping: {
+    breathing: '#3B82F6',
+    mindfulness: '#8B5CF6',
+    grounding: '#10B981',
+    sleep: '#6366F1',
+    academic: '#F59E0B',
+  },
+  
   shadow: {
     light: 'rgba(0, 0, 0, 0.1)',
     medium: 'rgba(0, 0, 0, 0.15)',
