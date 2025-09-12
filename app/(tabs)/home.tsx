@@ -15,12 +15,20 @@ import { getRandomQuote, Quote } from '@/constants/quotes';
 
 export default function HomeScreen() {
   const { user } = useAuth();
-  const { todaysMood, addMoodEntry } = useMood();
+  const { todaysMood, addMoodEntry, setUserId } = useMood();
   const [dailyQuote, setDailyQuote] = useState<Quote | null>(null);
 
   useEffect(() => {
     setDailyQuote(getRandomQuote());
   }, []);
+
+  useEffect(() => {
+    if (user?.id) {
+      setUserId(user.id);
+    } else {
+      setUserId(null);
+    }
+  }, [user?.id, setUserId]);
 
   const handleMoodSelect = useCallback((mood: 'great' | 'good' | 'okay' | 'low' | 'hard') => {
     if (!mood || typeof mood !== 'string') return;

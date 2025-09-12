@@ -1,23 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { MoodEntry } from '@/types/user';
-import { useAuth } from './auth-store';
 
 export const [MoodProvider, useMood] = createContextHook(() => {
-  const { user } = useAuth();
   const [moodEntries, setMoodEntries] = useState<MoodEntry[]>([]);
   const [todaysMood, setTodaysMood] = useState<MoodEntry | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      loadMoodEntries();
-    }
-  }, [user]);
-
-  const loadMoodEntries = async () => {
+  const loadMoodEntries = useCallback(async () => {
+    if (!currentUserId) return;
+    
     try {
-      const entries = await AsyncStorage.getItem(`mood_entries_${user?.id}`);
+      const entries = await AsyncStorage.getItem(`mood_entries_${currentUserId}`);
       if (entries && entries.trim() && entries !== 'undefined' && entries !== 'null') {
         try {
           const parsedEntries = JSON.parse(entries);
@@ -34,7 +29,7 @@ export const [MoodProvider, useMood] = createContextHook(() => {
         } catch (parseError) {
           console.error('Error parsing mood entries:', parseError);
           // Clear corrupted data
-          await AsyncStorage.removeItem(`mood_entries_${user?.id}`);
+          await AsyncStorage.removeItem(`mood_entries_${currentUserId}`);
           setMoodEntries([]);
           setTodaysMood(null);
         }
@@ -42,10 +37,18 @@ export const [MoodProvider, useMood] = createContextHook(() => {
     } catch (error) {
       console.error('Error loading mood entries:', error);
     }
-  };
+  }, [currentUserId]);
 
-  const addMoodEntry = async (mood: MoodEntry['mood'], notes?: string) => {
-    if (!user) return;
+  useEffect(() => {
+    if (currentUserId) {
+      loadMoodEntries();
+    }
+  }, [currentUserId, loadMoodEntries]);
+
+
+
+  const addMoodEntry = useCallback(async (mood: MoodEntry['mood'], notes?: string) => {
+    if (!currentUserId) return;
 
     try {
       const today = new Date().toDateString();
@@ -55,7 +58,7 @@ export const [MoodProvider, useMood] = createContextHook(() => {
 
       const newEntry: MoodEntry = {
         id: Date.now().toString(),
-        userId: user.id,
+        userId: currentUserId,
         mood,
         date: new Date().toISOString(),
         notes,
@@ -71,24 +74,32 @@ export const [MoodProvider, useMood] = createContextHook(() => {
         updatedEntries = [...moodEntries, newEntry];
       }
 
-      await AsyncStorage.setItem(`mood_entries_${user.id}`, JSON.stringify(updatedEntries));
+      await AsyncStorage.setItem(`mood_entries_${currentUserId}`, JSON.stringify(updatedEntries));
       setMoodEntries(updatedEntries);
       setTodaysMood(newEntry);
     } catch (error) {
       console.error('Error adding mood entry:', error);
     }
-  };
+  }, [currentUserId, moodEntries]);
 
-  const getWeeklyMoodData = () => {
+  const setUserId = useCallback((userId: string | null) => {
+    setCurrentUserId(userId);
+    if (!userId) {
+      setMoodEntries([]);
+      setTodaysMood(null);
+    }
+  }, []);
+
+  const getWeeklyMoodData = useCallback(() => {
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     
     return moodEntries.filter(entry => 
       new Date(entry.date) >= weekAgo && new Date(entry.date) <= now
     ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  };
+  }, [moodEntries]);
 
-  const getMoodAnalytics = () => {
+  const getMoodAnalytics = useCallback(() => {
     const weeklyData = getWeeklyMoodData();
     
     if (weeklyData.length === 0) {
@@ -150,13 +161,14 @@ export const [MoodProvider, useMood] = createContextHook(() => {
       moodDistribution: moodCounts,
       weeklyData,
     };
-  };
+  }, [getWeeklyMoodData]);
 
-  return {
+  return useMemo(() => ({
     moodEntries,
     todaysMood,
     addMoodEntry,
     getWeeklyMoodData,
     getMoodAnalytics,
-  };
+    setUserId,
+  }), [moodEntries, todaysMood, addMoodEntry, getWeeklyMoodData, getMoodAnalytics, setUserId]);
 });

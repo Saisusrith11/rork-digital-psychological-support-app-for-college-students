@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { Assessment, AssessmentResponse, AssessmentResult } from '@/types/assessment';
@@ -9,10 +9,6 @@ const ASSESSMENT_STORAGE_KEY = 'assessments';
 export const [AssessmentProvider, useAssessment] = createContextHook(() => {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  useEffect(() => {
-    loadAssessments();
-  }, []);
 
   const loadAssessments = useCallback(async () => {
     try {
@@ -45,6 +41,10 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
       setIsLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    loadAssessments();
+  }, [loadAssessments]);
 
   const saveAssessment = useCallback(async (responses: AssessmentResponse[]) => {
     try {
@@ -89,12 +89,12 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
     return assessments;
   }, [assessments]);
 
-  return {
+  return useMemo(() => ({
     assessments,
     isLoading,
     loadAssessments,
     saveAssessment,
     getLatestAssessment,
     getAssessmentHistory,
-  };
+  }), [assessments, isLoading, loadAssessments, saveAssessment, getLatestAssessment, getAssessmentHistory]);
 });

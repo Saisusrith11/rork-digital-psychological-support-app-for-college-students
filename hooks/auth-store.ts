@@ -7,11 +7,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    loadUser();
-  }, []);
-
-  const loadUser = async () => {
+  const loadUser = useCallback(async () => {
     try {
       const userData = await AsyncStorage.getItem('user');
       if (userData && userData.trim() && userData !== 'undefined' && userData !== 'null') {
@@ -31,7 +27,11 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadUser();
+  }, [loadUser]);
 
   const login = useCallback(async (username: string, password: string) => {
     try {

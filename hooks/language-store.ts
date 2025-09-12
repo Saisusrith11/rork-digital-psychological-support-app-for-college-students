@@ -229,10 +229,6 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
 export const [LanguageProvider, useLanguage] = createContextHook(() => {
   const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguage>('en');
 
-  useEffect(() => {
-    loadLanguage();
-  }, []);
-
   const loadLanguage = useCallback(async () => {
     try {
       const savedLanguage = await AsyncStorage.getItem('app_language');
@@ -243,6 +239,10 @@ export const [LanguageProvider, useLanguage] = createContextHook(() => {
       console.error('Error loading language:', error);
     }
   }, []);
+
+  useEffect(() => {
+    loadLanguage();
+  }, [loadLanguage]);
 
   const setLanguage = useCallback(async (language: SupportedLanguage) => {
     if (!language || typeof language !== 'string') return;
