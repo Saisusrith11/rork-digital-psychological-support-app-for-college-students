@@ -2,7 +2,7 @@ export interface ResourceContent {
   id: string;
   title: string;
   description: string;
-  type: 'video' | 'audio' | 'article' | 'exercise';
+  type: 'audio' | 'article' | 'exercise';
   category: string;
   duration?: string;
   content: string;
@@ -483,6 +483,357 @@ Daily Resilience Practices
       'Stress inoculation',
       'Social support building',
       'Meaning-making exercises'
+    ]
+  },
+  {
+    id: '9',
+    title: 'Social Anxiety Management',
+    description: 'Overcome social fears and build confidence in social situations',
+    type: 'article',
+    category: 'Anxiety Management',
+    duration: '8 min read',
+    icon: 'shield',
+    language: 'English',
+    tags: ['social-anxiety', 'confidence', 'social-skills'],
+    content: `Understanding Social Anxiety
+
+Social anxiety is more than just shyness. It's an intense fear of being judged, embarrassed, or rejected in social situations. This fear can significantly impact your college experience and relationships.
+
+Common Social Anxiety Triggers
+
+• Speaking in class or giving presentations
+• Meeting new people or making friends
+• Eating in public spaces like cafeterias
+• Attending social events or parties
+• Job interviews or group projects
+• Using public restrooms or facilities
+
+Cognitive Strategies
+
+Challenge Negative Thoughts
+• "Everyone will judge me" → "Most people are focused on themselves"
+• "I'll embarrass myself" → "Everyone makes mistakes sometimes"
+• "I'm boring" → "I have unique perspectives to share"
+• "They don't like me" → "I can't read minds, and that's okay"
+
+Prepare for Social Situations
+• Practice conversation starters
+• Set small, achievable social goals
+• Prepare topics you're comfortable discussing
+• Plan exit strategies if you feel overwhelmed
+
+Behavioral Techniques
+
+Gradual Exposure
+1. Start with low-stakes social interactions
+2. Gradually increase the challenge level
+3. Practice deep breathing before social events
+4. Celebrate small victories
+
+Body Language Tips
+• Make brief eye contact
+• Practice open posture
+• Use natural gestures
+• Smile genuinely when appropriate
+
+Building Social Skills
+
+• Join clubs or activities aligned with your interests
+• Practice active listening
+• Ask open-ended questions
+• Share appropriate personal experiences
+• Be genuinely curious about others
+
+Self-Care for Social Anxiety
+
+• Get adequate rest before social events
+• Practice relaxation techniques
+• Limit caffeine before social situations
+• Have a support person you can text
+• Plan recovery time after challenging social events`,
+    techniques: [
+      'Cognitive restructuring',
+      'Gradual exposure therapy',
+      'Social skills training',
+      'Relaxation techniques'
+    ]
+  },
+  {
+    id: '10',
+    title: 'Time Management for Students',
+    description: 'Master your schedule and reduce stress with effective time management',
+    type: 'article',
+    category: 'Academic Support',
+    duration: '7 min read',
+    icon: 'book-open',
+    language: 'English',
+    tags: ['time-management', 'productivity', 'organization'],
+    content: `Why Time Management Matters
+
+Effective time management reduces stress, improves academic performance, and creates more time for activities you enjoy. It's a crucial skill for college success and beyond.
+
+Time Management Principles
+
+The Eisenhower Matrix
+Categorize tasks by urgency and importance:
+• Urgent + Important: Do first
+• Important + Not Urgent: Schedule
+• Urgent + Not Important: Delegate or minimize
+• Neither: Eliminate
+
+Time Blocking
+• Assign specific time slots to different activities
+• Include buffer time between tasks
+• Block time for both work and rest
+• Stick to your schedule as much as possible
+
+Practical Strategies
+
+Daily Planning
+• Review your schedule each morning
+• Identify your top 3 priorities
+• Estimate time needed for each task
+• Plan for unexpected interruptions
+
+Weekly Planning
+• Set aside time each week for planning
+• Review upcoming deadlines and commitments
+• Balance academic work with personal time
+• Adjust your schedule based on what worked
+
+Digital Tools
+
+• Use calendar apps for scheduling
+• Set reminders for important deadlines
+• Try productivity apps like Forest or Pomodoro timers
+• Use note-taking apps for quick capture
+
+Overcoming Procrastination
+
+The Two-Minute Rule
+If something takes less than two minutes, do it immediately rather than adding it to your to-do list.
+
+Break Large Tasks Down
+• Divide big projects into smaller, manageable steps
+• Set mini-deadlines for each step
+• Celebrate completion of each milestone
+• Focus on starting, not finishing
+
+Eliminate Distractions
+• Turn off non-essential notifications
+• Use website blockers during study time
+• Create a dedicated study space
+• Inform others of your focused work time
+
+Energy Management
+
+• Identify your peak energy hours
+• Schedule demanding tasks during high-energy times
+• Take regular breaks to maintain focus
+• Match task difficulty to your energy level
+• Get adequate sleep and nutrition`,
+    techniques: [
+      'Eisenhower Matrix',
+      'Time blocking',
+      'Pomodoro Technique',
+      'Energy management'
+    ]
+  },
+  {
+    id: '11',
+    title: 'Healthy Relationships in College',
+    description: 'Build and maintain positive relationships during your college years',
+    type: 'article',
+    category: 'Personal Growth',
+    duration: '9 min read',
+    icon: 'trending-up',
+    language: 'English',
+    tags: ['relationships', 'communication', 'boundaries'],
+    content: `The Importance of Healthy Relationships
+
+College is a time of significant personal growth and change. Building healthy relationships with peers, professors, and family members can provide support, reduce stress, and enhance your overall college experience.
+
+Types of College Relationships
+
+Friendships
+• Casual acquaintances from classes
+• Close friends who provide emotional support
+• Study partners and academic collaborators
+• Roommates and dormmates
+
+Romantic Relationships
+• Dating and exploring romantic connections
+• Long-term partnerships
+• Managing long-distance relationships
+• Navigating breakups and relationship changes
+
+Professional Relationships
+• Professors and academic advisors
+• Mentors in your field of study
+• Supervisors in work-study jobs
+• Career services counselors
+
+Building Healthy Relationships
+
+Communication Skills
+• Practice active listening
+• Express your thoughts and feelings clearly
+• Ask questions to understand others better
+• Be honest while remaining respectful
+
+Setting Boundaries
+• Identify your personal limits
+• Communicate boundaries clearly and kindly
+• Respect others' boundaries
+• Be consistent in maintaining your boundaries
+
+Trust and Reliability
+• Keep your commitments
+• Be honest and authentic
+• Respect confidentiality
+• Show up for friends in difficult times
+
+Navigating Relationship Challenges
+
+Conflict Resolution
+• Address issues directly but respectfully
+• Focus on specific behaviors, not character
+• Listen to understand, not to win
+• Seek compromise when possible
+• Know when to agree to disagree
+
+Dealing with Toxic Relationships
+Recognize warning signs:
+• Constant criticism or put-downs
+• Controlling behavior
+• Disrespect for your boundaries
+• Making you feel bad about yourself
+• Isolation from other friends
+
+Maintaining Long-Distance Relationships
+• Schedule regular communication
+• Be creative with staying connected
+• Maintain your own interests and friendships
+• Plan visits when possible
+• Be honest about challenges
+
+Self-Care in Relationships
+
+• Maintain your individual identity
+• Continue pursuing your own interests
+• Don't lose yourself in relationships
+• Practice self-compassion
+• Seek support when relationships become stressful
+
+Building Your Support Network
+
+• Diversify your relationships
+• Join clubs and organizations
+• Participate in campus activities
+• Be open to meeting new people
+• Maintain connections with family and old friends`,
+    techniques: [
+      'Active listening',
+      'Boundary setting',
+      'Conflict resolution',
+      'Communication skills'
+    ]
+  },
+  {
+    id: '12',
+    title: 'Mindful Eating for Students',
+    description: 'Develop a healthy relationship with food during college',
+    type: 'article',
+    category: 'Sleep & Wellness',
+    duration: '6 min read',
+    icon: 'moon',
+    language: 'English',
+    tags: ['nutrition', 'mindfulness', 'wellness'],
+    content: `Understanding Mindful Eating
+
+Mindful eating involves paying full attention to the experience of eating and drinking. It helps you develop a healthier relationship with food, improve digestion, and reduce stress-related eating.
+
+Benefits of Mindful Eating
+
+• Better digestion and nutrient absorption
+• Improved awareness of hunger and fullness cues
+• Reduced emotional eating
+• Enhanced enjoyment of food
+• Better weight management
+• Decreased stress around meals
+
+College Eating Challenges
+
+• Irregular meal schedules
+• Limited cooking facilities
+• Stress eating during exams
+• Social eating and peer pressure
+• Budget constraints
+• Limited healthy food options
+
+Practicing Mindful Eating
+
+Before Eating
+• Take a moment to appreciate your food
+• Notice colors, textures, and aromas
+• Check in with your hunger level
+• Set an intention for the meal
+
+During Eating
+• Eat slowly and chew thoroughly
+• Put down utensils between bites
+• Notice flavors and textures
+• Pay attention to your body's signals
+• Minimize distractions like phones or TV
+
+After Eating
+• Notice how you feel physically
+• Reflect on the eating experience
+• Check your satisfaction level
+• Practice gratitude for the nourishment
+
+Healthy Eating on Campus
+
+Dorm Room Essentials
+• Keep healthy snacks available
+• Invest in a mini-fridge if possible
+• Stock up on non-perishable nutritious foods
+• Have a water bottle to stay hydrated
+
+Cafeteria Strategies
+• Survey all options before choosing
+• Fill half your plate with vegetables
+• Choose whole grains when available
+• Include lean protein sources
+• Practice portion awareness
+
+Managing Stress Eating
+
+Identify Triggers
+• Recognize emotional eating patterns
+• Notice stress, boredom, or anxiety cues
+• Distinguish between physical and emotional hunger
+• Keep a food and mood journal
+
+Alternative Coping Strategies
+• Take a walk instead of reaching for food
+• Practice deep breathing exercises
+• Call a friend or family member
+• Engage in a hobby or creative activity
+• Use relaxation techniques
+
+Building Healthy Habits
+
+• Establish regular meal times
+• Plan meals and snacks in advance
+• Cook simple, nutritious meals when possible
+• Stay hydrated throughout the day
+• Get adequate sleep to regulate hunger hormones`,
+    techniques: [
+      'Mindful awareness',
+      'Hunger/fullness recognition',
+      'Stress management',
+      'Meal planning'
     ]
   }
 ];

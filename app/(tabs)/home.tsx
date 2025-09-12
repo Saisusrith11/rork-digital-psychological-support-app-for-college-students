@@ -1,6 +1,6 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { ScrollView, View, Text, StyleSheet } from 'react-native';
-import { Bell, BarChart3 } from 'lucide-react-native';
+import { Bell } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
 import { useMood } from '@/hooks/mood-store';
@@ -11,10 +11,16 @@ import CrisisSupport from '@/components/CrisisSupport';
 import QuickActions from '@/components/QuickActions';
 import ResourceCard from '@/components/ResourceCard';
 import AssessmentCard from '@/components/AssessmentCard';
+import { getRandomQuote, Quote } from '@/constants/quotes';
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const { todaysMood, addMoodEntry } = useMood();
+  const [dailyQuote, setDailyQuote] = useState<Quote | null>(null);
+
+  useEffect(() => {
+    setDailyQuote(getRandomQuote());
+  }, []);
 
   const handleMoodSelect = useCallback((mood: 'great' | 'good' | 'okay' | 'low' | 'hard') => {
     if (!mood || typeof mood !== 'string') return;
@@ -53,36 +59,43 @@ export default function HomeScreen() {
 
         <AssessmentCard />
 
-        <View style={styles.weeklyReportCard}>
-          <TouchableOpacity 
-            style={styles.weeklyReportButton}
-            onPress={() => router.push('/weekly-report')}
-          >
-            <View style={styles.weeklyReportIcon}>
-              <BarChart3 size={24} color={Colors.primary} />
-            </View>
-            <View style={styles.weeklyReportContent}>
-              <Text style={styles.weeklyReportTitle}>Weekly Mood Report</Text>
-              <Text style={styles.weeklyReportSubtitle}>View your mood trends and insights</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
         <CrisisSupport />
 
         <QuickActions />
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Today&apos;s Resources</Text>
-            <Text style={styles.viewAll}>View all</Text>
+            <Text style={styles.sectionTitle}>Daily Inspiration</Text>
+          </View>
+          
+          <View style={styles.quoteCard}>
+            <Text style={styles.quoteText}>
+              &ldquo;{dailyQuote?.text || 'Peace comes from within. Do not seek it without.'}&rdquo;
+            </Text>
+            <Text style={styles.quoteAuthor}>- {dailyQuote?.author || 'Buddha'}</Text>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Today&apos;s Articles</Text>
+            <TouchableOpacity onPress={() => router.push('/resources')}>
+              <Text style={styles.viewAll}>View all</Text>
+            </TouchableOpacity>
           </View>
           
           <ResourceCard
-            title="5-Minute Breathing"
-            description="Calm your mind with guided breathing"
-            duration="5 min"
-            onPress={() => console.log('Open breathing exercise')}
+            title="Stress Management Techniques"
+            description="Learn practical ways to manage academic stress"
+            duration="5 min read"
+            onPress={() => router.push('/resource-detail?id=1')}
+          />
+          
+          <ResourceCard
+            title="Better Sleep for Students"
+            description="Improve your sleep quality with evidence-based tips"
+            duration="7 min read"
+            onPress={() => router.push('/resource-detail?id=2')}
           />
         </View>
       </ScrollView>
@@ -151,43 +164,30 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontWeight: '500',
   },
-  weeklyReportCard: {
-    marginHorizontal: 16,
-    marginVertical: 8,
-  },
-  weeklyReportButton: {
+  quoteCard: {
     backgroundColor: Colors.surface,
     borderRadius: 16,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
+    padding: 20,
+    marginHorizontal: 16,
+    marginBottom: 8,
     shadowColor: Colors.shadow.light,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 8,
     elevation: 3,
   },
-  weeklyReportIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.primaryLight + '20',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  weeklyReportContent: {
-    flex: 1,
-  },
-  weeklyReportTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+  quoteText: {
+    fontSize: 16,
+    fontStyle: 'italic',
     color: Colors.text.primary,
-    marginBottom: 4,
+    lineHeight: 24,
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  weeklyReportSubtitle: {
+  quoteAuthor: {
     fontSize: 14,
     color: Colors.text.secondary,
-    lineHeight: 20,
+    textAlign: 'center',
+    fontWeight: '500',
   },
 });

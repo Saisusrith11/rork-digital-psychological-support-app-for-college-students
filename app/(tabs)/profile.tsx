@@ -10,7 +10,8 @@ import {
   MessageSquare, 
   Heart, 
   Phone, 
-  LogOut 
+  LogOut,
+  ChevronRight 
 } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
@@ -21,6 +22,15 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState('English');
+
+  const languages = [
+    { code: 'en', name: 'English' },
+    { code: 'ta', name: 'Tamil' },
+    { code: 'te', name: 'Telugu' },
+    { code: 'hi', name: 'Hindi' }
+  ];
 
   const handleLogout = () => {
     setShowLogoutModal(true);
@@ -29,7 +39,12 @@ export default function ProfileScreen() {
   const confirmLogout = async () => {
     setShowLogoutModal(false);
     await logout();
-    router.replace('/');
+    router.replace('/auth');
+  };
+
+  const handleLanguageSelect = (language: string) => {
+    setSelectedLanguage(language);
+    setShowLanguageModal(false);
   };
 
   const progressData = {
@@ -76,20 +91,28 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.actionCard}>
+          <TouchableOpacity 
+            style={styles.actionCard}
+            onPress={() => router.push('/booking')}
+          >
             <Calendar size={24} color={Colors.primary} />
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Book Session</Text>
               <Text style={styles.actionSubtitle}>Schedule counseling</Text>
             </View>
+            <ChevronRight size={20} color={Colors.text.secondary} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionCard}>
+          <TouchableOpacity 
+            style={styles.actionCard}
+            onPress={() => router.push('/weekly-report')}
+          >
             <TrendingUp size={24} color={Colors.success} />
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Mood Tracking</Text>
               <Text style={styles.actionSubtitle}>View insights</Text>
             </View>
+            <ChevronRight size={20} color={Colors.text.secondary} />
           </TouchableOpacity>
         </View>
 
@@ -106,11 +129,17 @@ export default function ProfileScreen() {
             <Text style={styles.settingText}>Privacy & Data</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => setShowLanguageModal(true)}
+          >
             <Globe size={20} color={Colors.text.secondary} />
             <View style={styles.settingContent}>
               <Text style={styles.settingText}>Language</Text>
-              <Text style={styles.settingValue}>English</Text>
+              <View style={styles.settingValueContainer}>
+                <Text style={styles.settingValue}>{selectedLanguage}</Text>
+                <ChevronRight size={16} color={Colors.text.secondary} />
+              </View>
             </View>
           </TouchableOpacity>
 
@@ -177,6 +206,47 @@ export default function ProfileScreen() {
                 <Text style={styles.confirmButtonText}>Log Out</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showLanguageModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowLanguageModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.languageModalContent}>
+            <Text style={styles.modalTitle}>Select Language</Text>
+            {languages.map((language) => (
+              <TouchableOpacity
+                key={language.code}
+                style={[
+                  styles.languageOption,
+                  selectedLanguage === language.name && styles.selectedLanguageOption
+                ]}
+                onPress={() => handleLanguageSelect(language.name)}
+              >
+                <Text style={[
+                  styles.languageOptionText,
+                  selectedLanguage === language.name && styles.selectedLanguageOptionText
+                ]}>
+                  {language.name}
+                </Text>
+                {selectedLanguage === language.name && (
+                  <View style={styles.checkmark}>
+                    <Text style={styles.checkmarkText}>✓</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity 
+              style={styles.closeLanguageModal}
+              onPress={() => setShowLanguageModal(false)}
+            >
+              <Text style={styles.closeLanguageModalText}>Close</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -268,6 +338,7 @@ const styles = StyleSheet.create({
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     shadowColor: Colors.shadow.light,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
@@ -305,6 +376,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginLeft: 12,
+  },
+  settingValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   settingText: {
     fontSize: 16,
@@ -413,5 +489,58 @@ const styles = StyleSheet.create({
     color: Colors.text.white,
     fontSize: 16,
     fontWeight: '600',
+  },
+  languageModalContent: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 24,
+    marginHorizontal: 32,
+    width: '80%',
+    maxHeight: '60%',
+  },
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  selectedLanguageOption: {
+    backgroundColor: Colors.primary + '20',
+  },
+  languageOptionText: {
+    fontSize: 16,
+    color: Colors.text.primary,
+  },
+  selectedLanguageOptionText: {
+    color: Colors.primary,
+    fontWeight: '600',
+  },
+  checkmark: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkmarkText: {
+    color: Colors.text.white,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  closeLanguageModal: {
+    backgroundColor: Colors.surfaceLight,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  closeLanguageModalText: {
+    color: Colors.text.secondary,
+    fontSize: 16,
+    fontWeight: '500',
   },
 });

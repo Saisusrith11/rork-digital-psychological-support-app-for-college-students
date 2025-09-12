@@ -7,6 +7,7 @@ import { StyleSheet } from "react-native";
 import { AuthProvider } from "@/hooks/auth-store";
 import { MoodProvider } from "@/hooks/mood-store";
 import { AssessmentProvider } from "@/hooks/assessment-store";
+import { LanguageProvider } from "@/hooks/language-store";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -39,13 +40,15 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={styles.container}>
-        <AuthProvider>
-          <MoodProvider>
-            <AssessmentProvider>
-              <RootLayoutNav />
-            </AssessmentProvider>
-          </MoodProvider>
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <MoodProvider>
+              <AssessmentProvider>
+                <RootLayoutNav />
+              </AssessmentProvider>
+            </MoodProvider>
+          </AuthProvider>
+        </LanguageProvider>
       </GestureHandlerRootView>
     </QueryClientProvider>
   );
