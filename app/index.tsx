@@ -12,13 +12,15 @@ export default function IndexScreen() {
   useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated && user) {
-        // Route based on user role
         switch (user.role) {
           case 'counselor':
             router.replace('/(counselor)/dashboard');
             break;
           case 'admin':
             router.replace('/(admin)/dashboard');
+            break;
+          case 'volunteer':
+            router.replace('/(volunteer)/dashboard');
             break;
           default:
             router.replace('/(tabs)/home');
@@ -31,7 +33,7 @@ export default function IndexScreen() {
   }, [user, isAuthenticated, isLoading]);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]} />
+    <View testID="index-screen" style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]} />
   );
 }
 
