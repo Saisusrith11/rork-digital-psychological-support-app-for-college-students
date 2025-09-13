@@ -1,117 +1,36 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, Platform } from 'react-native';
-import { ArrowLeft, Mic, Send, Bot, AlertTriangle, Phone, Heart } from 'lucide-react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, Platform, ActivityIndicator, KeyboardAvoidingView } from 'react-native';
+import { ArrowLeft, Mic, Send, Bot, AlertTriangle, Phone, Heart, BookOpen, Users, Brain, Sparkles } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { AIChatService, Message, CopingStrategy } from '@/services/ai-chat-service';
 import { useLanguage } from '@/hooks/language-store';
 
-interface Message {
+interface QuickPrompt {
   id: string;
   text: string;
-  isUser: boolean;
-  timestamp: Date;
-  type?: 'normal' | 'urgent' | 'coping' | 'assessment';
-  actions?: Array<{
-    label: string;
-    action: () => void;
-  }>;
+  icon: any;
+  category: string;
 }
 
-interface CopingStrategy {
-  id: string;
-  title: string;
-  description: string;
-  category: 'breathing' | 'mindfulness' | 'grounding' | 'sleep' | 'academic';
-  steps: string[];
-}
-
-interface AIResponse {
-  text: string;
-  type: 'normal' | 'urgent' | 'coping' | 'assessment';
-  copingStrategies?: CopingStrategy[];
-  urgentReferral?: boolean;
-}
-
-const copingStrategies: CopingStrategy[] = [
-  {
-    id: '1',
-    title: 'Deep Breathing Exercise',
-    description: 'A simple breathing technique to reduce anxiety',
-    category: 'breathing',
-    steps: [
-      'Sit comfortably and close your eyes',
-      'Breathe in slowly through your nose for 4 counts',
-      'Hold your breath for 4 counts',
-      'Exhale slowly through your mouth for 6 counts',
-      'Repeat 5-10 times'
-    ]
-  },
-  {
-    id: '2',
-    title: '5-4-3-2-1 Grounding Technique',
-    description: 'Use your senses to ground yourself in the present',
-    category: 'grounding',
-    steps: [
-      'Name 5 things you can see',
-      'Name 4 things you can touch',
-      'Name 3 things you can hear',
-      'Name 2 things you can smell',
-      'Name 1 thing you can taste'
-    ]
-  },
-  {
-    id: '3',
-    title: 'Progressive Muscle Relaxation',
-    description: 'Release physical tension to calm your mind',
-    category: 'mindfulness',
-    steps: [
-      'Start with your toes, tense for 5 seconds then relax',
-      'Move to your calves, tense and relax',
-      'Continue with thighs, abdomen, arms, and face',
-      'Notice the difference between tension and relaxation',
-      'Take deep breaths throughout'
-    ]
-  },
-  {
-    id: '4',
-    title: 'Academic Stress Management',
-    description: 'Break down overwhelming academic tasks',
-    category: 'academic',
-    steps: [
-      'List all your tasks and deadlines',
-      'Break large tasks into smaller, manageable steps',
-      'Prioritize based on urgency and importance',
-      'Set realistic daily goals',
-      'Take regular breaks using the Pomodoro technique'
-    ]
-  },
-  {
-    id: '5',
-    title: 'Sleep Hygiene Tips',
-    description: 'Improve your sleep quality for better mental health',
-    category: 'sleep',
-    steps: [
-      'Set a consistent sleep schedule',
-      'Avoid screens 1 hour before bed',
-      'Create a relaxing bedtime routine',
-      'Keep your bedroom cool and dark',
-      'Avoid caffeine after 2 PM'
-    ]
-  }
+const quickPrompts: QuickPrompt[] = [
+  { id: '1', text: "I'm feeling anxious about exams", icon: BookOpen, category: 'academic' },
+  { id: '2', text: "I'm having trouble sleeping", icon: Brain, category: 'sleep' },
+  { id: '3', text: "I feel lonely and isolated", icon: Users, category: 'social' },
+  { id: '4', text: "I need coping strategies", icon: Sparkles, category: 'coping' }
 ];
 
 export default function ChatScreen() {
   const insets = useSafeAreaInsets();
-  const { t, currentLanguage } = useLanguage();
+  const { t } = useLanguage();
   const { to } = useLocalSearchParams<{ to?: string }>();
   const scrollViewRef = useRef<ScrollView>(null);
+  const aiService = useRef(AIChatService.getInstance());
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: t('chat.startConversation'),
+      text: "Hello! I'm here to support you. How are you feeling today? Remember, this is a safe space to share whatever is on your mind.",
       isUser: false,
       timestamp: new Date(),
       type: 'normal'
@@ -119,11 +38,15 @@ export default function ChatScreen() {
   ]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState<string[]>([]);
+  const [showQuickPrompts, setShowQuickPrompts] = useState(true);
+
 
   useEffect(() => {
-    loadConversationHistory();
-  }, []);
+    // Hide quick prompts after first message
+    if (messages.length > 1) {
+      setShowQuickPrompts(false);
+    }
+  }, [messages]);
 
   useEffect(() => {
     if (to && typeof to === 'string') {
@@ -144,212 +67,128 @@ export default function ChatScreen() {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
 
-  const loadConversationHistory = async () => {
-    try {
-      const history = await AsyncStorage.getItem('conversationHistory');
-      if (history) {
-        setConversationHistory(JSON.parse(history));
-      }
-    } catch (error) {
-      console.error('Error loading conversation history:', error);
+  const handleQuickPrompt = (prompt: string) => {
+    setInputText(prompt);
+    setShowQuickPrompts(false);
+    sendMessage(prompt);
+  };
+
+  const handleAction = (action: string) => {
+    const [type, value] = action.split(':');
+    
+    switch (type) {
+      case 'call':
+        if (Platform.OS !== 'web') {
+          Alert.alert(
+            'Crisis Support',
+            `Would you like to call ${value}?`,
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Call', onPress: () => console.log(`Calling ${value}`) }
+            ]
+          );
+        }
+        break;
+      case 'booking':
+        router.push(value === 'emergency' ? '/booking?emergency=true' : '/booking');
+        break;
+      case 'resources':
+        router.push(`/resources?category=${value}`);
+        break;
+      case 'coping':
+        const strategies = aiService.current.getCopingStrategies(value);
+        if (strategies.length > 0) {
+          displayCopingStrategy(strategies[0]);
+        }
+        break;
+      case 'community':
+        router.push('/(tabs)/community');
+        break;
+      default:
+        console.log('Unknown action:', action);
     }
   };
 
-  const saveConversationHistory = async (newHistory: string[]) => {
-    try {
-      await AsyncStorage.setItem('conversationHistory', JSON.stringify(newHistory));
-    } catch (error) {
-      console.error('Error saving conversation history:', error);
-    }
+  const displayCopingStrategy = (strategy: CopingStrategy) => {
+    const strategyMessage: Message = {
+      id: `strategy_${Date.now()}`,
+      text: `**${strategy.title}**\n\n${strategy.description}\n\n**Steps:**\n${strategy.steps.map((step, i) => `${i + 1}. ${step}`).join('\n')}\n\n⏱ Duration: ${strategy.duration || 'As needed'}\n✨ ${strategy.effectiveness || 'Helps reduce stress'}`,
+      isUser: false,
+      timestamp: new Date(),
+      type: 'coping'
+    };
+    setMessages(prev => [...prev, strategyMessage]);
   };
 
-  const analyzeUserInput = (input: string): AIResponse => {
-    const lowerInput = input.toLowerCase();
 
-    const crisisDict: Record<string, string[]> = {
-      en: ['suicide', 'kill myself', 'end it all', 'not worth living', 'hurt myself', 'die', 'hopeless'],
-      hi: ['आत्महत्या', 'खत्म', 'मरना', 'आशाहीन', 'खुद को चोट'],
-      ta: ['தற்கொலை', 'முடித்துவிட', 'நம்பிக்கையின்மை', 'என்னை காயப்படுத்த'],
-      te: ['ఆత్మహత్య', 'చంపుకోవాలి', 'నిరాశ', 'నన్ను నొప్పించుకోవాలి'],
-    };
-    const severeDict: Record<string, string[]> = {
-      en: ["can't cope", 'overwhelming', 'panic', 'breakdown', 'crisis'],
-      hi: ['घबराहट', 'संकट', 'नियंत्रण नहीं'],
-      ta: ['பயக்கோபம்', 'நெருக்கடி', 'கட்டுப்பாடின்றி'],
-      te: ['పానిక్', 'సంక్షోభం', 'నియంత్రణలో లేదు'],
-    };
-    const stressDict: Record<string, string[]> = {
-      en: ['stress', 'anxious', 'worried', 'nervous', 'overwhelmed', 'pressure'],
-      hi: ['तनाव', 'चिंता', 'घबराहट'],
-      ta: ['மன அழுத்தம்', 'கவலை', 'பதட்டம்'],
-      te: ['స్ట్రెస్', 'ఆందోళన', 'టెన్షన్'],
-    };
-    const academicDict: Record<string, string[]> = {
-      en: ['exam', 'study', 'assignment', 'deadline', 'grades', 'college', 'university'],
-      hi: ['परीक्षा', 'अध्ययन', 'असाइनमेंट', 'समयसीमा', 'अंक'],
-      ta: ['தேர்வு', 'படிப்பு', 'பணிக்குறை', 'காலக்கெடு', 'மதிப்பெண்கள்'],
-      te: ['పరీక్ష', 'చదువు', 'అసైన్‌మెంట్', 'డెడ్‌లైన్', 'మార్కులు'],
-    };
-    const sleepDict: Record<string, string[]> = {
-      en: ["sleep", 'insomnia', 'tired', 'exhausted', "can't sleep"],
-      hi: ['नींद', 'अनिद्रा', 'थकान'],
-      ta: ['தூக்கம்', 'தூக்கமின்மை', 'சோர்வு'],
-      te: ['నిద్ర', 'నిద్రలేమి', 'అలసట'],
-    };
-    const socialDict: Record<string, string[]> = {
-      en: ['lonely', 'isolated', 'friends', 'social', 'alone'],
-      hi: ['एकाकी', 'अलग-थलग', 'दोस्त'],
-      ta: ['தனிமை', 'தனித்து', 'நண்பர்கள்'],
-      te: ['ఒంటరితనం', 'విడివడి', 'స్నేహితులు'],
-    };
 
-    const crisisKeywords = crisisDict[currentLanguage] ?? crisisDict.en;
-    const severeKeywords = severeDict[currentLanguage] ?? severeDict.en;
-    const stressKeywords = stressDict[currentLanguage] ?? stressDict.en;
-    const academicKeywords = academicDict[currentLanguage] ?? academicDict.en;
-    const sleepKeywords = sleepDict[currentLanguage] ?? sleepDict.en;
-    const socialKeywords = socialDict[currentLanguage] ?? socialDict.en;
-    
-
-    
-    // Check for crisis indicators
-    if (crisisKeywords.some(keyword => lowerInput.includes(keyword))) {
-      return {
-        text: "I'm very concerned about what you've shared. Your safety is the most important thing right now. Please reach out to a mental health professional immediately. You don't have to go through this alone.",
-        type: 'urgent',
-        urgentReferral: true
-      };
-    }
-    
-    // Check for severe distress
-    if (severeKeywords.some(keyword => lowerInput.includes(keyword))) {
-      return {
-        text: "It sounds like you're going through a really difficult time. These feelings can be overwhelming, but there are people who can help. I'd strongly recommend speaking with a counselor. In the meantime, would you like to try some immediate coping strategies?",
-        type: 'coping',
-        copingStrategies: [copingStrategies[0], copingStrategies[1]] // Breathing and grounding
-      };
-    }
-    
-    // Academic stress
-    if (stressKeywords.some(keyword => lowerInput.includes(keyword)) && 
-        academicKeywords.some(keyword => lowerInput.includes(keyword))) {
-      return {
-        text: "Academic stress is very common among students. It's important to remember that your worth isn't defined by your grades. Let me share some strategies that can help you manage academic pressure more effectively.",
-        type: 'coping',
-        copingStrategies: [copingStrategies[3]] // Academic stress management
-      };
-    }
-    
-    // Sleep issues
-    if (sleepKeywords.some(keyword => lowerInput.includes(keyword))) {
-      return {
-        text: "Sleep problems can really affect your mental health and daily functioning. Good sleep hygiene can make a significant difference. Here are some evidence-based strategies to improve your sleep:",
-        type: 'coping',
-        copingStrategies: [copingStrategies[4]] // Sleep hygiene
-      };
-    }
-    
-    // General anxiety/stress
-    if (stressKeywords.some(keyword => lowerInput.includes(keyword))) {
-      return {
-        text: "I hear that you're feeling stressed. Stress is a normal response, but when it becomes overwhelming, it's important to have healthy coping strategies. Here are some techniques that many students find helpful:",
-        type: 'coping',
-        copingStrategies: [copingStrategies[0], copingStrategies[2]] // Breathing and muscle relaxation
-      };
-    }
-    
-    // Social isolation
-    if (socialKeywords.some(keyword => lowerInput.includes(keyword))) {
-      return {
-        text: "Feeling lonely or isolated can be really challenging, especially as a student. Remember that many people feel this way, and it's okay to reach out for support. Building connections takes time, but there are ways to start.",
-        type: 'normal'
-      };
-    }
-    
-    // Default supportive response
-    return {
-      text: "Thank you for sharing that with me. I'm here to listen and support you. Can you tell me more about what's been on your mind? Sometimes talking through our thoughts and feelings can help us process them better.",
-      type: 'normal'
-    };
-  };
-
-  const sendMessage = async () => {
-    if (!inputText.trim()) return;
+  const sendMessage = async (text?: string) => {
+    const messageText = text || inputText;
+    if (!messageText.trim()) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: inputText,
+      text: messageText,
       isUser: true,
       timestamp: new Date(),
     };
 
-    const newHistory = [...conversationHistory, inputText];
-    setConversationHistory(newHistory);
-    saveConversationHistory(newHistory);
-
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
     setIsTyping(true);
+    setShowQuickPrompts(false);
 
-    // Simulate AI processing time
-    setTimeout(() => {
-      const aiResponse = analyzeUserInput(inputText);
+    try {
+      // Get AI response
+      const response = await aiService.current.processMessage(messageText);
       
       const responseMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: aiResponse.text,
+        text: response.response,
         isUser: false,
         timestamp: new Date(),
-        type: aiResponse.type
+        type: response.type
       };
 
-      // Add urgent referral actions if needed
-      if (aiResponse.urgentReferral) {
-        responseMessage.actions = [
-          {
-            label: t('chat.actions.callHelpline'),
-            action: () => {
-              if (Platform.OS !== 'web') {
-                Alert.alert(
-                  'Emergency Support',
-                  'National Suicide Prevention Lifeline: 988\nCrisis Text Line: Text HOME to 741741',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    { text: 'Call 988', onPress: () => console.log('Would call 988') }
-                  ]
-                );
-              }
-            }
-          },
-          {
-            label: t('chat.actions.bookCounselor'),
-            action: () => router.push('/booking')
-          }
-        ];
+      // Add actions if provided
+      if (response.suggestedActions && response.suggestedActions.length > 0) {
+        responseMessage.actions = response.suggestedActions.map(action => ({
+          label: action.label,
+          action: () => handleAction(action.action)
+        }));
+      }
+
+      // Add resources if provided
+      if (response.resources && response.resources.length > 0) {
+        responseMessage.resources = response.resources;
       }
 
       setMessages(prev => [...prev, responseMessage]);
       
-      // Add coping strategies if provided
-      if (aiResponse.copingStrategies) {
-        setTimeout(() => {
-          aiResponse.copingStrategies?.forEach((strategy, index) => {
-            setTimeout(() => {
-              const strategyMessage: Message = {
-                id: `strategy_${Date.now()}_${index}`,
-                text: `**${strategy.title}**\n\n${strategy.description}\n\nSteps:\n${strategy.steps.map((step, i) => `${i + 1}. ${step}`).join('\n')}`,
-                isUser: false,
-                timestamp: new Date(),
-                type: 'coping'
-              };
-              setMessages(prev => [...prev, strategyMessage]);
-            }, index * 1000);
-          });
-        }, 1000);
+      // If coping strategies are suggested, get and display them
+      if (response.type === 'coping' && response.topics.length > 0) {
+        const strategies = aiService.current.getCopingStrategies(response.topics[0]);
+        if (strategies.length > 0) {
+          setTimeout(() => {
+            displayCopingStrategy(strategies[0]);
+          }, 1000);
+        }
       }
+    } catch (error) {
+      console.error('Error getting AI response:', error);
       
+      // Fallback message
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: "I'm having trouble processing your message right now. Please try again, or if you need immediate support, please contact the crisis helpline at 988.",
+        isUser: false,
+        timestamp: new Date(),
+        type: 'normal'
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const showEmergencyContacts = () => {
@@ -386,12 +225,31 @@ export default function ChatScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 20 }}
       >
-        <View style={styles.welcomeContainer}>
-          <View style={styles.welcomeIcon}>
-            <Bot size={32} color={Colors.text.secondary} />
+        {messages.length === 1 && (
+          <View style={styles.welcomeContainer}>
+            <View style={styles.welcomeIcon}>
+              <Bot size={32} color={Colors.text.secondary} />
+            </View>
+            <Text style={styles.welcomeTitle}>AI Mental Health Support</Text>
+            <Text style={styles.welcomeSubtitle}>I&apos;m here to listen and help</Text>
           </View>
-          <Text style={styles.welcomeTitle}>{t('chat.startConversation')}</Text>
-        </View>
+        )}
+
+        {showQuickPrompts && (
+          <View style={styles.quickPromptsContainer}>
+            <Text style={styles.quickPromptsTitle}>Quick conversation starters:</Text>
+            {quickPrompts.map((prompt) => (
+              <TouchableOpacity
+                key={prompt.id}
+                style={styles.quickPromptButton}
+                onPress={() => handleQuickPrompt(prompt.text)}
+              >
+                <prompt.icon size={20} color={Colors.primary} />
+                <Text style={styles.quickPromptText}>{prompt.text}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         {messages.map((message) => (
           <View key={message.id}>
@@ -422,6 +280,17 @@ export default function ChatScreen() {
               ]}>
                 {message.text}
               </Text>
+              {message.resources && message.resources.length > 0 && (
+                <View style={styles.resourcesContainer}>
+                  <Text style={styles.resourcesTitle}>📚 Helpful Resources:</Text>
+                  {message.resources.map((resource, index) => (
+                    <View key={index} style={styles.resourceItem}>
+                      <Text style={styles.resourceTitle}>{resource.title}</Text>
+                      <Text style={styles.resourceDescription}>{resource.description}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
               {message.actions && (
                 <View style={styles.actionsContainer}>
                   {message.actions.map((action, index) => (
@@ -442,33 +311,44 @@ export default function ChatScreen() {
         {isTyping && (
           <View style={[styles.messageContainer, styles.aiMessage]}>
             <View style={styles.typingIndicator}>
-              <Text style={styles.typingText}>{t('chat.typing')}</Text>
+              <ActivityIndicator size="small" color={Colors.primary} />
+              <Text style={styles.typingText}>AI is thinking...</Text>
             </View>
           </View>
         )}
       </ScrollView>
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.textInput}
-          placeholder={t('chat.input.placeholder')}
-          placeholderTextColor={Colors.text.light}
-          value={inputText}
-          onChangeText={setInputText}
-          multiline
-          maxLength={500}
-        />
-        <TouchableOpacity style={styles.micButton}>
-          <Mic size={20} color={Colors.text.secondary} />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.sendButton, inputText.trim() && styles.sendButtonActive]}
-          onPress={sendMessage}
-          disabled={!inputText.trim()}
-        >
-          <Send size={20} color={inputText.trim() ? Colors.text.white : Colors.text.light} />
-        </TouchableOpacity>
-      </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.textInput}
+            placeholder="Type your message..."
+            placeholderTextColor={Colors.text.light}
+            value={inputText}
+            onChangeText={setInputText}
+            multiline
+            maxLength={1000}
+            editable={!isTyping}
+          />
+          <TouchableOpacity style={styles.micButton} disabled={isTyping}>
+            <Mic size={20} color={isTyping ? Colors.text.light : Colors.text.secondary} />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.sendButton, (inputText.trim() && !isTyping) && styles.sendButtonActive]}
+            onPress={() => sendMessage()}
+            disabled={!inputText.trim() || isTyping}
+          >
+            {isTyping ? (
+              <ActivityIndicator size="small" color={Colors.text.white} />
+            ) : (
+              <Send size={20} color={inputText.trim() ? Colors.text.white : Colors.text.light} />
+            )}
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -663,10 +543,68 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
+    gap: 8,
   },
   typingText: {
     fontSize: 14,
     color: Colors.text.secondary,
     fontStyle: 'italic',
+  },
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginTop: 4,
+  },
+  quickPromptsContainer: {
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+  },
+  quickPromptsTitle: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginBottom: 12,
+    fontWeight: '500',
+  },
+  quickPromptButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: Colors.surfaceLight,
+  },
+  quickPromptText: {
+    fontSize: 14,
+    color: Colors.text.primary,
+    marginLeft: 12,
+    flex: 1,
+  },
+  resourcesContainer: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: Colors.surfaceLight,
+    borderRadius: 8,
+  },
+  resourcesTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  resourceItem: {
+    marginBottom: 8,
+  },
+  resourceTitle: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: Colors.primary,
+    marginBottom: 2,
+  },
+  resourceDescription: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    lineHeight: 16,
   },
 });
