@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '@/hooks/auth-store';
 import { Colors } from '@/constants/colors';
@@ -50,7 +50,7 @@ const MOCK_POSTS: ForumPost[] = [
 ];
 
 export default function VolunteerDashboard() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const insets = useSafeAreaInsets();
   const [trained, setTrained] = useState<boolean>(true);
   const [selectedCategory, setSelectedCategory] = useState<'All' | ForumPost['category']>('All');
@@ -59,10 +59,17 @@ export default function VolunteerDashboard() {
   const [replyText, setReplyText] = useState<string>('');
   const [pending, setPending] = useState<PendingReply[]>([]);
 
-  if (!user || user.role !== 'volunteer') {
-    router.replace('/');
-    return null;
-  }
+
+  useEffect(() => {
+    if (!isLoading && (!user || user.role !== 'volunteer')) {
+      try {
+        console.log('[VolunteerDashboard] Redirecting non-volunteer to /auth');
+        router.replace('/auth');
+      } catch (e) {
+        console.error('[VolunteerDashboard] Navigation error', e);
+      }
+    }
+  }, [isLoading, user?.role]);
 
   const posts = useMemo(() => {
     if (selectedCategory === 'All') return MOCK_POSTS;
@@ -96,6 +103,14 @@ export default function VolunteerDashboard() {
     setComposeOpen(false);
     setReplyText('');
   }, [activePost, replyText, trained]);
+
+  if (!user || user.role !== 'volunteer') {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom, alignItems: 'center', justifyContent: 'center' }]}>
+        <Text style={{ color: Colors.text.secondary }}>Redirecting…</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]} testID="volunteer-dashboard">
