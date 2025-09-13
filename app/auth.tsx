@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -9,19 +9,31 @@ import {
   Platform,
   Modal 
 } from 'react-native';
-import { Heart, Shield } from 'lucide-react-native';
+import { Heart, Shield, UserCog, GraduationCap, Handshake } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { UserRole } from '@/types/user';
+
+type AuthForm = {
+  username: string;
+  email: string;
+  fullName: string;
+  password: string;
+  college: string;
+  year: string;
+  course: string;
+  role: UserRole;
+};
 
 export default function AuthScreen() {
   const { login, register, loginAnonymous } = useAuth();
   const insets = useSafeAreaInsets();
-  const [isLogin, setIsLogin] = useState(true);
-  const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [formData, setFormData] = useState({
+  const [isLogin, setIsLogin] = useState<boolean>(true);
+  const [showErrorModal, setShowErrorModal] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [formData, setFormData] = useState<AuthForm>({
     username: '',
     email: '',
     fullName: '',
@@ -29,6 +41,7 @@ export default function AuthScreen() {
     college: '',
     year: '',
     course: '',
+    role: 'student',
   });
 
   const showError = (message: string) => {
@@ -40,26 +53,34 @@ export default function AuthScreen() {
     setShowErrorModal(true);
   };
 
+  const navigateAfterAuth = (role?: UserRole) => {
+    if (role === 'counselor') {
+      router.replace('/(counselor)/dashboard');
+    } else if (role === 'admin') {
+      router.replace('/(admin)/dashboard');
+    } else {
+      router.replace('/(tabs)/home');
+    }
+  };
+
   const handleSubmit = async () => {
     if (isLogin) {
       if (!formData.username || !formData.password) {
         showError('Please fill in all fields');
         return;
       }
-      
       const result = await login(formData.username, formData.password);
       if (result.success) {
-        router.replace('/(tabs)/home');
+        navigateAfterAuth(result.user?.role);
       } else {
         showError(result.error || 'Login failed');
       }
     } else {
       if (!formData.username || !formData.email || !formData.fullName || 
-          !formData.password || !formData.college || !formData.year || !formData.course) {
-        showError('Please fill in all fields');
+          !formData.password) {
+        showError('Please fill in required fields');
         return;
       }
-      
       const result = await register({
         username: formData.username,
         email: formData.email,
@@ -67,10 +88,10 @@ export default function AuthScreen() {
         college: formData.college,
         year: formData.year,
         course: formData.course,
+        role: formData.role,
       });
-      
       if (result.success) {
-        router.replace('/(tabs)/home');
+        navigateAfterAuth(result.user?.role);
       } else {
         showError(result.error || 'Registration failed');
       }
@@ -109,7 +130,7 @@ export default function AuthScreen() {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.inputContainer}>
+          <View style={styles.inputContainer} testID="usernameField">
             <Text style={styles.inputLabel}>Username</Text>
             <TextInput
               style={styles.input}
@@ -138,7 +159,7 @@ export default function AuthScreen() {
                 </View>
               </View>
 
-              <View style={styles.inputContainer}>
+              <View style={styles.inputContainer} testID="fullNameField">
                 <Text style={styles.inputLabel}>Full Name</Text>
                 <TextInput
                   style={styles.input}
@@ -148,10 +169,40 @@ export default function AuthScreen() {
                   placeholderTextColor={Colors.text.light}
                 />
               </View>
+
+              <View style={styles.inputContainer} testID="roleSelector">
+                <Text style={styles.inputLabel}>Register as</Text>
+                <View style={styles.roleRow}>
+                  <TouchableOpacity
+                    testID="roleStudent"
+                    style={[styles.rolePill, formData.role === 'student' && styles.rolePillActive]}
+                    onPress={() => setFormData(prev => ({ ...prev, role: 'student' }))}
+                  >
+                    <GraduationCap size={16} color={formData.role === 'student' ? Colors.text.white : Colors.primary} />
+                    <Text style={[styles.rolePillText, formData.role === 'student' && styles.rolePillTextActive]}>Student</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    testID="roleCounselor"
+                    style={[styles.rolePill, formData.role === 'counselor' && styles.rolePillActive]}
+                    onPress={() => setFormData(prev => ({ ...prev, role: 'counselor' }))}
+                  >
+                    <UserCog size={16} color={formData.role === 'counselor' ? Colors.text.white : Colors.primary} />
+                    <Text style={[styles.rolePillText, formData.role === 'counselor' && styles.rolePillTextActive]}>Counselor</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    testID="roleVolunteer"
+                    style={[styles.rolePill, formData.role === 'volunteer' && styles.rolePillActive]}
+                    onPress={() => setFormData(prev => ({ ...prev, role: 'volunteer' }))}
+                  >
+                    <Handshake size={16} color={formData.role === 'volunteer' ? Colors.text.white : Colors.primary} />
+                    <Text style={[styles.rolePillText, formData.role === 'volunteer' && styles.rolePillTextActive]}>Volunteer</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </>
           )}
 
-          <View style={styles.inputContainer}>
+          <View style={styles.inputContainer} testID="passwordField">
             <Text style={styles.inputLabel}>Password</Text>
             <TextInput
               style={styles.input}
@@ -202,7 +253,7 @@ export default function AuthScreen() {
             </>
           )}
 
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} testID="submitAuth">
             <Text style={styles.submitButtonText}>
               {isLogin ? 'Sign In' : 'Create Account'}
             </Text>
@@ -213,7 +264,7 @@ export default function AuthScreen() {
             onPress={async () => {
               const result = await loginAnonymous();
               if (result.success) {
-                router.replace('/(tabs)/home');
+                navigateAfterAuth(result.user?.role);
               }
             }}
           >
@@ -337,6 +388,33 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: 16,
+  },
+  roleRow: {
+    flexDirection: 'row',
+    gap: 8 as unknown as number,
+    alignItems: 'center',
+  },
+  rolePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    marginRight: 8,
+    backgroundColor: Colors.surface,
+  },
+  rolePillActive: {
+    backgroundColor: Colors.primary,
+  },
+  rolePillText: {
+    marginLeft: 6,
+    color: Colors.primary,
+    fontWeight: '600' as const,
+  },
+  rolePillTextActive: {
+    color: Colors.text.white,
   },
   inputRow: {
     flexDirection: 'row',
