@@ -28,7 +28,7 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const { notifications, unreadCount } = useNotifications();
   const { submitFeedback } = useFeedback();
-  const { currentLanguage, setLanguage } = useLanguage();
+  const { currentLanguage, setLanguage, t } = useLanguage();
   const insets = useSafeAreaInsets();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
@@ -105,23 +105,23 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.progressSection}>
-          <Text style={styles.sectionTitle}>Your Progress</Text>
+          <Text style={styles.sectionTitle}>{t('profile.progress')}</Text>
           <View style={styles.progressGrid}>
             <View style={styles.progressItem}>
               <Text style={styles.progressNumber}>{progressData.daysActive}</Text>
-              <Text style={styles.progressLabel}>Days Active</Text>
+              <Text style={styles.progressLabel}>{t('profile.daysActive')}</Text>
             </View>
             <View style={styles.progressItem}>
               <Text style={[styles.progressNumber, { color: Colors.success }]}>
                 {progressData.resourcesUsed}
               </Text>
-              <Text style={styles.progressLabel}>Resources Used</Text>
+              <Text style={styles.progressLabel}>{t('profile.resourcesUsed')}</Text>
             </View>
             <View style={styles.progressItem}>
               <Text style={[styles.progressNumber, { color: Colors.secondary }]}>
                 {progressData.sessionsBooked}
               </Text>
-              <Text style={styles.progressLabel}>Sessions Booked</Text>
+              <Text style={styles.progressLabel}>{t('profile.sessionsBooked')}</Text>
             </View>
           </View>
         </View>
@@ -133,8 +133,8 @@ export default function ProfileScreen() {
           >
             <Calendar size={24} color={Colors.primary} />
             <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Book Session</Text>
-              <Text style={styles.actionSubtitle}>Schedule counseling</Text>
+              <Text style={styles.actionTitle}>{t('profile.bookSession')}</Text>
+              <Text style={styles.actionSubtitle}>{t('profile.scheduleCounseling')}</Text>
             </View>
             <ChevronRight size={20} color={Colors.text.secondary} />
           </TouchableOpacity>
@@ -145,15 +145,15 @@ export default function ProfileScreen() {
           >
             <TrendingUp size={24} color={Colors.success} />
             <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Mood Tracking</Text>
-              <Text style={styles.actionSubtitle}>View insights</Text>
+              <Text style={styles.actionTitle}>{t('profile.moodTracking')}</Text>
+              <Text style={styles.actionSubtitle}>{t('profile.viewInsights')}</Text>
             </View>
             <ChevronRight size={20} color={Colors.text.secondary} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.settingsSection}>
-          <Text style={styles.sectionTitle}>Settings & Support</Text>
+          <Text style={styles.sectionTitle}>{t('profile.settings')}</Text>
           
           <TouchableOpacity 
             style={styles.settingItem}
@@ -161,7 +161,7 @@ export default function ProfileScreen() {
           >
             <Bell size={20} color={Colors.text.secondary} />
             <View style={styles.settingContent}>
-              <Text style={styles.settingText}>Notifications</Text>
+              <Text style={styles.settingText}>{t('profile.notifications')}</Text>
               <View style={styles.settingValueContainer}>
                 {unreadCount > 0 && (
                   <View style={styles.notificationBadge}>
@@ -179,7 +179,7 @@ export default function ProfileScreen() {
           >
             <Shield size={20} color={Colors.text.secondary} />
             <View style={styles.settingContent}>
-              <Text style={styles.settingText}>Privacy & Data</Text>
+              <Text style={styles.settingText}>{t('profile.privacyData')}</Text>
               <ChevronRight size={16} color={Colors.text.secondary} />
             </View>
           </TouchableOpacity>
@@ -190,7 +190,7 @@ export default function ProfileScreen() {
           >
             <Globe size={20} color={Colors.text.secondary} />
             <View style={styles.settingContent}>
-              <Text style={styles.settingText}>Language</Text>
+              <Text style={styles.settingText}>{t('profile.language')}</Text>
               <View style={styles.settingValueContainer}>
                 <Text style={styles.settingValue}>
                   {languages.find(l => l.code === currentLanguage)?.name || 'English'}
@@ -206,7 +206,7 @@ export default function ProfileScreen() {
           >
             <HelpCircle size={20} color={Colors.text.secondary} />
             <View style={styles.settingContent}>
-              <Text style={styles.settingText}>Help & Support</Text>
+              <Text style={styles.settingText}>{t('profile.helpSupport')}</Text>
               <ChevronRight size={16} color={Colors.text.secondary} />
             </View>
           </TouchableOpacity>
@@ -217,7 +217,7 @@ export default function ProfileScreen() {
           >
             <MessageSquare size={20} color={Colors.text.secondary} />
             <View style={styles.settingContent}>
-              <Text style={styles.settingText}>Send Feedback</Text>
+              <Text style={styles.settingText}>{t('profile.sendFeedback')}</Text>
               <ChevronRight size={16} color={Colors.text.secondary} />
             </View>
           </TouchableOpacity>
@@ -225,7 +225,7 @@ export default function ProfileScreen() {
           <View style={styles.settingItem}>
             <User size={20} color={Colors.text.secondary} />
             <View style={styles.settingContent}>
-              <Text style={styles.settingText}>Show Username</Text>
+              <Text style={styles.settingText}>{t('profile.showUsername')}</Text>
               <Switch
                 value={showUsernameSettings}
                 onValueChange={setShowUsernameSettings}
@@ -239,7 +239,7 @@ export default function ProfileScreen() {
         <View style={styles.emergencySection}>
           <View style={styles.emergencyHeader}>
             <Heart size={20} color={Colors.error} />
-            <Text style={styles.emergencyTitle}>Emergency Contacts</Text>
+            <Text style={styles.emergencyTitle}>{t('profile.emergency')}</Text>
           </View>
           
           {emergencyContacts.map((contact) => (
@@ -252,7 +252,7 @@ export default function ProfileScreen() {
 
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <LogOut size={20} color={Colors.text.white} />
-          <Text style={styles.logoutText}>Log Out</Text>
+          <Text style={styles.logoutText}>{t('profile.logout')}</Text>
         </TouchableOpacity>
       </ScrollView>
 

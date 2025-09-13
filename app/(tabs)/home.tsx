@@ -4,6 +4,7 @@ import { Bell } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
 import { useMood } from '@/hooks/mood-store';
+import { useLanguage } from '@/hooks/language-store';
 import { router } from 'expo-router';
 import { TouchableOpacity } from 'react-native';
 import MoodSelector from '@/components/MoodSelector';
@@ -16,6 +17,7 @@ import { getRandomQuote, Quote } from '@/constants/quotes';
 export default function HomeScreen() {
   const { user } = useAuth();
   const { todaysMood, addMoodEntry, setUserId } = useMood();
+  const { t } = useLanguage();
   const [dailyQuote, setDailyQuote] = useState<Quote | null>(null);
 
   useEffect(() => {
@@ -39,9 +41,9 @@ export default function HomeScreen() {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return t('home.greeting.morning');
+    if (hour < 17) return t('home.greeting.afternoon');
+    return t('home.greeting.evening');
   };
 
   return (
@@ -73,7 +75,7 @@ export default function HomeScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Daily Inspiration</Text>
+            <Text style={styles.sectionTitle}>{t('home.inspiration.title')}</Text>
           </View>
           
           <View style={styles.quoteCard}>
@@ -86,9 +88,9 @@ export default function HomeScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Today&apos;s Articles</Text>
+            <Text style={styles.sectionTitle}>{t('home.articles.title')}</Text>
             <TouchableOpacity onPress={() => router.push('/resources')}>
-              <Text style={styles.viewAll}>View all</Text>
+              <Text style={styles.viewAll}>{t('common.viewAll')}</Text>
             </TouchableOpacity>
           </View>
           

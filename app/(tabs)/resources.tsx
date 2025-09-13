@@ -5,9 +5,11 @@ import { Colors } from '@/constants/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { resourcesData, resourceCategories } from '@/constants/resources-data';
+import { useLanguage } from '@/hooks/language-store';
 
 export default function ResourcesScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
 
   const getIcon = (iconName: string) => {
     const iconProps = { size: 24, color: Colors.primary };
@@ -40,8 +42,8 @@ export default function ResourcesScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Mental Health Resources</Text>
-        <Text style={styles.subtitle}>Evidence-based tools and information to support your wellbeing</Text>
+        <Text style={styles.title}>{t('resources.title')}</Text>
+        <Text style={styles.subtitle}>{t('resources.subtitle')}</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>

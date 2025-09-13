@@ -2,8 +2,11 @@ import { Tabs } from "expo-router";
 import { Home, MessageCircle, BookOpen, Users, User } from "lucide-react-native";
 import React from "react";
 import { Colors } from "@/constants/colors";
+import { useLanguage } from "@/hooks/language-store";
 
 export default function TabLayout() {
+  const { t } = useLanguage();
+  
   return (
     <Tabs
       screenOptions={{
@@ -24,35 +27,35 @@ export default function TabLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: "Home",
+          title: t('nav.home'),
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="chat"
         options={{
-          title: "AI Chat",
+          title: t('nav.chat'),
           tabBarIcon: ({ color, size }) => <MessageCircle size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="resources"
         options={{
-          title: "Resources",
+          title: t('nav.resources'),
           tabBarIcon: ({ color, size }) => <BookOpen size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="community"
         options={{
-          title: "Community",
+          title: t('nav.community'),
           tabBarIcon: ({ color, size }) => <Users size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: t('nav.profile'),
           tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />

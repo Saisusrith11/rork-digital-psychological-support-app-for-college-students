@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, TextInput,
 import { Plus, Shield, MessageCircle, Users, Globe, X, Send, Heart, MessageSquare } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLanguage } from '@/hooks/language-store';
 
 const categories = ['All Posts', 'Academic', 'Wellness', 'Social'];
 const popularTags = ['#ExamStress', '#SleepHelp', '#Meditation', '#SocialAnxiety', '#StudyTips'];
@@ -80,6 +81,7 @@ const volunteers = [
 
 export default function CommunityScreen() {
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState('All Posts');
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [posts, setPosts] = useState<Post[]>(samplePosts);
@@ -137,7 +139,7 @@ export default function CommunityScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Community Support</Text>
+        <Text style={styles.title}>{t('community.title')}</Text>
         <TouchableOpacity 
           style={styles.addButton}
           onPress={() => setShowCreatePost(true)}
@@ -150,9 +152,9 @@ export default function CommunityScreen() {
         <View style={styles.guidelinesContainer}>
           <Shield size={20} color={Colors.secondary} />
           <View style={styles.guidelinesTextContainer}>
-            <Text style={styles.guidelinesTitle}>Safe Space Guidelines</Text>
+            <Text style={styles.guidelinesTitle}>{t('community.guidelines')}</Text>
             <Text style={styles.guidelinesSubtitle}>
-              This is a moderated, supportive community. Please be kind and respectful.
+              {t('community.guidelinesText')}
             </Text>
           </View>
         </View>
@@ -183,7 +185,7 @@ export default function CommunityScreen() {
         </ScrollView>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Active Discussions</Text>
+          <Text style={styles.sectionTitle}>{t('community.discussions')}</Text>
           
           {filteredPosts.length === 0 ? (
             <View style={styles.emptyState}>
@@ -263,10 +265,10 @@ export default function CommunityScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Users size={20} color={Colors.secondary} />
-            <Text style={styles.sectionTitle}>Student Volunteers</Text>
+            <Text style={styles.sectionTitle}>{t('community.volunteers')}</Text>
           </View>
           <Text style={styles.sectionSubtitle}>
-            Connect with trained peer volunteers for support and guidance
+            {t('community.volunteersText')}
           </Text>
           
           {volunteers.map((volunteer) => (

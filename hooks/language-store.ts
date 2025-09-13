@@ -28,6 +28,7 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'common.ok': 'OK',
     'common.save': 'Save',
     'common.close': 'Close',
+    'common.viewAll': 'View all',
     
     // Home Screen
     'home.greeting.morning': 'Good morning',
@@ -44,6 +45,18 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'profile.language': 'Language',
     'profile.logout': 'Log Out',
     'profile.emergency': 'Emergency Contacts',
+    'profile.daysActive': 'Days Active',
+    'profile.resourcesUsed': 'Resources Used',
+    'profile.sessionsBooked': 'Sessions Booked',
+    'profile.bookSession': 'Book Session',
+    'profile.scheduleCounseling': 'Schedule counseling',
+    'profile.moodTracking': 'Mood Tracking',
+    'profile.viewInsights': 'View insights',
+    'profile.notifications': 'Notifications',
+    'profile.privacyData': 'Privacy & Data',
+    'profile.helpSupport': 'Help & Support',
+    'profile.sendFeedback': 'Send Feedback',
+    'profile.showUsername': 'Show Username',
     
     // Resources
     'resources.title': 'Mental Health Resources',
@@ -54,6 +67,8 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'community.guidelines': 'Safe Space Guidelines',
     'community.volunteers': 'Student Volunteers',
     'community.discussions': 'Active Discussions',
+    'community.guidelinesText': 'This is a moderated, supportive community. Please be kind and respectful.',
+    'community.volunteersText': 'Connect with trained peer volunteers for support and guidance',
     
     // Assessment
     'assessment.title': 'Mental Health Check-in',
@@ -81,6 +96,7 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'common.ok': 'சரி',
     'common.save': 'சேமி',
     'common.close': 'மூடு',
+    'common.viewAll': 'அனைத்தையும் பார்க்க',
     
     // Home Screen
     'home.greeting.morning': 'காலை வணக்கம்',
@@ -97,6 +113,18 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'profile.language': 'மொழி',
     'profile.logout': 'வெளியேறு',
     'profile.emergency': 'அவசர தொடர்புகள்',
+    'profile.daysActive': 'செயலில் உள்ள நாட்கள்',
+    'profile.resourcesUsed': 'பயன்படுத்திய வளங்கள்',
+    'profile.sessionsBooked': 'முன்பதிவு செய்யப்பட்ட அமர்வுகள்',
+    'profile.bookSession': 'அமர்வு முன்பதிவு',
+    'profile.scheduleCounseling': 'ஆலோசனை திட்டமிடுங்கள்',
+    'profile.moodTracking': 'மனநிலை கண்காணிப்பு',
+    'profile.viewInsights': 'நுண்ணறிவுகளைப் பார்க்கவும்',
+    'profile.notifications': 'அறிவிப்புகள்',
+    'profile.privacyData': 'தனியுரிமை மற்றும் தரவு',
+    'profile.helpSupport': 'உதவி மற்றும் ஆதரவு',
+    'profile.sendFeedback': 'கருத்து அனுப்பவும்',
+    'profile.showUsername': 'பயனர்பெயரைக் காட்டு',
     
     // Resources
     'resources.title': 'மனநல வளங்கள்',
@@ -107,6 +135,8 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'community.guidelines': 'பாதுகாப்பான இடம் வழிகாட்டுதல்கள்',
     'community.volunteers': 'மாணவர் தன்னார்வலர்கள்',
     'community.discussions': 'செயலில் உள்ள விவாதங்கள்',
+    'community.guidelinesText': 'இது ஒரு கட்டுப்படுத்தப்பட்ட, ஆதரவான சமூகம். தயவுசெய்து கருணையுடனும் மரியாதையுடனும் இருங்கள்.',
+    'community.volunteersText': 'ஆதரவு மற்றும் வழிகாட்டுதலுக்காக பயிற்சி பெற்ற சக தன்னார்வலர்களுடன் இணைக்கவும்',
     
     // Assessment
     'assessment.title': 'மனநல சோதனை',
@@ -134,6 +164,7 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'common.ok': 'సరే',
     'common.save': 'సేవ్ చేయండి',
     'common.close': 'మూసివేయండి',
+    'common.viewAll': 'అన్నీ చూడండి',
     
     // Home Screen
     'home.greeting.morning': 'శుభోదయం',
@@ -150,6 +181,18 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'profile.language': 'భాష',
     'profile.logout': 'లాగ్ అవుట్',
     'profile.emergency': 'అత్యవసర పరిచయాలు',
+    'profile.daysActive': 'క్రియాశీల రోజులు',
+    'profile.resourcesUsed': 'ఉపయోగించిన వనరులు',
+    'profile.sessionsBooked': 'బుక్ చేసిన సెషన్లు',
+    'profile.bookSession': 'సెషన్ బుక్ చేయండి',
+    'profile.scheduleCounseling': 'కౌన్సెలింగ్ షెడ్యూల్ చేయండి',
+    'profile.moodTracking': 'మూడ్ ట్రాకింగ్',
+    'profile.viewInsights': 'అంతర్దృష్టులను చూడండి',
+    'profile.notifications': 'నోటిఫికేషన్లు',
+    'profile.privacyData': 'గోప్యత & డేటా',
+    'profile.helpSupport': 'సహాయం & మద్దతు',
+    'profile.sendFeedback': 'ఫీడ్‌బ్యాక్ పంపండి',
+    'profile.showUsername': 'యూజర్‌నేమ్ చూపించు',
     
     // Resources
     'resources.title': 'మానసిక ఆరోగ్య వనరులు',
@@ -160,6 +203,8 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'community.guidelines': 'సురక్షిత స్థల మార్గదర్శకాలు',
     'community.volunteers': 'విద్యార్థి వాలంటీర్లు',
     'community.discussions': 'క్రియాశీల చర్చలు',
+    'community.guidelinesText': 'ఇది నియంత్రిత, సహాయక సంఘం. దయచేసి దయతో మరియు గౌరవంతో ఉండండి.',
+    'community.volunteersText': 'మద్దతు మరియు మార్గదర్శకత్వం కోసం శిక్షణ పొందిన సహచర వాలంటీర్లతో కనెక్ట్ అవ్వండి',
     
     // Assessment
     'assessment.title': 'మానసిక ఆరోగ్య తనిఖీ',
@@ -187,6 +232,7 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'common.ok': 'ठीक है',
     'common.save': 'सेव करें',
     'common.close': 'बंद करें',
+    'common.viewAll': 'सभी देखें',
     
     // Home Screen
     'home.greeting.morning': 'सुप्रभात',
@@ -203,6 +249,18 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'profile.language': 'भाषा',
     'profile.logout': 'लॉग आउट',
     'profile.emergency': 'आपातकालीन संपर्क',
+    'profile.daysActive': 'सक्रिय दिन',
+    'profile.resourcesUsed': 'उपयोग किए गए संसाधन',
+    'profile.sessionsBooked': 'बुक किए गए सत्र',
+    'profile.bookSession': 'सत्र बुक करें',
+    'profile.scheduleCounseling': 'परामर्श शेड्यूल करें',
+    'profile.moodTracking': 'मूड ट्रैकिंग',
+    'profile.viewInsights': 'अंतर्दृष्टि देखें',
+    'profile.notifications': 'सूचनाएं',
+    'profile.privacyData': 'गोपनीयता और डेटा',
+    'profile.helpSupport': 'सहायता और समर्थन',
+    'profile.sendFeedback': 'फीडबैक भेजें',
+    'profile.showUsername': 'उपयोगकर्ता नाम दिखाएं',
     
     // Resources
     'resources.title': 'मानसिक स्वास्थ्य संसाधन',
@@ -213,6 +271,8 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'community.guidelines': 'सुरक्षित स्थान दिशानिर्देश',
     'community.volunteers': 'छात्र स्वयंसेवक',
     'community.discussions': 'सक्रिय चर्चाएं',
+    'community.guidelinesText': 'यह एक नियंत्रित, सहायक समुदाय है। कृपया दयालु और सम्मानजनक रहें।',
+    'community.volunteersText': 'समर्थन और मार्गदर्शन के लिए प्रशिक्षित सहकर्मी स्वयंसेवकों से जुड़ें',
     
     // Assessment
     'assessment.title': 'मानसिक स्वास्थ्य जांच',
