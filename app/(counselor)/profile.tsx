@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -7,7 +7,6 @@ import {
   StyleSheet 
 } from 'react-native';
 import { 
-  User, 
   Shield, 
   Calendar,
   MessageSquare,
@@ -25,29 +24,49 @@ export default function CounselorProfile() {
   const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
 
-  const handleLogout = async () => {
-    await logout();
-    router.replace('/auth');
-  };
+  const handleLogout = useCallback(async () => {
+    console.log('[CounselorProfile] Logging out');
+    try {
+      await logout();
+      router.replace('/auth');
+    } catch (e) {
+      console.error('[CounselorProfile] Logout error', e);
+    }
+  }, [logout]);
+
+  const go = useCallback((path: string) => {
+    try {
+      console.log('[CounselorProfile] Navigate to', path);
+      router.push(path as any);
+    } catch (e) {
+      console.error('[CounselorProfile] Navigation error', e);
+    }
+  }, []);
 
   const profileStats = {
     totalSessions: 156,
     activeStudents: 24,
     avgRating: 4.8,
     yearsExperience: 8,
-  };
+  } as const;
+
+  const initials = (user?.fullName ?? 'SJ')
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('');
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top }]} testID="counselor-profile-screen">
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.profileHeader}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {user?.fullName?.split(' ').map(n => n[0]).join('') || 'SJ'}
-            </Text>
+          <View style={styles.avatar} testID="counselor-avatar">
+            <Text style={styles.avatarText}>{initials || 'SJ'}</Text>
           </View>
-          <Text style={styles.userName}>{user?.fullName}</Text>
-          <Text style={styles.specialization}>{user?.specialization}</Text>
+          <Text style={styles.userName}>{user?.fullName ?? 'Counselor'}</Text>
+          {!!user?.specialization && (
+            <Text style={styles.specialization}>{user?.specialization}</Text>
+          )}
           <Text style={styles.experience}>{profileStats.yearsExperience} years experience</Text>
         </View>
 
@@ -76,8 +95,8 @@ export default function CounselorProfile() {
         <View style={styles.languagesSection}>
           <Text style={styles.sectionTitle}>Languages</Text>
           <View style={styles.languagesList}>
-            {user?.languages?.map((language, index) => (
-              <View key={index} style={styles.languageChip}>
+            {(user?.languages ?? ['English']).map((language, index) => (
+              <View key={`lang-${index}`} style={styles.languageChip}>
                 <Text style={styles.languageText}>{language}</Text>
               </View>
             ))}
@@ -87,38 +106,62 @@ export default function CounselorProfile() {
         <View style={styles.settingsSection}>
           <Text style={styles.sectionTitle}>Settings</Text>
           
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity
+            testID="btn-availability-settings"
+            style={styles.settingItem}
+            onPress={() => go('/(counselor)/settings/availability')}
+          >
             <Calendar size={20} color={Colors.text.secondary} />
             <Text style={styles.settingText}>Availability Settings</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity
+            testID="btn-notification-settings"
+            style={styles.settingItem}
+            onPress={() => go('/(counselor)/settings/notifications')}
+          >
             <Bell size={20} color={Colors.text.secondary} />
             <Text style={styles.settingText}>Notification Preferences</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity
+            testID="btn-language-settings"
+            style={styles.settingItem}
+            onPress={() => go('/(counselor)/settings/language')}
+          >
             <Globe size={20} color={Colors.text.secondary} />
             <Text style={styles.settingText}>Language Preferences</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity
+            testID="btn-privacy-settings"
+            style={styles.settingItem}
+            onPress={() => go('/(counselor)/settings/privacy')}
+          >
             <Shield size={20} color={Colors.text.secondary} />
             <Text style={styles.settingText}>Privacy & Security</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity
+            testID="btn-communications-settings"
+            style={styles.settingItem}
+            onPress={() => go('/(counselor)/settings/communications')}
+          >
             <MessageSquare size={20} color={Colors.text.secondary} />
             <Text style={styles.settingText}>Communication Settings</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingItem}>
+          <TouchableOpacity
+            testID="btn-general-settings"
+            style={styles.settingItem}
+            onPress={() => go('/(counselor)/settings/general')}
+          >
             <Settings size={20} color={Colors.text.secondary} />
             <Text style={styles.settingText}>General Settings</Text>
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} testID="btn-logout">
           <LogOut size={20} color={Colors.text.white} />
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
