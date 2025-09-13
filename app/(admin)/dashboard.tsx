@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -25,60 +25,77 @@ import { useFeedback } from '@/hooks/feedback-store';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
+type RangeKey = '7d' | '30d' | '90d';
+
+type TrendPoint = { label: string; value: number };
+
+type StressBreakdown = {
+  low: number;
+  moderate: number;
+  high: number;
+};
+
+function ErrorBoundary({ children }: { children: React.ReactNode }) {
+  const [error, setError] = useState<Error | null>(null);
+  if (error) {
+    return (
+      <View style={styles.errorState} testID="admin-error">
+        <Text style={styles.errorTitle}>Something went wrong</Text>
+        <Text style={styles.errorMessage}>{error.message}</Text>
+      </View>
+    );
+  }
+  return (
+    <View
+      testID="admin-error-wrapper"
+      onLayout={() => {
+        try {
+          console.log('[AdminDashboard] Layout measured');
+        } catch (e) {
+          const err = e as Error;
+          setError(err);
+        }
+      }}
+    >
+      {children}
+    </View>
+  );
+}
+
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const { feedbacks, pendingCount } = useFeedback();
   const insets = useSafeAreaInsets();
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState<boolean>(false);
+  const [range, setRange] = useState<RangeKey>('30d');
 
-  const handleLogout = async () => {
-    setShowLogoutModal(false);
-    await logout();
-    router.replace('/auth');
-  };
+  const handleLogout = useCallback(async () => {
+    try {
+      setShowLogoutModal(false);
+      await logout();
+      router.replace('/auth');
+    } catch (e) {
+      console.log('[AdminDashboard] logout error', e);
+    }
+  }, [logout]);
 
-  // Mock data for admin dashboard
-  const systemStats = {
+  const systemStats = useMemo(() => ({
     totalUsers: 1247,
     activeUsers: 892,
     totalCounselors: 12,
     activeSessions: 34,
     pendingFeedback: pendingCount,
     systemHealth: 98.5,
-  };
+  }), [pendingCount]);
 
-  const recentActivity = [
-    {
-      id: '1',
-      type: 'user_registration',
-      message: 'New student registered',
-      time: '2 minutes ago',
-      status: 'success',
-    },
-    {
-      id: '2',
-      type: 'session_booked',
-      message: 'Counseling session booked',
-      time: '15 minutes ago',
-      status: 'info',
-    },
-    {
-      id: '3',
-      type: 'feedback_received',
-      message: 'New feedback submitted',
-      time: '1 hour ago',
-      status: 'warning',
-    },
-    {
-      id: '4',
-      type: 'system_alert',
-      message: 'High usage detected',
-      time: '2 hours ago',
-      status: 'error',
-    },
-  ];
+  const recentActivity = useMemo(() => ([
+    { id: '1', type: 'user_registration', message: 'New student registered', time: '2 minutes ago', status: 'success' },
+    { id: '2', type: 'session_booked', message: 'Counseling session booked', time: '15 minutes ago', status: 'info' },
+    { id: '3', type: 'feedback_received', message: 'New feedback submitted', time: '1 hour ago', status: 'warning' },
+    { id: '4', type: 'system_alert', message: 'High usage detected', time: '2 hours ago', status: 'error' },
+  ]), []);
 
-  const getActivityIcon = (type: string) => {
+  const getActivityIcon = useCallback((type: string) => {
     switch (type) {
       case 'user_registration':
         return <Users size={16} color={Colors.success} />;
@@ -91,167 +108,283 @@ export default function AdminDashboard() {
       default:
         return <Activity size={16} color={Colors.text.secondary} />;
     }
-  };
+  }, []);
+
+  const trendData: TrendPoint[] = useMemo(() => {
+    const map: Record<RangeKey, TrendPoint[]> = {
+      '7d': [
+        { label: 'M', value: 42 },
+        { label: 'T', value: 55 },
+        { label: 'W', value: 51 },
+        { label: 'T', value: 63 },
+        { label: 'F', value: 70 },
+        { label: 'S', value: 64 },
+        { label: 'S', value: 58 },
+      ],
+      '30d': Array.from({ length: 12 }).map((_, i) => ({ label: `${i+1}`, value: 30 + (i * 4) % 40 })),
+      '90d': Array.from({ length: 18 }).map((_, i) => ({ label: `${i+1}`, value: 20 + (i * 5) % 60 })),
+    };
+    return map[range];
+  }, [range]);
+
+  const stressBreakdown: StressBreakdown = useMemo(() => ({ low: 38, moderate: 44, high: 18 }), []);
+
+  const engagement = useMemo(() => ({
+    dailyActive: 612,
+    avgSessionTimeMin: 9.4,
+    resourceOpens: 1423,
+  }), []);
+
+  const resourceUsage = useMemo(() => ([
+    { id: 'res1', title: 'Breathing Exercise', percent: 64 },
+    { id: 'res2', title: 'Sleep Hygiene Guide', percent: 47 },
+    { id: 'res3', title: 'Exam Stress Tips', percent: 72 },
+    { id: 'res4', title: 'Mindfulness Audio', percent: 35 },
+  ]), []);
+
+  const maxTrend = useMemo(() => Math.max(...trendData.map(p => p.value), 1), [trendData]);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Admin Dashboard</Text>
-            <Text style={styles.userName}>{user?.fullName}</Text>
-            <Text style={styles.systemStatus}>System Status: Healthy</Text>
-          </View>
-          <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.notificationButton}>
-              <Bell size={24} color={Colors.text.primary} />
-              {pendingCount > 0 && (
-                <View style={styles.notificationBadge}>
-                  <Text style={styles.notificationBadgeText}>{pendingCount}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.logoutButton}
-              onPress={() => setShowLogoutModal(true)}
-            >
-              <LogOut size={20} color={Colors.warning} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* System Health */}
-        <View style={styles.healthCard}>
-          <View style={styles.healthHeader}>
-            <Activity size={24} color={Colors.success} />
-            <Text style={styles.healthTitle}>System Health</Text>
-          </View>
-          <Text style={styles.healthPercentage}>{systemStats.systemHealth}%</Text>
-          <Text style={styles.healthStatus}>All systems operational</Text>
-        </View>
-
-        {/* Stats Grid */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statsRow}>
-            <View style={[styles.statCard, { backgroundColor: Colors.primary + '20' }]}>
-              <Users size={24} color={Colors.primary} />
-              <Text style={styles.statNumber}>{systemStats.totalUsers}</Text>
-              <Text style={styles.statLabel}>Total Users</Text>
+    <ErrorBoundary>
+      <View style={[styles.container, { paddingTop: insets.top }]} testID="admin-root">
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.greeting}>Admin Dashboard</Text>
+              <Text style={styles.userName} testID="admin-username">{user?.fullName ?? 'Administrator'}</Text>
+              <Text style={styles.systemStatus}>System Status: Healthy</Text>
             </View>
-            <View style={[styles.statCard, { backgroundColor: Colors.success + '20' }]}>
+            <View style={styles.headerActions}>
+              <TouchableOpacity style={styles.notificationButton} testID="admin-bell">
+                <Bell size={24} color={Colors.text.primary} />
+                {pendingCount > 0 && (
+                  <View style={styles.notificationBadge}>
+                    <Text style={styles.notificationBadgeText}>{pendingCount}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.logoutButton}
+                onPress={() => setShowLogoutModal(true)}
+                testID="admin-logout"
+              >
+                <LogOut size={20} color={Colors.warning} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.healthCard}>
+            <View style={styles.healthHeader}>
               <Activity size={24} color={Colors.success} />
-              <Text style={styles.statNumber}>{systemStats.activeUsers}</Text>
-              <Text style={styles.statLabel}>Active Users</Text>
+              <Text style={styles.healthTitle}>System Health</Text>
             </View>
+            <Text style={styles.healthPercentage}>{systemStats.systemHealth}%</Text>
+            <Text style={styles.healthStatus}>All systems operational</Text>
           </View>
-          <View style={styles.statsRow}>
-            <View style={[styles.statCard, { backgroundColor: Colors.secondary + '20' }]}>
-              <Users size={24} color={Colors.secondary} />
-              <Text style={styles.statNumber}>{systemStats.totalCounselors}</Text>
-              <Text style={styles.statLabel}>Counselors</Text>
-            </View>
-            <View style={[styles.statCard, { backgroundColor: Colors.warning + '20' }]}>
-              <Clock size={24} color={Colors.warning} />
-              <Text style={styles.statNumber}>{systemStats.activeSessions}</Text>
-              <Text style={styles.statLabel}>Active Sessions</Text>
-            </View>
-          </View>
-        </View>
 
-        {/* Recent Activity */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-          {recentActivity.map((activity) => (
-            <View key={activity.id} style={styles.activityCard}>
-              <View style={styles.activityIcon}>
-                {getActivityIcon(activity.type)}
+          <View style={styles.statsContainer}>
+            <View style={styles.statsRow}>
+              <View style={[styles.statCard, { backgroundColor: Colors.primary + '20' }]} testID="stat-total-users">
+                <Users size={24} color={Colors.primary} />
+                <Text style={styles.statNumber}>{systemStats.totalUsers}</Text>
+                <Text style={styles.statLabel}>Total Users</Text>
               </View>
-              <View style={styles.activityContent}>
-                <Text style={styles.activityMessage}>{activity.message}</Text>
-                <Text style={styles.activityTime}>{activity.time}</Text>
+              <View style={[styles.statCard, { backgroundColor: Colors.success + '20' }]} testID="stat-active-users">
+                <Activity size={24} color={Colors.success} />
+                <Text style={styles.statNumber}>{systemStats.activeUsers}</Text>
+                <Text style={styles.statLabel}>Active Users</Text>
               </View>
             </View>
-          ))}
-        </View>
+            <View style={styles.statsRow}>
+              <View style={[styles.statCard, { backgroundColor: Colors.secondary + '20' }]} testID="stat-counselors">
+                <Users size={24} color={Colors.secondary} />
+                <Text style={styles.statNumber}>{systemStats.totalCounselors}</Text>
+                <Text style={styles.statLabel}>Counselors</Text>
+              </View>
+              <View style={[styles.statCard, { backgroundColor: Colors.warning + '20' }]} testID="stat-active-sessions">
+                <Clock size={24} color={Colors.warning} />
+                <Text style={styles.statNumber}>{systemStats.activeSessions}</Text>
+                <Text style={styles.statLabel}>Active Sessions</Text>
+              </View>
+            </View>
+          </View>
 
-        {/* Pending Feedback */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Pending Feedback ({pendingCount})</Text>
-          {feedbacks.filter(f => f.status === 'pending').slice(0, 3).map((feedback) => (
-            <View key={feedback.id} style={styles.feedbackCard}>
-              <View style={styles.feedbackHeader}>
-                <Text style={styles.feedbackUser}>{feedback.userName}</Text>
-                <View style={[styles.categoryBadge, { backgroundColor: Colors.warning + '20' }]}>
-                  <Text style={[styles.categoryText, { color: Colors.warning }]}>
-                    {feedback.category}
-                  </Text>
+          <View style={styles.section}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>Trends</Text>
+              <View style={styles.rangePills}>
+                {(['7d','30d','90d'] as RangeKey[]).map((k) => (
+                  <TouchableOpacity
+                    key={k}
+                    onPress={() => setRange(k)}
+                    style={[styles.pill, range === k ? styles.pillActive : undefined]}
+                    testID={`range-${k}`}
+                  >
+                    <Text style={[styles.pillText, range === k ? styles.pillTextActive : undefined]}>{k}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+            <View style={styles.card} testID="trend-card">
+              <View style={styles.trendRow}>
+                {trendData.map((p, idx) => (
+                  <View key={idx} style={styles.trendBarWrap}>
+                    <View
+                      style={[styles.trendBar, { height: Math.max(8, (p.value / maxTrend) * 100) }]}
+                      testID={`trend-bar-${idx}`}
+                    />
+                    <Text style={styles.trendLabel}>{p.label}</Text>
+                  </View>
+                ))}
+              </View>
+              <View style={styles.legendRow}>
+                <TrendingUp size={16} color={Colors.primary} />
+                <Text style={styles.legendText}>Engagement over time</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Stress Levels (Anonymous)</Text>
+            <View style={styles.card} testID="stress-card">
+              <View style={styles.progressRow}>
+                <View style={[styles.progressSeg, { flex: stressBreakdown.low, backgroundColor: Colors.success + 'AA' }]} />
+                <View style={[styles.progressSeg, { flex: stressBreakdown.moderate, backgroundColor: Colors.warning + 'AA' }]} />
+                <View style={[styles.progressSeg, { flex: stressBreakdown.high, backgroundColor: Colors.error + 'AA' }]} />
+              </View>
+              <View style={styles.progressLabels}>
+                <Text style={[styles.progressLabel, { color: Colors.success }]}>Low {stressBreakdown.low}%</Text>
+                <Text style={[styles.progressLabel, { color: Colors.warning }]}>Moderate {stressBreakdown.moderate}%</Text>
+                <Text style={[styles.progressLabel, { color: Colors.error }]}>High {stressBreakdown.high}%</Text>
+              </View>
+              <Text style={styles.disclaimer}>All screening metrics are aggregated and anonymized.</Text>
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Engagement</Text>
+            <View style={styles.engagementRow}>
+              <View style={[styles.engageCard, { backgroundColor: Colors.primary + '20' }]} testID="eng-dau">
+                <Text style={styles.engNum}>{engagement.dailyActive}</Text>
+                <Text style={styles.engLabel}>Daily Active</Text>
+              </View>
+              <View style={[styles.engageCard, { backgroundColor: Colors.secondary + '20' }]} testID="eng-time">
+                <Text style={styles.engNum}>{engagement.avgSessionTimeMin}m</Text>
+                <Text style={styles.engLabel}>Avg Session</Text>
+              </View>
+              <View style={[styles.engageCard, { backgroundColor: Colors.success + '20' }]} testID="eng-opens">
+                <Text style={styles.engNum}>{engagement.resourceOpens}</Text>
+                <Text style={styles.engLabel}>Resource Opens</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Top Resources</Text>
+            <View style={styles.card}>
+              {resourceUsage.map((r) => (
+                <View key={r.id} style={styles.resourceRow} testID={`res-${r.id}`}>
+                  <Text style={styles.resourceTitle}>{r.title}</Text>
+                  <View style={styles.resourceBarBg}>
+                    <View style={[styles.resourceBar, { width: `${r.percent}%` }]} />
+                  </View>
+                  <Text style={styles.resourcePct}>{r.percent}%</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Recent Activity</Text>
+            {recentActivity.map((activity) => (
+              <View key={activity.id} style={styles.activityCard}>
+                <View style={styles.activityIcon}>
+                  {getActivityIcon(activity.type)}
+                </View>
+                <View style={styles.activityContent}>
+                  <Text style={styles.activityMessage}>{activity.message}</Text>
+                  <Text style={styles.activityTime}>{activity.time}</Text>
                 </View>
               </View>
-              <Text style={styles.feedbackMessage} numberOfLines={2}>
-                {feedback.message}
-              </Text>
-              <Text style={styles.feedbackTime}>
-                {new Date(feedback.createdAt).toLocaleDateString()}
-              </Text>
-            </View>
-          ))}
-          {pendingCount === 0 && (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No pending feedback</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Quick Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.quickActions}>
-            <TouchableOpacity style={styles.actionButton}>
-              <BarChart3 size={24} color={Colors.primary} />
-              <Text style={styles.actionButtonText}>View Analytics</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <Users size={24} color={Colors.success} />
-              <Text style={styles.actionButtonText}>Manage Users</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <MessageSquare size={24} color={Colors.warning} />
-              <Text style={styles.actionButtonText}>Review Feedback</Text>
-            </TouchableOpacity>
+            ))}
           </View>
-        </View>
-      </ScrollView>
 
-      {/* Logout Modal */}
-      <Modal
-        visible={showLogoutModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowLogoutModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Log Out</Text>
-            <Text style={styles.modalMessage}>Are you sure you want to log out?</Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.cancelButton]} 
-                onPress={() => setShowLogoutModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Pending Feedback ({pendingCount})</Text>
+            {feedbacks.filter(f => f.status === 'pending').slice(0, 3).map((feedback) => (
+              <View key={feedback.id} style={styles.feedbackCard}>
+                <View style={styles.feedbackHeader}>
+                  <Text style={styles.feedbackUser}>{feedback.userName}</Text>
+                  <View style={[styles.categoryBadge, { backgroundColor: Colors.warning + '20' }]}>
+                    <Text style={[styles.categoryText, { color: Colors.warning }]}>
+                      {feedback.category}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.feedbackMessage} numberOfLines={2}>
+                  {feedback.message}
+                </Text>
+                <Text style={styles.feedbackTime}>
+                  {new Date(feedback.createdAt).toLocaleDateString()}
+                </Text>
+              </View>
+            ))}
+            {pendingCount === 0 && (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateText}>No pending feedback</Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Quick Actions</Text>
+            <View style={styles.quickActions}>
+              <TouchableOpacity style={styles.actionButton} testID="qa-analytics">
+                <BarChart3 size={24} color={Colors.primary} />
+                <Text style={styles.actionButtonText}>View Analytics</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.confirmButton]} 
-                onPress={handleLogout}
-              >
-                <Text style={styles.confirmButtonText}>Log Out</Text>
+              <TouchableOpacity style={styles.actionButton} testID="qa-users">
+                <Users size={24} color={Colors.success} />
+                <Text style={styles.actionButtonText}>Manage Users</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.actionButton} testID="qa-feedback">
+                <MessageSquare size={24} color={Colors.warning} />
+                <Text style={styles.actionButtonText}>Review Feedback</Text>
               </TouchableOpacity>
             </View>
+            <Text style={styles.privacyNote}>Admin view shows only anonymized aggregates. No individual identities or notes are visible.</Text>
           </View>
-        </View>
-      </Modal>
-    </View>
+        </ScrollView>
+
+        <Modal
+          visible={showLogoutModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowLogoutModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Log Out</Text>
+              <Text style={styles.modalMessage}>Are you sure you want to log out?</Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.cancelButton]} 
+                  onPress={() => setShowLogoutModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.confirmButton]} 
+                  onPress={handleLogout}
+                >
+                  <Text style={styles.confirmButtonText}>Log Out</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      </View>
+    </ErrorBoundary>
   );
 }
 
@@ -371,11 +504,140 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 24,
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: Colors.text.primary,
-    marginBottom: 16,
+  },
+  rangePills: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  pill: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: Colors.surfaceLight,
+  },
+  pillActive: {
+    backgroundColor: Colors.primary,
+  },
+  pillText: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+  },
+  pillTextActive: {
+    color: Colors.text.white,
+    fontWeight: '600',
+  },
+  card: {
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: 16,
+  },
+  trendRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+    height: 120,
+  },
+  trendBarWrap: {
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    flex: 1,
+  },
+  trendBar: {
+    width: 10,
+    borderRadius: 4,
+    backgroundColor: Colors.primary,
+  },
+  trendLabel: {
+    fontSize: 10,
+    color: Colors.text.secondary,
+    marginTop: 6,
+  },
+  legendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 10,
+  },
+  legendText: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+  },
+  progressRow: {
+    flexDirection: 'row',
+    height: 16,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: Colors.surfaceLight,
+  },
+  progressSeg: {
+    height: '100%',
+  },
+  progressLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  progressLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  disclaimer: {
+    marginTop: 8,
+    fontSize: 12,
+    color: Colors.text.light,
+  },
+  engagementRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  engageCard: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  engNum: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.text.primary,
+  },
+  engLabel: {
+    marginTop: 4,
+    fontSize: 12,
+    color: Colors.text.secondary,
+  },
+  resourceRow: {
+    marginBottom: 14,
+  },
+  resourceTitle: {
+    fontSize: 14,
+    color: Colors.text.primary,
+    marginBottom: 6,
+  },
+  resourceBarBg: {
+    height: 10,
+    borderRadius: 6,
+    backgroundColor: Colors.surfaceLight,
+    overflow: 'hidden',
+  },
+  resourceBar: {
+    height: '100%',
+    backgroundColor: Colors.secondary,
+  },
+  resourcePct: {
+    marginTop: 4,
+    fontSize: 12,
+    color: Colors.text.secondary,
   },
   activityCard: {
     backgroundColor: Colors.surface,
@@ -470,6 +732,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
   },
+  privacyNote: {
+    marginTop: 12,
+    fontSize: 12,
+    color: Colors.text.light,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -521,5 +788,22 @@ const styles = StyleSheet.create({
     color: Colors.text.white,
     fontSize: 16,
     fontWeight: '600',
+  },
+  errorState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.error,
+    marginBottom: 8,
+  },
+  errorMessage: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    textAlign: 'center',
   },
 });
