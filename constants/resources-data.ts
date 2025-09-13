@@ -1,3 +1,5 @@
+import type { SupportedLanguage } from '@/hooks/language-store';
+
 export interface ResourceContent {
   id: string;
   title: string;
@@ -8,7 +10,7 @@ export interface ResourceContent {
   content: string;
   techniques?: string[];
   tips?: string[];
-  language: string;
+  language: SupportedLanguage;
   tags: string[];
   icon: string;
 }
@@ -22,7 +24,7 @@ export const resourcesData: ResourceContent[] = [
     category: 'Stress & Anxiety',
     duration: '5 min read',
     icon: 'target',
-    language: 'English',
+    language: 'en',
     tags: ['stress', 'management', 'academic'],
     content: `Understanding Stress
 
@@ -58,6 +60,37 @@ Building resilience against stress requires consistent practice:
       'Time management strategies'
     ]
   },
+  // Tamil translation
+  {
+    id: '1-ta',
+    title: 'மன அழுத்த மேலாண்மை முறைகள்',
+    description: 'கல்வி மற்றும் தனிப்பட்ட மன அழுத்தத்தை சமாளிக்கும் நடைமுறை வழிகள்',
+    type: 'article',
+    category: 'Stress & Anxiety',
+    duration: '5 நிமிட வாசிப்பு',
+    icon: 'target',
+    language: 'ta',
+    tags: ['stress', 'management', 'academic'],
+    content: `மன அழுத்தம் பற்றி புரிதல்
+
+சில மன அழுத்தம் உந்துதலாக இருக்கலாம். ஆனால் தொடர்ந்து நீடித்தால் உடல் மற்றும் மன ஆரோக்கியத்தை பாதிக்கலாம். கீழே உள்ள குறுக்கு முறைகள் உடனடி நிவாரணம் தரும்:
+
+• 4-6 எண்ணிக்கையில் ஆழ்ந்த சுவாசம்
+• 5-4-3-2-1 நிலைநிறுத்தும் பயிற்சி
+• உடல் ஸ்கேன் செய்து தளர்த்தல்
+
+நீண்டகால மேலாண்மை:
+• ஒழுங்கையான தூக்க நேரம்
+• தினமும் குறைந்தது 15 நிமிடம் உடற்பயிற்சி
+• மனவிழிப்புணர்ச்சி தியானம்
+• ஆதரவு வலையமைப்பு உருவாக்கல்`,
+    techniques: [
+      'ஆழ்ந்த சுவாச பயிற்சி',
+      '5-4-3-2-1 நிலைநிறுத்தல்',
+      'மனவிழிப்புணர்ச்சி தியானம்',
+      'நேர மேலாண்மை'
+    ]
+  },
   {
     id: '2',
     title: 'Better Sleep for Students',
@@ -66,7 +99,7 @@ Building resilience against stress requires consistent practice:
     category: 'Sleep & Wellness',
     duration: '7 min read',
     icon: 'moon',
-    language: 'English',
+    language: 'en',
     tags: ['sleep', 'wellness', 'health'],
     content: `Why Sleep Matters for Students
 
@@ -108,6 +141,31 @@ If you need to nap:
       'Bedtime routine establishment'
     ]
   },
+  // Telugu translation
+  {
+    id: '2-te',
+    title: 'విద్యార్థులకు మెరుగైన నిద్ర',
+    description: 'నిద్ర నాణ్యతను మెరుగుపరచడానికి సాక్ష్య ఆధారిత చిట్కాలు',
+    type: 'article',
+    category: 'Sleep & Wellness',
+    duration: '7 నిమిషాల చదువు',
+    icon: 'moon',
+    language: 'te',
+    tags: ['sleep', 'wellness', 'health'],
+    content: `నిద్ర ప్రాముఖ్యత
+
+మెమరీ, దృష్టి, భావ నియంత్రణకు నాణ్యమైన నిద్ర అవసరం.
+
+స్లీప్ హైజీన్:
+• గది చల్లగా, చీకటిగా ఉంచండి
+• పడుకునే ముందు ఒక గంట స్క్రీన్లకు దూరంగా ఉండండి
+• కాఫీన్‌ను మధ్యాహ్నం 2 తర్వాత తగ్గించండి`,
+    techniques: [
+      '4-7-8 శ్వాస పద్ధతి',
+      'ప్రోగ్రెసివ్ మసిల్ రిలాక్సేషన్',
+      'స్లీప్ హైజీన్'
+    ]
+  },
   {
     id: '3',
     title: 'Deep Breathing Exercises',
@@ -116,7 +174,7 @@ If you need to nap:
     category: 'Coping Skills',
     duration: '10 min',
     icon: 'wind',
-    language: 'English',
+    language: 'en',
     tags: ['breathing', 'anxiety', 'relaxation'],
     content: `The Power of Breath
 
@@ -160,6 +218,31 @@ When to Use These Techniques
       'Coherent breathing'
     ]
   },
+  // Hindi translation
+  {
+    id: '4-hi',
+    title: 'छात्रों के लिए माइंडफुलनेस',
+    description: 'फोकस बढ़ाने और तनाव कम करने के लिए सरल अभ्यास',
+    type: 'article',
+    category: 'Mindfulness',
+    duration: '8 मिनट पढ़ें',
+    icon: 'brain',
+    language: 'hi',
+    tags: ['mindfulness', 'meditation', 'focus'],
+    content: `माइंडफुलनेस क्या है?
+
+वर्तमान क्षण पर बिना निर्णय के ध्यान देना।
+
+सरल अभ्यास:
+• 5 मिनट श्वास पर ध्यान
+• बॉडी स्कैन मेडिटेशन
+• माइंडफुल वॉकिंग`,
+    techniques: [
+      'माइंडफुल ब्रीदिंग',
+      'बॉडी स्कैन',
+      'माइंडफुल वॉकिंग'
+    ]
+  },
   {
     id: '4',
     title: 'Mindfulness for Students',
@@ -168,7 +251,7 @@ When to Use These Techniques
     category: 'Mindfulness',
     duration: '8 min read',
     icon: 'brain',
-    language: 'English',
+    language: 'en',
     tags: ['mindfulness', 'meditation', 'focus'],
     content: `What is Mindfulness?
 
@@ -217,7 +300,7 @@ Mindfulness in Daily Life
     category: 'Academic Support',
     duration: '6 min read',
     icon: 'book-open',
-    language: 'English',
+    language: 'en',
     tags: ['academic', 'stress', 'study', 'time-management'],
     content: `Understanding Academic Stress
 
@@ -283,7 +366,7 @@ Seeking Support
     category: 'Relaxation',
     duration: '15 min',
     icon: 'zap',
-    language: 'English',
+    language: 'en',
     tags: ['relaxation', 'tension', 'muscle', 'stress-relief'],
     content: `What is Progressive Muscle Relaxation?
 
@@ -347,7 +430,7 @@ Tips for Success
     category: 'Anxiety Management',
     duration: '9 min read',
     icon: 'shield',
-    language: 'English',
+    language: 'en',
     tags: ['anxiety', 'panic', 'coping', 'mental-health'],
     content: `Understanding Anxiety
 
@@ -416,7 +499,7 @@ Consider professional support if:
     category: 'Personal Growth',
     duration: '10 min read',
     icon: 'trending-up',
-    language: 'English',
+    language: 'en',
     tags: ['resilience', 'growth', 'strength', 'recovery'],
     content: `What is Resilience?
 
@@ -493,7 +576,7 @@ Daily Resilience Practices
     category: 'Anxiety Management',
     duration: '8 min read',
     icon: 'shield',
-    language: 'English',
+    language: 'en',
     tags: ['social-anxiety', 'confidence', 'social-skills'],
     content: `Understanding Social Anxiety
 
@@ -566,7 +649,7 @@ Self-Care for Social Anxiety
     category: 'Academic Support',
     duration: '7 min read',
     icon: 'book-open',
-    language: 'English',
+    language: 'en',
     tags: ['time-management', 'productivity', 'organization'],
     content: `Why Time Management Matters
 
@@ -647,7 +730,7 @@ Energy Management
     category: 'Personal Growth',
     duration: '9 min read',
     icon: 'trending-up',
-    language: 'English',
+    language: 'en',
     tags: ['relationships', 'communication', 'boundaries'],
     content: `The Importance of Healthy Relationships
 
@@ -747,7 +830,7 @@ Building Your Support Network
     category: 'Sleep & Wellness',
     duration: '6 min read',
     icon: 'moon',
-    language: 'English',
+    language: 'en',
     tags: ['nutrition', 'mindfulness', 'wellness'],
     content: `Understanding Mindful Eating
 

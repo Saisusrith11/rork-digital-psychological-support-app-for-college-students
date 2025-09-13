@@ -1,15 +1,15 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { Target, Moon, Wind, Brain, BookOpen, Zap, Shield, TrendingUp } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { resourcesData, resourceCategories } from '@/constants/resources-data';
+import { resourcesData, resourceCategories, ResourceContent } from '@/constants/resources-data';
 import { useLanguage } from '@/hooks/language-store';
 
 export default function ResourcesScreen() {
   const insets = useSafeAreaInsets();
-  const { t } = useLanguage();
+  const { t, currentLanguage } = useLanguage();
 
   const getIcon = (iconName: string) => {
     const iconProps = { size: 24, color: Colors.primary };
@@ -35,6 +35,12 @@ export default function ResourcesScreen() {
     }
   };
 
+  const filteredByLanguage: ResourceContent[] = useMemo(() => {
+    const itemsForLang = resourcesData.filter(r => r.language === currentLanguage);
+    if (itemsForLang.length > 0) return itemsForLang;
+    return resourcesData.filter(r => r.language === 'en');
+  }, [currentLanguage]);
+
   const handleResourcePress = (resourceId: string) => {
     router.push(`/resource-detail?id=${resourceId}`);
   };
@@ -49,7 +55,7 @@ export default function ResourcesScreen() {
       <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
         {/* Category Sections */}
         {resourceCategories.map((category) => {
-          const categoryResources = resourcesData.filter(resource => 
+          const categoryResources = filteredByLanguage.filter(resource => 
             resource.category === category.name
           );
           

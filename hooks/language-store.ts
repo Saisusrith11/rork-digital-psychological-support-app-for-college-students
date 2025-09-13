@@ -69,16 +69,27 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'community.discussions': 'Active Discussions',
     'community.guidelinesText': 'This is a moderated, supportive community. Please be kind and respectful.',
     'community.volunteersText': 'Connect with trained peer volunteers for support and guidance',
+    'community.popularTopics': 'Popular Topics',
+    'community.noPosts': 'No posts in this category',
+    'community.beFirst': 'Be the first to start a conversation',
+    'community.createFirstPost': 'Create First Post',
+    'community.createPost': 'Create Post',
+    'community.category': 'Category',
+    'community.placeholder': "Share your thoughts, ask for advice, or start a discussion...",
+    'community.remember': 'Remember to be respectful and supportive. Your post will be reviewed before appearing in the community.',
+    'community.chatNow': 'Chat Now',
+    'community.sendMessage': 'Send Message',
     
-    // Assessment
-    'assessment.title': 'Mental Health Check-in',
-    'assessment.subtitle': 'Take a moment to check in with yourself',
-    'assessment.retake': 'Retake Assessment',
-    
-    // Crisis Support
-    'crisis.title': 'Need Immediate Help?',
-    'crisis.subtitle': 'If you are in crisis, please reach out for help immediately',
-    'crisis.call': 'Call Now',
+    // Chat
+    'chat.title': 'AI Mental Health Support',
+    'chat.subtitle': '• Available 24/7 • Confidential',
+    'chat.startConversation': 'Start a conversation',
+    'chat.typing': 'AI is typing...',
+    'chat.input.placeholder': 'Type your message...',
+    'chat.urgent.label': 'Urgent Support Needed',
+    'chat.coping.label': 'Coping Strategy',
+    'chat.actions.callHelpline': 'Call Emergency Helpline',
+    'chat.actions.bookCounselor': 'Book Counselor',
   },
   ta: {
     // Navigation (Tamil)
@@ -137,16 +148,27 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'community.discussions': 'செயலில் உள்ள விவாதங்கள்',
     'community.guidelinesText': 'இது ஒரு கட்டுப்படுத்தப்பட்ட, ஆதரவான சமூகம். தயவுசெய்து கருணையுடனும் மரியாதையுடனும் இருங்கள்.',
     'community.volunteersText': 'ஆதரவு மற்றும் வழிகாட்டுதலுக்காக பயிற்சி பெற்ற சக தன்னார்வலர்களுடன் இணைக்கவும்',
+    'community.popularTopics': 'பிரபல தலைப்புகள்',
+    'community.noPosts': 'இந்த வகையில் பதிவுகள் இல்லை',
+    'community.beFirst': 'முதலாவது உரையாடலைத் தொடங்குங்கள்',
+    'community.createFirstPost': 'முதல் பதிவை உருவாக்கு',
+    'community.createPost': 'பதிவு உருவாக்கு',
+    'community.category': 'வகை',
+    'community.placeholder': 'உங்கள் எண்ணங்களைப் பகிரவும், ஆலோசனை கேளுங்கள் அல்லது ஒரு விவாதத்தை தொடங்குங்கள்...',
+    'community.remember': 'மரியாதையுடனும் ஆதரவுடனும் இருங்கள். உங்கள் பதிவு மதிப்பாய்வுக்குப் பிறகு சமூகத்தில் தோன்றும்.',
+    'community.chatNow': 'இப்போது அரட்டை',
+    'community.sendMessage': 'செய்தி அனுப்பு',
     
-    // Assessment
-    'assessment.title': 'மனநல சோதனை',
-    'assessment.subtitle': 'உங்களுடன் சரிபார்க்க ஒரு நிமிடம் எடுத்துக்கொள்ளுங்கள்',
-    'assessment.retake': 'மீண்டும் மதிப்பீடு செய்யுங்கள்',
-    
-    // Crisis Support
-    'crisis.title': 'உடனடி உதவி தேவையா?',
-    'crisis.subtitle': 'நீங்கள் நெருக்கடியில் இருந்தால், தயவுசெய்து உடனடியாக உதவியை நாடுங்கள்',
-    'crisis.call': 'இப்போது அழைக்கவும்',
+    // Chat
+    'chat.title': 'ஏஐ மனநல ஆதரவு',
+    'chat.subtitle': '• 24/7 கிடைக்கும் • ரகசியம்',
+    'chat.startConversation': 'ஒரு உரையாடலை தொடங்குங்கள்',
+    'chat.typing': 'ஏஐ தட்டச்சு செய்கிறது...',
+    'chat.input.placeholder': 'உங்கள் செய்தியை உள்ளிடுங்கள்...',
+    'chat.urgent.label': 'அவசர உதவி தேவையுள்ளது',
+    'chat.coping.label': 'சமாளிக்கும் முறை',
+    'chat.actions.callHelpline': 'அவசர உதவி அழைப்பு',
+    'chat.actions.bookCounselor': 'ஆலோசகரை முன்பதிவு செய்',
   },
   te: {
     // Navigation (Telugu)
@@ -205,16 +227,27 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'community.discussions': 'క్రియాశీల చర్చలు',
     'community.guidelinesText': 'ఇది నియంత్రిత, సహాయక సంఘం. దయచేసి దయతో మరియు గౌరవంతో ఉండండి.',
     'community.volunteersText': 'మద్దతు మరియు మార్గదర్శకత్వం కోసం శిక్షణ పొందిన సహచర వాలంటీర్లతో కనెక్ట్ అవ్వండి',
+    'community.popularTopics': 'ప్రసిద్ధ విషయాలు',
+    'community.noPosts': 'ఈ వర్గంలో పోస్టులు లేవు',
+    'community.beFirst': 'మాటల్ని మొదలుపెట్టండి',
+    'community.createFirstPost': 'మొదటి పోస్ట్ సృష్టించండి',
+    'community.createPost': 'పోస్ట్ సృష్టించండి',
+    'community.category': 'వర్గం',
+    'community.placeholder': 'మీ ఆలోచనలను పంచుకోండి, సలహా అడగండి లేదా చర్చను ప్రారంభించండి...',
+    'community.remember': 'గౌరవపూర్వకంగా మరియు సహాయకరంగా ఉండండి. మీ పోస్ట్ సమీక్ష తర్వాత కమ్యూనిటీలో కనిపిస్తుంది.',
+    'community.chatNow': 'ఇప్పుడు చాట్ చేయండి',
+    'community.sendMessage': 'సందేశం పంపండి',
     
-    // Assessment
-    'assessment.title': 'మానసిక ఆరోగ్య తనిఖీ',
-    'assessment.subtitle': 'మీతో తనిఖీ చేయడానికి ఒక క్షణం తీసుకోండి',
-    'assessment.retake': 'మళ్లీ అసెస్మెంట్ తీసుకోండి',
-    
-    // Crisis Support
-    'crisis.title': 'తక్షణ సహాయం అవసరమా?',
-    'crisis.subtitle': 'మీరు సంక్షోభంలో ఉంటే, దయచేసి వెంటనే సహాయం కోరండి',
-    'crisis.call': 'ఇప్పుడే కాల్ చేయండి',
+    // Chat
+    'chat.title': 'ఏఐ మానసిక ఆరోగ్య మద్దతు',
+    'chat.subtitle': '• 24/7 అందుబాటులో • గోప్యత',
+    'chat.startConversation': 'ఒక సంభాషణ ప్రారంభించండి',
+    'chat.typing': 'ఏఐ టైప్ చేస్తోంది...',
+    'chat.input.placeholder': 'మీ సందేశాన్ని టైప్ చేయండి...',
+    'chat.urgent.label': 'తక్షణ మద్దతు అవసరం',
+    'chat.coping.label': 'సామర్థ్య వ్యూహం',
+    'chat.actions.callHelpline': 'అత్యవసర హెల్ప్‌లైన్ కాల్',
+    'chat.actions.bookCounselor': 'కౌన్సిలర్ బుక్ చేయండి',
   },
   hi: {
     // Navigation (Hindi)
@@ -273,16 +306,27 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'community.discussions': 'सक्रिय चर्चाएं',
     'community.guidelinesText': 'यह एक नियंत्रित, सहायक समुदाय है। कृपया दयालु और सम्मानजनक रहें।',
     'community.volunteersText': 'समर्थन और मार्गदर्शन के लिए प्रशिक्षित सहकर्मी स्वयंसेवकों से जुड़ें',
+    'community.popularTopics': 'लोकप्रिय विषय',
+    'community.noPosts': 'इस श्रेणी में कोई पोस्ट नहीं',
+    'community.beFirst': 'बातचीत शुरू करने वाले पहले व्यक्ति बनें',
+    'community.createFirstPost': 'पहली पोस्ट बनाएं',
+    'community.createPost': 'पोस्ट बनाएं',
+    'community.category': 'श्रेणी',
+    'community.placeholder': 'अपने विचार साझा करें, सलाह मांगें या चर्चा शुरू करें...',
+    'community.remember': 'कृपया सम्मानजनक और सहायक बनें। आपकी पोस्ट समीक्षा के बाद दिखाई देगी।',
+    'community.chatNow': 'अभी चैट करें',
+    'community.sendMessage': 'संदेश भेजें',
     
-    // Assessment
-    'assessment.title': 'मानसिक स्वास्थ्य जांच',
-    'assessment.subtitle': 'अपने साथ जांच करने के लिए एक पल लें',
-    'assessment.retake': 'फिर से मूल्यांकन लें',
-    
-    // Crisis Support
-    'crisis.title': 'तत्काल सहायता चाहिए?',
-    'crisis.subtitle': 'यदि आप संकट में हैं, तो कृपया तुरंत सहायता लें',
-    'crisis.call': 'अभी कॉल करें',
+    // Chat
+    'chat.title': 'एआई मानसिक स्वास्थ्य सहायता',
+    'chat.subtitle': '• 24/7 उपलब्ध • गोपनीय',
+    'chat.startConversation': 'संबंध बनाना शुरू करें',
+    'chat.typing': 'एआई लिख रहा है...',
+    'chat.input.placeholder': 'अपना संदेश लिखें...',
+    'chat.urgent.label': 'तत्काल सहायता आवश्यक',
+    'chat.coping.label': 'सम्भालने की रणनीति',
+    'chat.actions.callHelpline': 'आपातकालीन हेल्पलाइन कॉल',
+    'chat.actions.bookCounselor': 'काउंसलर बुक करें',
   },
 };
 

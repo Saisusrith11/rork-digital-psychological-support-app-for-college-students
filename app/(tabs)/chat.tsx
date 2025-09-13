@@ -2,9 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, Platform } from 'react-native';
 import { ArrowLeft, Mic, Send, Bot, AlertTriangle, Phone, Heart } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { useLanguage } from '@/hooks/language-store';
 
 interface Message {
   id: string;
@@ -103,11 +105,13 @@ const copingStrategies: CopingStrategy[] = [
 
 export default function ChatScreen() {
   const insets = useSafeAreaInsets();
+  const { t, currentLanguage } = useLanguage();
+  const { to } = useLocalSearchParams<{ to?: string }>();
   const scrollViewRef = useRef<ScrollView>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: "Hello! I'm your AI mental health companion. I'm here to provide support, coping strategies, and connect you with professional help when needed. How are you feeling today?",
+      text: t('chat.startConversation'),
       isUser: false,
       timestamp: new Date(),
       type: 'normal'
@@ -120,6 +124,21 @@ export default function ChatScreen() {
   useEffect(() => {
     loadConversationHistory();
   }, []);
+
+  useEffect(() => {
+    if (to && typeof to === 'string') {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: `vol_${Date.now()}`,
+          text: `Connected to volunteer: ${to}. You can start messaging now.`,
+          isUser: false,
+          timestamp: new Date(),
+          type: 'normal',
+        },
+      ]);
+    }
+  }, [to]);
 
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -146,16 +165,52 @@ export default function ChatScreen() {
 
   const analyzeUserInput = (input: string): AIResponse => {
     const lowerInput = input.toLowerCase();
+
+    const crisisDict: Record<string, string[]> = {
+      en: ['suicide', 'kill myself', 'end it all', 'not worth living', 'hurt myself', 'die', 'hopeless'],
+      hi: ['आत्महत्या', 'खत्म', 'मरना', 'आशाहीन', 'खुद को चोट'],
+      ta: ['தற்கொலை', 'முடித்துவிட', 'நம்பிக்கையின்மை', 'என்னை காயப்படுத்த'],
+      te: ['ఆత్మహత్య', 'చంపుకోవాలి', 'నిరాశ', 'నన్ను నొప్పించుకోవాలి'],
+    };
+    const severeDict: Record<string, string[]> = {
+      en: ["can't cope", 'overwhelming', 'panic', 'breakdown', 'crisis'],
+      hi: ['घबराहट', 'संकट', 'नियंत्रण नहीं'],
+      ta: ['பயக்கோபம்', 'நெருக்கடி', 'கட்டுப்பாடின்றி'],
+      te: ['పానిక్', 'సంక్షోభం', 'నియంత్రణలో లేదు'],
+    };
+    const stressDict: Record<string, string[]> = {
+      en: ['stress', 'anxious', 'worried', 'nervous', 'overwhelmed', 'pressure'],
+      hi: ['तनाव', 'चिंता', 'घबराहट'],
+      ta: ['மன அழுத்தம்', 'கவலை', 'பதட்டம்'],
+      te: ['స్ట్రెస్', 'ఆందోళన', 'టెన్షన్'],
+    };
+    const academicDict: Record<string, string[]> = {
+      en: ['exam', 'study', 'assignment', 'deadline', 'grades', 'college', 'university'],
+      hi: ['परीक्षा', 'अध्ययन', 'असाइनमेंट', 'समयसीमा', 'अंक'],
+      ta: ['தேர்வு', 'படிப்பு', 'பணிக்குறை', 'காலக்கெடு', 'மதிப்பெண்கள்'],
+      te: ['పరీక్ష', 'చదువు', 'అసైన్‌మెంట్', 'డెడ్‌లైన్', 'మార్కులు'],
+    };
+    const sleepDict: Record<string, string[]> = {
+      en: ["sleep", 'insomnia', 'tired', 'exhausted', "can't sleep"],
+      hi: ['नींद', 'अनिद्रा', 'थकान'],
+      ta: ['தூக்கம்', 'தூக்கமின்மை', 'சோர்வு'],
+      te: ['నిద్ర', 'నిద్రలేమి', 'అలసట'],
+    };
+    const socialDict: Record<string, string[]> = {
+      en: ['lonely', 'isolated', 'friends', 'social', 'alone'],
+      hi: ['एकाकी', 'अलग-थलग', 'दोस्त'],
+      ta: ['தனிமை', 'தனித்து', 'நண்பர்கள்'],
+      te: ['ఒంటరితనం', 'విడివడి', 'స్నేహితులు'],
+    };
+
+    const crisisKeywords = crisisDict[currentLanguage] ?? crisisDict.en;
+    const severeKeywords = severeDict[currentLanguage] ?? severeDict.en;
+    const stressKeywords = stressDict[currentLanguage] ?? stressDict.en;
+    const academicKeywords = academicDict[currentLanguage] ?? academicDict.en;
+    const sleepKeywords = sleepDict[currentLanguage] ?? sleepDict.en;
+    const socialKeywords = socialDict[currentLanguage] ?? socialDict.en;
     
-    // Crisis detection keywords
-    const crisisKeywords = ['suicide', 'kill myself', 'end it all', 'not worth living', 'hurt myself', 'die', 'hopeless'];
-    const severeKeywords = ['can\'t cope', 'overwhelming', 'panic', 'breakdown', 'crisis'];
-    
-    // Stress/anxiety keywords
-    const stressKeywords = ['stress', 'anxious', 'worried', 'nervous', 'overwhelmed', 'pressure'];
-    const academicKeywords = ['exam', 'study', 'assignment', 'deadline', 'grades', 'college', 'university'];
-    const sleepKeywords = ['sleep', 'insomnia', 'tired', 'exhausted', 'can\'t sleep'];
-    const socialKeywords = ['lonely', 'isolated', 'friends', 'social', 'alone'];
+
     
     // Check for crisis indicators
     if (crisisKeywords.some(keyword => lowerInput.includes(keyword))) {
@@ -252,7 +307,7 @@ export default function ChatScreen() {
       if (aiResponse.urgentReferral) {
         responseMessage.actions = [
           {
-            label: 'Call Emergency Helpline',
+            label: t('chat.actions.callHelpline'),
             action: () => {
               if (Platform.OS !== 'web') {
                 Alert.alert(
@@ -267,7 +322,7 @@ export default function ChatScreen() {
             }
           },
           {
-            label: 'Book Counselor',
+            label: t('chat.actions.bookCounselor'),
             action: () => router.push('/booking')
           }
         ];
@@ -315,9 +370,9 @@ export default function ChatScreen() {
           <View style={styles.avatarContainer}>
             <Bot size={24} color={Colors.text.white} />
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>AI Mental Health Support</Text>
-            <Text style={styles.headerStatus}>• Available 24/7 • Confidential</Text>
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle}>{t('chat.title')}</Text>
+            <Text style={styles.headerStatus}>{t('chat.subtitle')}</Text>
           </View>
           <TouchableOpacity onPress={showEmergencyContacts} style={styles.emergencyButton}>
             <Phone size={20} color={Colors.error} />
@@ -335,7 +390,7 @@ export default function ChatScreen() {
           <View style={styles.welcomeIcon}>
             <Bot size={32} color={Colors.text.secondary} />
           </View>
-          <Text style={styles.welcomeTitle}>Start a conversation</Text>
+          <Text style={styles.welcomeTitle}>{t('chat.startConversation')}</Text>
         </View>
 
         {messages.map((message) => (
@@ -351,13 +406,13 @@ export default function ChatScreen() {
               {message.type === 'urgent' && (
                 <View style={styles.urgentHeader}>
                   <AlertTriangle size={16} color={Colors.error} />
-                  <Text style={styles.urgentLabel}>Urgent Support Needed</Text>
+                  <Text style={styles.urgentLabel}>{t('chat.urgent.label')}</Text>
                 </View>
               )}
               {message.type === 'coping' && (
                 <View style={styles.copingHeader}>
                   <Heart size={16} color={Colors.primary} />
-                  <Text style={styles.copingLabel}>Coping Strategy</Text>
+                  <Text style={styles.copingLabel}>{t('chat.coping.label')}</Text>
                 </View>
               )}
               <Text style={[
@@ -387,7 +442,7 @@ export default function ChatScreen() {
         {isTyping && (
           <View style={[styles.messageContainer, styles.aiMessage]}>
             <View style={styles.typingIndicator}>
-              <Text style={styles.typingText}>AI is typing...</Text>
+              <Text style={styles.typingText}>{t('chat.typing')}</Text>
             </View>
           </View>
         )}
@@ -396,7 +451,7 @@ export default function ChatScreen() {
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.textInput}
-          placeholder="Type your message..."
+          placeholder={t('chat.input.placeholder')}
           placeholderTextColor={Colors.text.light}
           value={inputText}
           onChangeText={setInputText}
@@ -438,6 +493,9 @@ const styles = StyleSheet.create({
   headerInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+  },
+  headerTextContainer: {
     flex: 1,
   },
   avatarContainer: {

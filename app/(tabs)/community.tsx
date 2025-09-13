@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, TextInput, Alert } from 'react-native';
 import { Plus, Shield, MessageCircle, Users, Globe, X, Send, Heart, MessageSquare } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
@@ -52,6 +52,8 @@ const samplePosts: Post[] = [
   }
 ];
 
+import { router } from 'expo-router';
+
 const volunteers = [
   {
     id: '1',
@@ -81,7 +83,7 @@ const volunteers = [
 
 export default function CommunityScreen() {
   const insets = useSafeAreaInsets();
-  const { t } = useLanguage();
+  const { t, currentLanguage } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState('All Posts');
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [posts, setPosts] = useState<Post[]>(samplePosts);
@@ -132,9 +134,10 @@ export default function CommunityScreen() {
     }));
   };
 
-  const filteredPosts = selectedCategory === 'All Posts' 
-    ? posts 
-    : posts.filter(post => post.category === selectedCategory);
+  const filteredPosts = useMemo(() => {
+    const base = selectedCategory === 'All Posts' ? posts : posts.filter(post => post.category === selectedCategory);
+    return base;
+  }, [posts, selectedCategory]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -190,15 +193,15 @@ export default function CommunityScreen() {
           {filteredPosts.length === 0 ? (
             <View style={styles.emptyState}>
               <MessageCircle size={48} color={Colors.text.light} />
-              <Text style={styles.emptyTitle}>No posts in this category</Text>
+              <Text style={styles.emptyTitle}>{t('community.noPosts')}</Text>
               <Text style={styles.emptySubtitle}>
-                Be the first to start a conversation
+                {t('community.beFirst')}
               </Text>
               <TouchableOpacity 
                 style={styles.createPostButton}
                 onPress={() => setShowCreatePost(true)}
               >
-                <Text style={styles.createPostText}>Create First Post</Text>
+                <Text style={styles.createPostText}>{t('community.createFirstPost')}</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -252,7 +255,7 @@ export default function CommunityScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Popular Topics</Text>
+          <Text style={styles.sectionTitle}>{t('community.popularTopics')}</Text>
           <View style={styles.tagsContainer}>
             {popularTags.map((tag) => (
               <TouchableOpacity key={tag} style={styles.tagButton}>
@@ -272,7 +275,7 @@ export default function CommunityScreen() {
           </Text>
           
           {volunteers.map((volunteer) => (
-            <TouchableOpacity key={volunteer.id} style={styles.volunteerCard}>
+            <TouchableOpacity key={volunteer.id} style={styles.volunteerCard} onPress={() => router.push(`/chat?to=${encodeURIComponent(volunteer.name)}`)}>
               <View style={styles.volunteerHeader}>
                 <View style={styles.volunteerAvatar}>
                   <Text style={styles.volunteerInitials}>
@@ -299,10 +302,10 @@ export default function CommunityScreen() {
                 ))}
               </View>
               <View style={styles.volunteerActions}>
-                <TouchableOpacity style={styles.chatButton}>
+                <TouchableOpacity style={styles.chatButton} onPress={() => router.push(`/chat?to=${encodeURIComponent(volunteer.name)}`)}>
                   <MessageCircle size={16} color={Colors.text.white} />
                   <Text style={styles.chatButtonText}>
-                    {volunteer.isOnline ? 'Chat Now' : 'Send Message'}
+                    {volunteer.isOnline ? t('community.chatNow') : t('community.sendMessage')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -322,7 +325,7 @@ export default function CommunityScreen() {
             <TouchableOpacity onPress={() => setShowCreatePost(false)}>
               <X size={24} color={Colors.text.secondary} />
             </TouchableOpacity>
-            <Text style={styles.createPostTitle}>Create Post</Text>
+            <Text style={styles.createPostTitle}>{t('community.createPost')}</Text>
             <TouchableOpacity 
               style={styles.postButton}
               onPress={handleCreatePost}
@@ -332,7 +335,7 @@ export default function CommunityScreen() {
           </View>
           
           <ScrollView style={styles.createPostContent}>
-            <Text style={styles.inputLabel}>Category</Text>
+            <Text style={styles.inputLabel}>{t('community.category')}</Text>
             <ScrollView 
               horizontal 
               showsHorizontalScrollIndicator={false}
@@ -357,12 +360,12 @@ export default function CommunityScreen() {
               ))}
             </ScrollView>
             
-            <Text style={styles.inputLabel}>What's on your mind?</Text>
+            <Text style={styles.inputLabel}>{t('community.placeholder')}</Text>
             <TextInput
               style={styles.postInput}
               multiline
               numberOfLines={8}
-              placeholder="Share your thoughts, ask for advice, or start a discussion..."
+              placeholder={t('community.placeholder')}
               placeholderTextColor={Colors.text.light}
               value={newPostContent}
               onChangeText={setNewPostContent}
@@ -372,7 +375,7 @@ export default function CommunityScreen() {
             <View style={styles.postGuidelines}>
               <Shield size={16} color={Colors.secondary} />
               <Text style={styles.guidelinesText}>
-                Remember to be respectful and supportive. Your post will be reviewed before appearing in the community.
+                {t('community.remember')}
               </Text>
             </View>
           </ScrollView>
