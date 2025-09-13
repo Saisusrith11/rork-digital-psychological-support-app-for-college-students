@@ -14,7 +14,17 @@ import { FeedbackProvider } from "@/hooks/feedback-store";
 
 SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
 
 function RootLayoutNav() {
   return (
@@ -44,8 +54,8 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <trpc.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <GestureHandlerRootView style={styles.container}>
           <LanguageProvider>
             <AuthProvider>
@@ -61,7 +71,7 @@ export default function RootLayout() {
             </AuthProvider>
           </LanguageProvider>
         </GestureHandlerRootView>
-      </QueryClientProvider>
-    </trpc.Provider>
+      </trpc.Provider>
+    </QueryClientProvider>
   );
 }
