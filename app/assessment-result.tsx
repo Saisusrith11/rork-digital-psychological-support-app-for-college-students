@@ -87,7 +87,7 @@ export default function AssessmentResultScreen() {
     };
     
     confirmRevoke();
-  }, [assessment, revokeConsent]);
+  }, [assessment?.id, revokeConsent]);
 
   if (!assessment) {
     return (
