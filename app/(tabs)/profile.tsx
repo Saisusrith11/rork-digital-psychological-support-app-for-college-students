@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, Switch, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, Switch, TextInput, Platform } from 'react-native';
 import { 
   Calendar, 
   TrendingUp, 
@@ -14,7 +14,8 @@ import {
   ChevronRight,
   User,
   Send,
-
+  Wifi,
+  WifiOff
 } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
@@ -23,6 +24,7 @@ import { useFeedback } from '@/hooks/feedback-store';
 import { useLanguage, type SupportedLanguage } from '@/hooks/language-store';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();

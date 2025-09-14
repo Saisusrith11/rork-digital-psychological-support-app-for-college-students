@@ -58,6 +58,8 @@ export default function AuthScreen() {
       router.replace('/(counselor)/dashboard');
     } else if (role === 'admin') {
       router.replace('/(admin)/dashboard');
+    } else if (role === 'volunteer') {
+      router.replace('/(volunteer)/dashboard');
     } else {
       router.replace('/(tabs)/home');
     }

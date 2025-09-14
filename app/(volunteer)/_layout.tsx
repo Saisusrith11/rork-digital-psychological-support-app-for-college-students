@@ -16,7 +16,6 @@ function LogoutButton() {
       router.replace('/auth');
     } catch (e) {
       console.error('[LogoutButton] Error', e);
-      // Fallback UI handled by header; show console message on web
       console.log('Logout failed. Please try again.');
     }
   }, [logout]);
@@ -34,17 +33,19 @@ function LogoutButton() {
   );
 }
 
+const headerRightComponent = () => (
+  <View style={styles.headerRightWrap}>
+    <LogoutButton />
+  </View>
+);
+
 export default function VolunteerLayout() {
   return (
     <Stack
       screenOptions={{
         headerShown: true,
         headerTitle: 'Volunteer',
-        headerRight: () => (
-          <View style={styles.headerRightWrap}>
-            <LogoutButton />
-          </View>
-        ),
+        headerRight: headerRightComponent,
       }}
     >
       <Stack.Screen name="dashboard" options={{ title: 'Volunteer Dashboard' }} />

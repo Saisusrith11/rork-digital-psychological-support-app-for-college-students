@@ -59,18 +59,6 @@ export default function VolunteerDashboard() {
   const [replyText, setReplyText] = useState<string>('');
   const [pending, setPending] = useState<PendingReply[]>([]);
 
-
-  useEffect(() => {
-    if (!isLoading && (!user || user.role !== 'volunteer')) {
-      try {
-        console.log('[VolunteerDashboard] Redirecting non-volunteer to /auth');
-        router.replace('/auth');
-      } catch (e) {
-        console.error('[VolunteerDashboard] Navigation error', e);
-      }
-    }
-  }, [isLoading, user?.role]);
-
   const posts = useMemo(() => {
     if (selectedCategory === 'All') return MOCK_POSTS;
     return MOCK_POSTS.filter(p => p.category === selectedCategory);
@@ -103,6 +91,17 @@ export default function VolunteerDashboard() {
     setComposeOpen(false);
     setReplyText('');
   }, [activePost, replyText, trained]);
+
+  useEffect(() => {
+    if (!isLoading && (!user || user.role !== 'volunteer')) {
+      try {
+        console.log('[VolunteerDashboard] Redirecting non-volunteer to /auth');
+        router.replace('/auth');
+      } catch (e) {
+        console.error('[VolunteerDashboard] Navigation error', e);
+      }
+    }
+  }, [isLoading, user?.role]);
 
   if (!user || user.role !== 'volunteer') {
     return (
