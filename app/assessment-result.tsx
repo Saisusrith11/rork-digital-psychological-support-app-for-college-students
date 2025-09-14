@@ -36,46 +36,6 @@ export default function AssessmentResultScreen() {
     }
   }, [id, getAssessmentHistory]);
 
-  if (!assessment) {
-    return (
-      <View style={styles.container}>
-        <Stack.Screen
-          options={{
-            title: 'Assessment Results',
-            headerLeft: () => (
-              <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                <ChevronLeft size={24} color={Colors.text.primary} />
-              </TouchableOpacity>
-            ),
-          }}
-        />
-        <View style={styles.centerContainer}>
-          <Text style={styles.errorText}>Assessment not found</Text>
-        </View>
-      </View>
-    );
-  }
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'minimal': return Colors.success;
-      case 'mild': return Colors.mood.okay;
-      case 'moderate': return Colors.warning;
-      case 'severe': return Colors.error;
-      default: return Colors.text.secondary;
-    }
-  };
-
-  const getCategoryDescription = (category: string) => {
-    switch (category) {
-      case 'minimal': return 'Your responses suggest you\'re managing well overall.';
-      case 'mild': return 'You may be experiencing some stress or mild concerns.';
-      case 'moderate': return 'Your responses indicate moderate stress or mental health concerns.';
-      case 'severe': return 'Your responses suggest significant mental health concerns that warrant attention.';
-      default: return '';
-    }
-  };
-
   const handleRevokeConsent = useCallback(async () => {
     if (!assessment) return;
     
@@ -128,6 +88,46 @@ export default function AssessmentResultScreen() {
     
     confirmRevoke();
   }, [assessment, revokeConsent]);
+
+  if (!assessment) {
+    return (
+      <View style={styles.container}>
+        <Stack.Screen
+          options={{
+            title: 'Assessment Results',
+            headerLeft: () => (
+              <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                <ChevronLeft size={24} color={Colors.text.primary} />
+              </TouchableOpacity>
+            ),
+          }}
+        />
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>Assessment not found</Text>
+        </View>
+      </View>
+    );
+  }
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'minimal': return Colors.success;
+      case 'mild': return Colors.mood.okay;
+      case 'moderate': return Colors.warning;
+      case 'severe': return Colors.error;
+      default: return Colors.text.secondary;
+    }
+  };
+
+  const getCategoryDescription = (category: string) => {
+    switch (category) {
+      case 'minimal': return 'Your responses suggest you\'re managing well overall.';
+      case 'mild': return 'You may be experiencing some stress or mild concerns.';
+      case 'moderate': return 'Your responses indicate moderate stress or mental health concerns.';
+      case 'severe': return 'Your responses suggest significant mental health concerns that warrant attention.';
+      default: return '';
+    }
+  };
 
   const getConsentStatusColor = (status?: string) => {
     switch (status) {
