@@ -16,13 +16,21 @@ export const consentProcedure = publicProcedure
   .mutation(async ({ input }) => {
     console.log('Processing consent decision:', input);
     
+    // Validate required fields
+    if (!input.assessmentId) {
+      throw new Error('Assessment ID is required');
+    }
+    
+    // Ensure we have a student ID
+    const studentId = input.studentId || `anonymous_${Date.now()}`;
+    
     // In a real app, this would save to a database
     // For now, we'll simulate the consent processing
     const consentRecord = {
       id: Date.now().toString(),
       assessmentId: input.assessmentId,
       consentGranted: input.consentGranted,
-      studentId: input.studentId || `student_${Date.now()}`,
+      studentId,
       timestamp: new Date(),
       anonymousCode: `AN-${Math.floor(Math.random() * 9000) + 1000}`,
     };
@@ -90,7 +98,12 @@ export const revokeConsentProcedure = publicProcedure
     studentId: z.string().min(1),
   }))
   .mutation(async ({ input }) => {
-    console.log('Revoking consent for assessment:', input.assessmentId);
+    console.log('Revoking consent for assessment:', input.assessmentId, 'Student ID:', input.studentId);
+    
+    // Validate input
+    if (!input.assessmentId || !input.studentId) {
+      throw new Error('Assessment ID and Student ID are required');
+    }
     
     // Simulate consent revocation
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -98,5 +111,7 @@ export const revokeConsentProcedure = publicProcedure
     return {
       success: true,
       message: 'Consent has been revoked. Your data is now private.',
+      assessmentId: input.assessmentId,
+      studentId: input.studentId,
     };
   });

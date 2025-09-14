@@ -70,7 +70,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
         result,
         completedAt: new Date(),
         consentStatus: 'pending',
-        studentId: user?.id,
+        studentId: user?.id || `anonymous_${Date.now()}`,
         anonymousCode: `AN-${Math.floor(Math.random() * 9000) + 1000}`,
       };
 
@@ -86,7 +86,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
     } finally {
       setIsLoading(false);
     }
-  }, [assessments]);
+  }, [assessments, user?.id]);
 
   const getLatestAssessment = useCallback(() => {
     return assessments.length > 0 ? assessments[0] : null;
@@ -99,18 +99,29 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
   const submitConsent = useCallback(async (assessment: Assessment, consentGranted: boolean) => {
     try {
       setIsLoading(true);
-      console.log('Submitting consent:', { assessmentId: assessment.id, consentGranted, studentId: assessment.studentId });
+      
+      // Ensure we have a valid student ID
+      const studentId = assessment.studentId || user?.id || `anonymous_${Date.now()}`;
+      
+      console.log('Submitting consent:', { 
+        assessmentId: assessment.id, 
+        consentGranted, 
+        studentId,
+        originalStudentId: assessment.studentId,
+        currentUserId: user?.id
+      });
       
       const result = await trpcClient.consent.submit.mutate({
         assessmentId: assessment.id,
         consentGranted,
-        studentId: assessment.studentId,
+        studentId,
       });
       console.log('Backend consent result:', result);
 
-      // Update the assessment with consent status
+      // Update the assessment with consent status and ensure studentId is set
       const updatedAssessment: Assessment = {
         ...assessment,
+        studentId, // Ensure studentId is always set
         consentStatus: consentGranted ? 'granted' : 'denied',
         consentTimestamp: new Date(),
       };
@@ -136,20 +147,25 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
     } finally {
       setIsLoading(false);
     }
-  }, [assessments]);
+  }, [assessments, user?.id]);
 
   const revokeConsent = useCallback(async (assessmentId: string) => {
     try {
       setIsLoading(true);
       
       const assessment = assessments.find(a => a.id === assessmentId);
-      if (!assessment || !assessment.studentId) {
-        throw new Error('Assessment not found or missing student ID');
+      if (!assessment) {
+        throw new Error('Assessment not found');
       }
+
+      // Use current user ID if assessment doesn't have studentId
+      const studentId = assessment.studentId || user?.id || `anonymous_${Date.now()}`;
+      
+      console.log('Revoking consent for:', { assessmentId, studentId, assessment });
 
       await trpcClient.consent.revoke.mutate({
         assessmentId,
-        studentId: assessment.studentId,
+        studentId,
       });
 
       // Update local assessment
@@ -168,7 +184,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
     } finally {
       setIsLoading(false);
     }
-  }, [assessments]);
+  }, [assessments, user?.id]);
 
   const setPendingConsentAssessment = useCallback((assessment: Assessment | null) => {
     setPendingConsent(assessment);

@@ -89,6 +89,45 @@ export default function AssessmentResultScreen() {
     confirmRevoke();
   }, [assessment, revokeConsent]);
 
+  // Always call all hooks before any early returns
+  const getCategoryColor = useCallback((category: string) => {
+    switch (category) {
+      case 'minimal': return Colors.success;
+      case 'mild': return Colors.mood.okay;
+      case 'moderate': return Colors.warning;
+      case 'severe': return Colors.error;
+      default: return Colors.text.secondary;
+    }
+  }, []);
+
+  const getCategoryDescription = useCallback((category: string) => {
+    switch (category) {
+      case 'minimal': return 'Your responses suggest you\'re managing well overall.';
+      case 'mild': return 'You may be experiencing some stress or mild concerns.';
+      case 'moderate': return 'Your responses indicate moderate stress or mental health concerns.';
+      case 'severe': return 'Your responses suggest significant mental health concerns that warrant attention.';
+      default: return '';
+    }
+  }, []);
+
+  const getConsentStatusColor = useCallback((status?: string) => {
+    switch (status) {
+      case 'granted': return Colors.success;
+      case 'denied': return Colors.text.secondary;
+      case 'pending': return Colors.warning;
+      default: return Colors.text.light;
+    }
+  }, []);
+
+  const getConsentStatusText = useCallback((status?: string) => {
+    switch (status) {
+      case 'granted': return 'Shared with Counselors';
+      case 'denied': return 'Private (Not Shared)';
+      case 'pending': return 'Consent Pending';
+      default: return 'Unknown Status';
+    }
+  }, []);
+
   if (!assessment) {
     return (
       <View style={styles.container}>
@@ -109,43 +148,7 @@ export default function AssessmentResultScreen() {
     );
   }
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'minimal': return Colors.success;
-      case 'mild': return Colors.mood.okay;
-      case 'moderate': return Colors.warning;
-      case 'severe': return Colors.error;
-      default: return Colors.text.secondary;
-    }
-  };
 
-  const getCategoryDescription = (category: string) => {
-    switch (category) {
-      case 'minimal': return 'Your responses suggest you\'re managing well overall.';
-      case 'mild': return 'You may be experiencing some stress or mild concerns.';
-      case 'moderate': return 'Your responses indicate moderate stress or mental health concerns.';
-      case 'severe': return 'Your responses suggest significant mental health concerns that warrant attention.';
-      default: return '';
-    }
-  };
-
-  const getConsentStatusColor = (status?: string) => {
-    switch (status) {
-      case 'granted': return Colors.success;
-      case 'denied': return Colors.text.secondary;
-      case 'pending': return Colors.warning;
-      default: return Colors.text.light;
-    }
-  };
-
-  const getConsentStatusText = (status?: string) => {
-    switch (status) {
-      case 'granted': return 'Shared with Counselors';
-      case 'denied': return 'Private (Not Shared)';
-      case 'pending': return 'Consent Pending';
-      default: return 'Unknown Status';
-    }
-  };
 
   return (
     <View style={styles.container}>
