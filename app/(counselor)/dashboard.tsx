@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
   ScrollView, 
   TouchableOpacity, 
   StyleSheet,
-  Modal 
+  Modal,
+  FlatList 
 } from 'react-native';
 import { 
   Calendar, 
@@ -16,7 +17,9 @@ import {
   AlertCircle,
   CheckCircle,
   Bell,
-  LogOut
+  LogOut,
+  X,
+  Trash2
 } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
@@ -26,15 +29,50 @@ import { router } from 'expo-router';
 
 export default function CounselorDashboard() {
   const { user, logout } = useAuth();
-  const { notifications, unreadCount } = useNotifications();
+  const { notifications, unreadCount, addNotification, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
   const insets = useSafeAreaInsets();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const handleLogout = async () => {
     setShowLogoutModal(false);
     await logout();
     router.replace('/auth');
   };
+
+  useEffect(() => {
+    // Add sample notifications for counselor
+    const sampleNotifications = [
+      {
+        userId: user?.id || 'counselor-1',
+        title: 'New Appointment Request',
+        message: 'Student #2847 has requested an appointment for tomorrow at 2:00 PM',
+        type: 'booking' as const,
+        isRead: false,
+      },
+      {
+        userId: user?.id || 'counselor-1',
+        title: 'Urgent Case Alert',
+        message: 'High-risk assessment detected for anonymous student. Immediate attention required.',
+        type: 'system' as const,
+        isRead: false,
+      },
+      {
+        userId: user?.id || 'counselor-1',
+        title: 'Session Reminder',
+        message: 'You have a counseling session starting in 30 minutes',
+        type: 'message' as const,
+        isRead: true,
+      },
+    ];
+
+    // Only add if no notifications exist
+    if (notifications.length === 0) {
+      sampleNotifications.forEach(notification => {
+        addNotification(notification);
+      });
+    }
+  }, [notifications.length, addNotification, user?.id]);
 
   // Mock data for counselor dashboard
   const dashboardStats = {
@@ -81,7 +119,10 @@ export default function CounselorDashboard() {
             <Text style={styles.specialization}>{user?.specialization}</Text>
           </View>
           <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.notificationButton}>
+            <TouchableOpacity 
+              style={styles.notificationButton}
+              onPress={() => setShowNotifications(true)}
+            >
               <Bell size={24} color={Colors.text.primary} />
               {unreadCount > 0 && (
                 <View style={styles.notificationBadge}>
@@ -104,7 +145,7 @@ export default function CounselorDashboard() {
             <View style={[styles.statCard, { backgroundColor: Colors.primary + '20' }]}>
               <Calendar size={24} color={Colors.primary} />
               <Text style={styles.statNumber}>{dashboardStats.todayAppointments}</Text>
-              <Text style={styles.statLabel}>Today's Sessions</Text>
+              <Text style={styles.statLabel}>Today&apos;s Sessions</Text>
             </View>
             <View style={[styles.statCard, { backgroundColor: Colors.secondary + '20' }]}>
               <Clock size={24} color={Colors.secondary} />
@@ -128,7 +169,7 @@ export default function CounselorDashboard() {
 
         {/* Today's Appointments */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Today's Appointments</Text>
+          <Text style={styles.sectionTitle}>Today&apos;s Appointments</Text>
           {todayAppointments.map((appointment) => (
             <View key={appointment.id} style={styles.appointmentCard}>
               <View style={styles.appointmentInfo}>
@@ -160,10 +201,21 @@ export default function CounselorDashboard() {
 
         {/* Recent Notifications */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Notifications</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Notifications</Text>
+            {unreadCount > 0 && (
+              <TouchableOpacity onPress={markAllAsRead}>
+                <Text style={styles.markAllRead}>Mark all as read</Text>
+              </TouchableOpacity>
+            )}
+          </View>
           {recentNotifications.length > 0 ? (
             recentNotifications.map((notification) => (
-              <View key={notification.id} style={styles.notificationCard}>
+              <TouchableOpacity 
+                key={notification.id} 
+                style={styles.notificationCard}
+                onPress={() => !notification.isRead && markAsRead(notification.id)}
+              >
                 <MessageSquare size={20} color={Colors.primary} />
                 <View style={styles.notificationContent}>
                   <Text style={styles.notificationTitle}>{notification.title}</Text>
@@ -173,7 +225,7 @@ export default function CounselorDashboard() {
                   </Text>
                 </View>
                 {!notification.isRead && <View style={styles.unreadDot} />}
-              </View>
+              </TouchableOpacity>
             ))
           ) : (
             <View style={styles.emptyState}>
@@ -227,6 +279,94 @@ export default function CounselorDashboard() {
                 <Text style={styles.confirmButtonText}>Log Out</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Notifications Modal */}
+      <Modal
+        visible={showNotifications}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowNotifications(false)}
+      >
+        <View style={styles.notificationModalOverlay}>
+          <View style={[styles.notificationModalContent, { paddingTop: insets.top + 20 }]}>
+            <View style={styles.notificationModalHeader}>
+              <Text style={styles.notificationModalTitle}>Notifications</Text>
+              <View style={styles.notificationModalActions}>
+                {unreadCount > 0 && (
+                  <TouchableOpacity onPress={markAllAsRead}>
+                    <Text style={styles.markAllReadButton}>Mark all read</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity 
+                  onPress={() => setShowNotifications(false)}
+                  style={styles.closeButton}
+                >
+                  <X size={24} color={Colors.text.primary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+            
+            {notifications.length > 0 ? (
+              <FlatList
+                data={notifications}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                renderItem={({ item }) => (
+                  <View style={[
+                    styles.fullNotificationCard,
+                    !item.isRead && styles.unreadNotificationCard
+                  ]}>
+                    <View style={styles.notificationCardHeader}>
+                      <View style={styles.notificationIconContainer}>
+                        {item.type === 'system' && <AlertCircle size={20} color={Colors.error} />}
+                        {item.type === 'booking' && <Calendar size={20} color={Colors.primary} />}
+                        {item.type === 'feedback' && <Clock size={20} color={Colors.warning} />}
+                        {item.type === 'message' && <MessageSquare size={20} color={Colors.success} />}
+                      </View>
+                      <View style={styles.notificationCardContent}>
+                        <Text style={[
+                          styles.fullNotificationTitle,
+                          !item.isRead && styles.unreadNotificationTitle
+                        ]}>
+                          {item.title}
+                        </Text>
+                        <Text style={styles.fullNotificationMessage}>
+                          {item.message}
+                        </Text>
+                        <Text style={styles.fullNotificationTime}>
+                          {new Date(item.createdAt).toLocaleString()}
+                        </Text>
+                      </View>
+                      <View style={styles.notificationCardActions}>
+                        {!item.isRead && (
+                          <TouchableOpacity 
+                            onPress={() => markAsRead(item.id)}
+                            style={styles.markReadButton}
+                          >
+                            <CheckCircle size={16} color={Colors.success} />
+                          </TouchableOpacity>
+                        )}
+                        <TouchableOpacity 
+                          onPress={() => deleteNotification(item.id)}
+                          style={styles.deleteButton}
+                        >
+                          <Trash2 size={16} color={Colors.error} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                )}
+              />
+            ) : (
+              <View style={styles.emptyNotifications}>
+                <Bell size={48} color={Colors.text.light} />
+                <Text style={styles.emptyNotificationsText}>No notifications</Text>
+                <Text style={styles.emptyNotificationsSubtext}>You&apos;re all caught up!</Text>
+              </View>
+            )}
           </View>
         </View>
       </Modal>
@@ -479,5 +619,127 @@ const styles = StyleSheet.create({
     color: Colors.text.white,
     fontSize: 16,
     fontWeight: '600',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  markAllRead: {
+    fontSize: 14,
+    color: Colors.primary,
+    fontWeight: '500',
+  },
+  notificationModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  notificationModalContent: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    marginTop: 50,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  notificationModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.surfaceLight,
+  },
+  notificationModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.text.primary,
+  },
+  notificationModalActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  markAllReadButton: {
+    fontSize: 14,
+    color: Colors.primary,
+    fontWeight: '500',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  fullNotificationCard: {
+    backgroundColor: Colors.surface,
+    marginHorizontal: 16,
+    marginVertical: 6,
+    borderRadius: 12,
+    padding: 16,
+  },
+  unreadNotificationCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.primary,
+  },
+  notificationCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  notificationIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.surfaceLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notificationCardContent: {
+    flex: 1,
+  },
+  fullNotificationTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: Colors.text.primary,
+    marginBottom: 4,
+  },
+  unreadNotificationTitle: {
+    fontWeight: '600',
+  },
+  fullNotificationMessage: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  fullNotificationTime: {
+    fontSize: 12,
+    color: Colors.text.light,
+  },
+  notificationCardActions: {
+    flexDirection: 'column',
+    gap: 8,
+  },
+  markReadButton: {
+    padding: 4,
+  },
+  deleteButton: {
+    padding: 4,
+  },
+  emptyNotifications: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  emptyNotificationsText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginTop: 16,
+  },
+  emptyNotificationsSubtext: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginTop: 4,
   },
 });
