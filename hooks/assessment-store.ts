@@ -99,12 +99,14 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
   const submitConsent = useCallback(async (assessment: Assessment, consentGranted: boolean) => {
     try {
       setIsLoading(true);
+      console.log('Submitting consent:', { assessmentId: assessment.id, consentGranted, studentId: assessment.studentId });
       
       const result = await trpcClient.consent.submit.mutate({
         assessmentId: assessment.id,
         consentGranted,
         studentId: assessment.studentId,
       });
+      console.log('Backend consent result:', result);
 
       // Update the assessment with consent status
       const updatedAssessment: Assessment = {
@@ -112,6 +114,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
         consentStatus: consentGranted ? 'granted' : 'denied',
         consentTimestamp: new Date(),
       };
+      console.log('Updated assessment:', updatedAssessment);
 
       // Update local storage
       const updatedAssessments = assessments.map(a => 
@@ -119,6 +122,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
       );
       setAssessments(updatedAssessments);
       await AsyncStorage.setItem(ASSESSMENT_STORAGE_KEY, JSON.stringify(updatedAssessments));
+      console.log('Assessments updated in storage');
       
       setPendingConsent(null);
       

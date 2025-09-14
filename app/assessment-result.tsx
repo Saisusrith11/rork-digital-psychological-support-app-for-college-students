@@ -39,24 +39,6 @@ export default function AssessmentResultScreen() {
   const handleRevokeConsent = useCallback(async () => {
     if (!assessment) return;
     
-    const confirmRevoke = () => {
-      if (Platform.OS !== 'web') {
-        Alert.alert(
-          'Revoke Consent',
-          'Are you sure you want to revoke consent? Your assessment data will no longer be visible to counselors.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Revoke', style: 'destructive', onPress: performRevoke },
-          ]
-        );
-      } else {
-        const confirmed = confirm('Are you sure you want to revoke consent? Your assessment data will no longer be visible to counselors.');
-        if (confirmed) {
-          performRevoke();
-        }
-      }
-    };
-    
     const performRevoke = async () => {
       try {
         setIsRevokingConsent(true);
@@ -83,6 +65,24 @@ export default function AssessmentResultScreen() {
         }
       } finally {
         setIsRevokingConsent(false);
+      }
+    };
+    
+    const confirmRevoke = () => {
+      if (Platform.OS !== 'web') {
+        Alert.alert(
+          'Revoke Consent',
+          'Are you sure you want to revoke consent? Your assessment data will no longer be visible to counselors.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Revoke', style: 'destructive', onPress: performRevoke },
+          ]
+        );
+      } else {
+        const confirmed = confirm('Are you sure you want to revoke consent? Your assessment data will no longer be visible to counselors.');
+        if (confirmed) {
+          performRevoke();
+        }
       }
     };
     

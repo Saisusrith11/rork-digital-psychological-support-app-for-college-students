@@ -27,9 +27,13 @@ export default function ConsentScreen({
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
   const handleConsentDecision = async (granted: boolean) => {
+    console.log('ConsentScreen: User clicked consent decision:', granted);
     setIsProcessing(true);
     try {
       await onConsentDecision(granted);
+      console.log('ConsentScreen: Consent decision processed successfully');
+    } catch (error) {
+      console.error('ConsentScreen: Error processing consent decision:', error);
     } finally {
       setIsProcessing(false);
     }

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,10 @@ export default function AssessmentScreen() {
   const [responses, setResponses] = useState<AssessmentResponse[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const { saveAssessment, submitConsent, pendingConsent, setPendingConsentAssessment } = useAssessment();
+
+  useEffect(() => {
+    console.log('Pending consent changed:', pendingConsent);
+  }, [pendingConsent]);
 
   const currentQuestion = ASSESSMENT_QUESTIONS[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === ASSESSMENT_QUESTIONS.length - 1;
@@ -63,9 +67,12 @@ export default function AssessmentScreen() {
 
     try {
       setIsSubmitting(true);
+      console.log('Saving assessment with responses:', responses.length);
       const savedAssessment = await saveAssessment(responses);
+      console.log('Assessment saved:', savedAssessment);
       
       // Show consent screen instead of immediately going to results
+      console.log('Setting pending consent assessment');
       setPendingConsentAssessment(savedAssessment);
     } catch (error) {
       console.error('Assessment save error:', error);
@@ -80,10 +87,15 @@ export default function AssessmentScreen() {
   }, [responses, saveAssessment, setPendingConsentAssessment]);
 
   const handleConsentDecision = useCallback(async (consentGranted: boolean) => {
-    if (!pendingConsent) return;
+    if (!pendingConsent) {
+      console.log('No pending consent found');
+      return;
+    }
     
     try {
+      console.log('Processing consent decision:', { consentGranted, assessmentId: pendingConsent.id });
       const result = await submitConsent(pendingConsent, consentGranted);
+      console.log('Consent submission result:', result);
       
       if (Platform.OS !== 'web') {
         Alert.alert(
