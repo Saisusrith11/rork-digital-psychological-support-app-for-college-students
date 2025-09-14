@@ -87,7 +87,7 @@ export default function AssessmentResultScreen() {
     };
     
     confirmRevoke();
-  }, [assessment?.id, revokeConsent]);
+  }, [assessment, revokeConsent]);
 
   if (!assessment) {
     return (
@@ -316,7 +316,7 @@ export default function AssessmentResultScreen() {
           <Text style={styles.disclaimerTitle}>Important Note</Text>
           <Text style={styles.disclaimerText}>
             This assessment is a screening tool and not a diagnostic instrument. 
-            If you're experiencing persistent distress or thoughts of self-harm, 
+            If you&apos;re experiencing persistent distress or thoughts of self-harm, 
             please seek immediate professional help or contact emergency services.
           </Text>
         </View>
