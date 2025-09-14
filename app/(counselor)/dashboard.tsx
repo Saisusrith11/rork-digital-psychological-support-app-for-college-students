@@ -19,13 +19,15 @@ import {
   Bell,
   LogOut,
   X,
-  Trash2
+  Trash2,
+  Shield
 } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
 import { useNotifications } from '@/hooks/notification-store';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import ConsentedAssessmentsView from '@/components/ConsentedAssessmentsView';
 
 export default function CounselorDashboard() {
   const { user, logout } = useAuth();
@@ -234,6 +236,11 @@ export default function CounselorDashboard() {
           )}
         </View>
 
+        {/* Consented Assessments */}
+        <View style={styles.section}>
+          <ConsentedAssessmentsView />
+        </View>
+
         {/* Quick Actions */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
@@ -247,8 +254,8 @@ export default function CounselorDashboard() {
               <Text style={styles.actionButtonText}>Student List</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.actionButton}>
-              <TrendingUp size={24} color={Colors.secondary} />
-              <Text style={styles.actionButtonText}>Analytics</Text>
+              <Shield size={24} color={Colors.secondary} />
+              <Text style={styles.actionButtonText}>Privacy Center</Text>
             </TouchableOpacity>
           </View>
         </View>

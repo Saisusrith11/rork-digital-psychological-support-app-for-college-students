@@ -28,4 +28,24 @@ export interface Assessment {
   responses: AssessmentResponse[];
   result: AssessmentResult;
   completedAt: Date;
+  consentStatus?: 'pending' | 'granted' | 'denied';
+  consentTimestamp?: Date;
+  studentId?: string;
+  anonymousCode?: string;
+}
+
+export interface ConsentRequest {
+  assessmentId: string;
+  consentGranted: boolean;
+  timestamp: Date;
+}
+
+export interface CounselorAssessmentView {
+  id: string;
+  anonymousCode: string;
+  totalScore: number;
+  category: 'minimal' | 'mild' | 'moderate' | 'severe';
+  completedAt: Date;
+  consentGranted: boolean;
+  studentId?: string;
 }

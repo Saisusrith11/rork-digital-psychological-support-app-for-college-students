@@ -14,13 +14,14 @@ import { Colors } from '@/constants/colors';
 import { ASSESSMENT_QUESTIONS } from '@/constants/assessment-questions';
 import { AssessmentResponse } from '@/types/assessment';
 import { useAssessment } from '@/hooks/assessment-store';
+import ConsentScreen from '@/components/ConsentScreen';
 
 export default function AssessmentScreen() {
   const [showIntroduction, setShowIntroduction] = useState<boolean>(true);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [responses, setResponses] = useState<AssessmentResponse[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const { saveAssessment } = useAssessment();
+  const { saveAssessment, submitConsent, pendingConsent, setPendingConsentAssessment } = useAssessment();
 
   const currentQuestion = ASSESSMENT_QUESTIONS[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === ASSESSMENT_QUESTIONS.length - 1;
@@ -64,20 +65,8 @@ export default function AssessmentScreen() {
       setIsSubmitting(true);
       const savedAssessment = await saveAssessment(responses);
       
-      if (Platform.OS !== 'web') {
-        Alert.alert(
-          'Assessment Complete',
-          'Your mental health assessment has been completed. You can view your results and recommendations.',
-          [
-            {
-              text: 'View Results',
-              onPress: () => router.push(`/assessment-result?id=${savedAssessment.id}` as any),
-            },
-          ]
-        );
-      } else {
-        router.push(`/assessment-result?id=${savedAssessment.id}` as any);
-      }
+      // Show consent screen instead of immediately going to results
+      setPendingConsentAssessment(savedAssessment);
     } catch (error) {
       console.error('Assessment save error:', error);
       if (Platform.OS !== 'web') {
@@ -88,7 +77,46 @@ export default function AssessmentScreen() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [responses, saveAssessment]);
+  }, [responses, saveAssessment, setPendingConsentAssessment]);
+
+  const handleConsentDecision = useCallback(async (consentGranted: boolean) => {
+    if (!pendingConsent) return;
+    
+    try {
+      const result = await submitConsent(pendingConsent, consentGranted);
+      
+      if (Platform.OS !== 'web') {
+        Alert.alert(
+          'Assessment Complete',
+          result.message,
+          [
+            {
+              text: 'View Results',
+              onPress: () => router.push(`/assessment-result?id=${pendingConsent.id}` as any),
+            },
+          ]
+        );
+      } else {
+        console.log(result.message);
+        router.push(`/assessment-result?id=${pendingConsent.id}` as any);
+      }
+    } catch (error) {
+      console.error('Consent submission error:', error);
+      if (Platform.OS !== 'web') {
+        Alert.alert('Error', 'Failed to process consent. Please try again.');
+      } else {
+        console.error('Failed to process consent. Please try again.');
+      }
+    }
+  }, [pendingConsent, submitConsent]);
+
+  const handleConsentClose = useCallback(() => {
+    setPendingConsentAssessment(null);
+    // Navigate to results anyway
+    if (pendingConsent) {
+      router.push(`/assessment-result?id=${pendingConsent.id}` as any);
+    }
+  }, [pendingConsent, setPendingConsentAssessment]);
 
   const getCurrentResponse = useCallback(() => {
     return responses.find(r => r.questionId === currentQuestion.id);
@@ -227,6 +255,14 @@ export default function AssessmentScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Consent Screen */}
+      <ConsentScreen
+        visible={!!pendingConsent}
+        assessment={pendingConsent}
+        onConsentDecision={handleConsentDecision}
+        onClose={handleConsentClose}
+      />
     </View>
   );
 }

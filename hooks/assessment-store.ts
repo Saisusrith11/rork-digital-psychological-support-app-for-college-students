@@ -3,12 +3,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { Assessment, AssessmentResponse, AssessmentResult } from '@/types/assessment';
 import { getAssessmentResult } from '@/constants/assessment-questions';
+import { trpcClient } from '@/lib/trpc';
+import { useAuth } from './auth-store';
 
 const ASSESSMENT_STORAGE_KEY = 'assessments';
 
 export const [AssessmentProvider, useAssessment] = createContextHook(() => {
+  const { user } = useAuth();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [pendingConsent, setPendingConsent] = useState<Assessment | null>(null);
 
   const loadAssessments = useCallback(async () => {
     try {
@@ -65,6 +69,9 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
         responses,
         result,
         completedAt: new Date(),
+        consentStatus: 'pending',
+        studentId: user?.id,
+        anonymousCode: `AN-${Math.floor(Math.random() * 9000) + 1000}`,
       };
 
       const updatedAssessments = [newAssessment, ...assessments];
@@ -89,12 +96,90 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
     return assessments;
   }, [assessments]);
 
+  const submitConsent = useCallback(async (assessment: Assessment, consentGranted: boolean) => {
+    try {
+      setIsLoading(true);
+      
+      const result = await trpcClient.consent.submit.mutate({
+        assessmentId: assessment.id,
+        consentGranted,
+        studentId: assessment.studentId,
+      });
+
+      // Update the assessment with consent status
+      const updatedAssessment: Assessment = {
+        ...assessment,
+        consentStatus: consentGranted ? 'granted' : 'denied',
+        consentTimestamp: new Date(),
+      };
+
+      // Update local storage
+      const updatedAssessments = assessments.map(a => 
+        a.id === assessment.id ? updatedAssessment : a
+      );
+      setAssessments(updatedAssessments);
+      await AsyncStorage.setItem(ASSESSMENT_STORAGE_KEY, JSON.stringify(updatedAssessments));
+      
+      setPendingConsent(null);
+      
+      return {
+        success: result.success,
+        message: result.message,
+      };
+    } catch (error) {
+      console.error('Error submitting consent:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [assessments]);
+
+  const revokeConsent = useCallback(async (assessmentId: string) => {
+    try {
+      setIsLoading(true);
+      
+      const assessment = assessments.find(a => a.id === assessmentId);
+      if (!assessment || !assessment.studentId) {
+        throw new Error('Assessment not found or missing student ID');
+      }
+
+      await trpcClient.consent.revoke.mutate({
+        assessmentId,
+        studentId: assessment.studentId,
+      });
+
+      // Update local assessment
+      const updatedAssessments = assessments.map(a => 
+        a.id === assessmentId 
+          ? { ...a, consentStatus: 'denied' as const, consentTimestamp: new Date() }
+          : a
+      );
+      setAssessments(updatedAssessments);
+      await AsyncStorage.setItem(ASSESSMENT_STORAGE_KEY, JSON.stringify(updatedAssessments));
+      
+      return { success: true, message: 'Consent revoked successfully' };
+    } catch (error) {
+      console.error('Error revoking consent:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [assessments]);
+
+  const setPendingConsentAssessment = useCallback((assessment: Assessment | null) => {
+    setPendingConsent(assessment);
+  }, []);
+
   return useMemo(() => ({
     assessments,
     isLoading,
+    pendingConsent,
     loadAssessments,
     saveAssessment,
     getLatestAssessment,
     getAssessmentHistory,
-  }), [assessments, isLoading, loadAssessments, saveAssessment, getLatestAssessment, getAssessmentHistory]);
+    submitConsent,
+    revokeConsent,
+    setPendingConsentAssessment,
+  }), [assessments, isLoading, pendingConsent, loadAssessments, saveAssessment, getLatestAssessment, getAssessmentHistory, submitConsent, revokeConsent, setPendingConsentAssessment]);
 });
