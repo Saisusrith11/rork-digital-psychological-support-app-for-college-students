@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, Switch, TextInput, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, Switch, TextInput, Platform, Alert } from 'react-native';
 import { 
   Calendar, 
   TrendingUp, 
@@ -41,6 +41,42 @@ export default function ProfileScreen() {
   const [showUsernameSettings, setShowUsernameSettings] = useState(user?.showUsername ?? true);
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackCategory, setFeedbackCategory] = useState<'bug' | 'feature' | 'general' | 'complaint'>('general');
+  const [isOffline, setIsOffline] = useState(false);
+  const [offlineData, setOfflineData] = useState<any>(null);
+
+  // Check offline status and load offline data
+  useEffect(() => {
+    const loadOfflineData = async () => {
+      try {
+        const stored = await AsyncStorage.getItem('offline_profile_data');
+        if (stored) {
+          setOfflineData(JSON.parse(stored));
+        }
+      } catch (error) {
+        console.error('Error loading offline data:', error);
+      }
+    };
+    
+    loadOfflineData();
+    
+    // Simulate network check (in real app, use NetInfo)
+    const checkConnection = () => {
+      // For demo purposes, assume we're online
+      setIsOffline(false);
+    };
+    
+    checkConnection();
+  }, []);
+
+  // Save data offline when changes are made
+  const saveOfflineData = async (data: any) => {
+    try {
+      await AsyncStorage.setItem('offline_profile_data', JSON.stringify(data));
+      setOfflineData(data);
+    } catch (error) {
+      console.error('Error saving offline data:', error);
+    }
+  };
 
   const languages = [
     { code: 'en', name: 'English' },
@@ -66,12 +102,27 @@ export default function ProfileScreen() {
 
   const handleSubmitFeedback = () => {
     if (feedbackText.trim()) {
-      submitFeedback({
-        userId: user?.id || 'anonymous',
-        userName: user?.showUsername ? user.fullName : 'Anonymous User',
-        message: feedbackText.trim(),
-        category: feedbackCategory,
-      });
+      if (isOffline) {
+        // Store feedback offline
+        const offlineFeedback = {
+          userId: user?.id || 'anonymous',
+          userName: user?.showUsername ? user.fullName : 'Anonymous User',
+          message: feedbackText.trim(),
+          category: feedbackCategory,
+          timestamp: new Date().toISOString(),
+          status: 'pending_sync'
+        };
+        
+        saveOfflineData({ ...offlineData, pendingFeedback: [...(offlineData?.pendingFeedback || []), offlineFeedback] });
+        Alert.alert('Feedback Saved', 'Your feedback has been saved offline and will be sent when you reconnect.');
+      } else {
+        submitFeedback({
+          userId: user?.id || 'anonymous',
+          userName: user?.showUsername ? user.fullName : 'Anonymous User',
+          message: feedbackText.trim(),
+          category: feedbackCategory,
+        });
+      }
       setFeedbackText('');
       setShowFeedbackModal(false);
     }
@@ -95,14 +146,20 @@ export default function ProfileScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.profileHeader}>
+          {isOffline && (
+            <View style={styles.offlineIndicator}>
+              <WifiOff size={16} color={Colors.warning} />
+              <Text style={styles.offlineText}>Offline Mode</Text>
+            </View>
+          )}
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>
-              {user?.fullName?.split(' ').map(n => n[0]).join('') || 'TS'}
+              {(user?.fullName || offlineData?.fullName)?.split(' ').map((n: string) => n[0]).join('') || 'TS'}
             </Text>
           </View>
-          <Text style={styles.userName}>{user?.fullName || 'Test Student'}</Text>
+          <Text style={styles.userName}>{user?.fullName || offlineData?.fullName || 'Test Student'}</Text>
           <Text style={styles.userInfo}>
-            {user?.college || 'Demo College'} • {user?.course || 'Computer Science'}, {user?.year || '2'} Year
+            {user?.college || offlineData?.college || 'Demo College'} • {user?.course || offlineData?.course || 'Computer Science'}, {user?.year || offlineData?.year || '2'} Year
           </Text>
         </View>
 
@@ -1016,5 +1073,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.text.secondary,
     lineHeight: 20,
+  },
+  offlineIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.warning + '20',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginBottom: 16,
+    gap: 6,
+  },
+  offlineText: {
+    fontSize: 12,
+    color: Colors.warning,
+    fontWeight: '600',
   },
 });

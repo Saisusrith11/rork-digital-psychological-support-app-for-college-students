@@ -1,45 +1,40 @@
 import { Stack } from 'expo-router';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { useAuth } from '@/hooks/auth-store';
 import { router } from 'expo-router';
 import { LogOut } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 
-function LogoutButton() {
+export default function VolunteerLayout() {
   const { logout } = useAuth();
 
-  const onPress = useCallback(async () => {
+  const handleLogout = useCallback(async () => {
     try {
-      console.log('[LogoutButton] Pressed');
+      console.log('[VolunteerLayout] Logout pressed');
       await logout();
       router.replace('/auth');
     } catch (e) {
-      console.error('[LogoutButton] Error', e);
-      console.log('Logout failed. Please try again.');
+      console.error('[VolunteerLayout] Logout error', e);
     }
   }, [logout]);
 
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      style={styles.logoutBtn}
-      testID="logout-button"
-      accessibilityLabel="Logout"
-    >
-      <LogOut size={18} color={Colors.text.white} />
-      <Text style={styles.logoutText}>Logout</Text>
-    </TouchableOpacity>
-  );
-}
+  const headerRightComponent = useMemo(() => {
+    return () => (
+      <View style={styles.headerRightWrap}>
+        <TouchableOpacity
+          onPress={handleLogout}
+          style={styles.logoutBtn}
+          testID="logout-button"
+          accessibilityLabel="Logout"
+        >
+          <LogOut size={18} color={Colors.text.white} />
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }, [handleLogout]);
 
-const headerRightComponent = () => (
-  <View style={styles.headerRightWrap}>
-    <LogoutButton />
-  </View>
-);
-
-export default function VolunteerLayout() {
   return (
     <Stack
       screenOptions={{

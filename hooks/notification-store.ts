@@ -34,12 +34,25 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
   }, []);
 
   const addNotification = useCallback((notification: Omit<Notification, 'id' | 'createdAt'>) => {
+    // Check if similar notification already exists to avoid duplicates
+    const existingNotification = notifications.find(n => 
+      n.title === notification.title && 
+      n.message === notification.message &&
+      n.userId === notification.userId
+    );
+    
+    if (existingNotification) {
+      console.log('[NotificationStore] Duplicate notification prevented');
+      return;
+    }
+    
     const newNotification: Notification = {
       ...notification,
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
     };
     
+    console.log('[NotificationStore] Adding notification:', newNotification.title);
     const updated = [newNotification, ...notifications];
     setNotifications(updated);
     saveNotifications(updated);

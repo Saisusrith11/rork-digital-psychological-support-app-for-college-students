@@ -139,8 +139,10 @@ export default function ChatScreen() {
     setShowQuickPrompts(false);
 
     try {
-      // Get AI response
+      console.log('[ChatScreen] Processing message with advanced AI service');
+      // Get enhanced AI response with improved dialogue flow
       const response = await aiService.current.processMessage(messageText);
+      console.log('[ChatScreen] AI response received:', { type: response.type, urgency: response.urgency, topics: response.topics });
       
       const responseMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -177,13 +179,18 @@ export default function ChatScreen() {
     } catch (error) {
       console.error('Error getting AI response:', error);
       
-      // Fallback message
+      // Enhanced fallback with better error handling
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: "I'm having trouble processing your message right now. Please try again, or if you need immediate support, please contact the crisis helpline at 988.",
+        text: "I apologize, but I'm experiencing technical difficulties right now. Your message is important to me, and I want to make sure you get the support you need.\n\n🆘 **Immediate Support:**\n• Crisis Helpline: 988 (24/7)\n• Campus Counseling: Available during business hours\n• Emergency Services: 911\n\nPlease try sending your message again in a moment, or reach out to one of these resources if you need immediate assistance.",
         isUser: false,
         timestamp: new Date(),
-        type: 'normal'
+        type: 'urgent',
+        actions: [
+          { label: 'Try Again', action: () => sendMessage(messageText) },
+          { label: 'Call Crisis Line', action: () => console.log('Calling 988') },
+          { label: 'Campus Resources', action: () => router.push('/resources') }
+        ]
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
