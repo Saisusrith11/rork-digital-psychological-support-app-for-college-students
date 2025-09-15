@@ -10,9 +10,18 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
   const loadNotifications = useCallback(async () => {
     try {
       const stored = await AsyncStorage.getItem('notifications');
-      if (stored) {
-        const parsedNotifications = JSON.parse(stored);
-        setNotifications(parsedNotifications);
+      if (stored && stored.trim() && stored !== 'undefined' && stored !== 'null') {
+        try {
+          const parsedNotifications = JSON.parse(stored);
+          if (Array.isArray(parsedNotifications)) {
+            setNotifications(parsedNotifications);
+          }
+        } catch (parseError) {
+          console.error('Error parsing notifications:', parseError);
+          // Clear corrupted data
+          await AsyncStorage.removeItem('notifications');
+          setNotifications([]);
+        }
       }
     } catch (error) {
       console.error('Error loading notifications:', error);
@@ -87,7 +96,7 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     return notifications.filter(notification => !notification.isRead).length;
   }, [notifications]);
 
-  return {
+  return useMemo(() => ({
     notifications,
     isLoading,
     unreadCount,
@@ -95,5 +104,5 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     markAsRead,
     markAllAsRead,
     deleteNotification,
-  };
+  }), [notifications, isLoading, unreadCount, addNotification, markAsRead, markAllAsRead, deleteNotification]);
 });

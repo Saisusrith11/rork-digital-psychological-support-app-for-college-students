@@ -10,9 +10,18 @@ export const [FeedbackProvider, useFeedback] = createContextHook(() => {
   const loadFeedbacks = useCallback(async () => {
     try {
       const stored = await AsyncStorage.getItem('feedbacks');
-      if (stored) {
-        const parsedFeedbacks = JSON.parse(stored);
-        setFeedbacks(parsedFeedbacks);
+      if (stored && stored.trim() && stored !== 'undefined' && stored !== 'null') {
+        try {
+          const parsedFeedbacks = JSON.parse(stored);
+          if (Array.isArray(parsedFeedbacks)) {
+            setFeedbacks(parsedFeedbacks);
+          }
+        } catch (parseError) {
+          console.error('Error parsing feedbacks:', parseError);
+          // Clear corrupted data
+          await AsyncStorage.removeItem('feedbacks');
+          setFeedbacks([]);
+        }
       }
     } catch (error) {
       console.error('Error loading feedbacks:', error);
@@ -65,11 +74,11 @@ export const [FeedbackProvider, useFeedback] = createContextHook(() => {
     return feedbacks.filter(feedback => feedback.status === 'pending').length;
   }, [feedbacks]);
 
-  return {
+  return useMemo(() => ({
     feedbacks,
     isLoading,
     pendingCount,
     submitFeedback,
     updateFeedbackStatus,
-  };
+  }), [feedbacks, isLoading, pendingCount, submitFeedback, updateFeedbackStatus]);
 });

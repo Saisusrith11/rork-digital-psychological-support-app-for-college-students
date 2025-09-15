@@ -57,8 +57,18 @@ export class AIChatService {
   private async initializeHistory() {
     try {
       const stored = await AsyncStorage.getItem('ai_conversation_history');
-      if (stored) {
-        this.conversationHistory = JSON.parse(stored);
+      if (stored && stored.trim() && stored !== 'undefined' && stored !== 'null') {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            this.conversationHistory = parsed;
+          }
+        } catch (parseError) {
+          console.error('Error parsing conversation history:', parseError);
+          // Clear corrupted data
+          await AsyncStorage.removeItem('ai_conversation_history');
+          this.conversationHistory = [];
+        }
       }
     } catch (error) {
       console.error('Error loading conversation history:', error);
