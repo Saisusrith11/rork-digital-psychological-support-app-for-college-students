@@ -9,6 +9,8 @@ import {
   uploadDocumentProcedure,
   checkApplicationStatusProcedure,
   getAllApplicationsProcedure,
+  approveApplicationProcedure,
+  rejectApplicationProcedure,
 } from "./routes/counselor/application/route";
 
 export const appRouter = createTRPCRouter({
@@ -29,6 +31,8 @@ export const appRouter = createTRPCRouter({
       uploadDocument: uploadDocumentProcedure,
       checkStatus: checkApplicationStatusProcedure,
       getAll: getAllApplicationsProcedure,
+      approve: approveApplicationProcedure,
+      reject: rejectApplicationProcedure,
     }),
   }),
 });

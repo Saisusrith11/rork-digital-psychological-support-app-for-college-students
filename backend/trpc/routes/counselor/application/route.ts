@@ -3,7 +3,49 @@ import { protectedProcedure, publicProcedure } from '@/backend/trpc/create-conte
 import type { CounselorApplication, CounselorDocument } from '@/types/user';
 
 // Mock storage for applications (in production, use a database)
-const applications: CounselorApplication[] = [];
+const applications: CounselorApplication[] = [
+  {
+    id: '1',
+    counselorId: 'counselor_1',
+    personalInfo: {
+      fullName: 'Dr. Sarah Johnson',
+      email: 'sarah.johnson@email.com',
+      phone: '+1234567890',
+      address: '123 Main St, City, State',
+      dateOfBirth: '1985-06-15',
+    },
+    professionalInfo: {
+      specialization: ['Anxiety Disorders', 'Depression'],
+      experience: '5 years of clinical experience in mental health counseling with focus on cognitive behavioral therapy and mindfulness-based interventions.',
+      languages: ['English', 'Spanish'],
+      currentEmployment: 'Private Practice',
+    },
+    documents: [
+      {
+        id: 'doc_1',
+        type: 'degree_certificate',
+        fileName: 'masters_degree.pdf',
+        fileUrl: 'https://example.com/doc1.pdf',
+        fileSize: 1024000,
+        mimeType: 'application/pdf',
+        uploadedAt: new Date().toISOString(),
+      },
+      {
+        id: 'doc_2',
+        type: 'government_id',
+        fileName: 'government_id.pdf',
+        fileUrl: 'https://example.com/doc2.pdf',
+        fileSize: 512000,
+        mimeType: 'application/pdf',
+        uploadedAt: new Date().toISOString(),
+      },
+    ],
+    termsAccepted: true,
+    privacyAccepted: true,
+    status: 'pending',
+    submittedAt: new Date().toISOString(),
+  },
+];
 const documents: CounselorDocument[] = [];
 
 const DocumentSchema = z.object({
@@ -242,7 +284,8 @@ export const checkApplicationStatusProcedure = publicProcedure
 // Get all applications with filters (Admin only)
 export const getAllApplicationsProcedure = protectedProcedure
   .input(z.object({
-    status: z.enum(['pending', 'approved', 'rejected', 'all']).default('all'),
+    status: z.enum(['pending', 'approved', 'rejected']).optional(),
+    search: z.string().max(100).optional(),
     limit: z.number().min(1).max(100).default(20),
     offset: z.number().min(0).default(0),
   }))
@@ -250,10 +293,20 @@ export const getAllApplicationsProcedure = protectedProcedure
     try {
       console.log('[CounselorApplication] Fetching all applications with filters:', input);
       
-      let filteredApplications = applications;
+      let filteredApplications = [...applications];
       
-      if (input.status !== 'all') {
-        filteredApplications = applications.filter(app => app.status === input.status);
+      // Filter by status
+      if (input.status) {
+        filteredApplications = filteredApplications.filter(app => app.status === input.status);
+      }
+      
+      // Filter by search query
+      if (input.search) {
+        const searchLower = input.search.toLowerCase();
+        filteredApplications = filteredApplications.filter(app => 
+          app.personalInfo.fullName.toLowerCase().includes(searchLower) ||
+          app.personalInfo.email.toLowerCase().includes(searchLower)
+        );
       }
       
       // Sort by submission date (newest first)
@@ -274,5 +327,85 @@ export const getAllApplicationsProcedure = protectedProcedure
     } catch (error) {
       console.error('[CounselorApplication] Error fetching applications:', error);
       throw new Error('Failed to fetch applications');
+    }
+  });
+
+// Approve application (Admin only)
+export const approveApplicationProcedure = protectedProcedure
+  .input(z.object({
+    applicationId: z.string().min(1).max(100),
+    adminNotes: z.string().max(1000).optional(),
+  }))
+  .mutation(async ({ input, ctx }) => {
+    try {
+      console.log('[CounselorApplication] Approving application:', input.applicationId);
+      
+      const applicationIndex = applications.findIndex(app => app.id === input.applicationId);
+      
+      if (applicationIndex === -1) {
+        throw new Error('Application not found');
+      }
+      
+      // Update application status
+      applications[applicationIndex] = {
+        ...applications[applicationIndex],
+        status: 'approved',
+        reviewedAt: new Date().toISOString(),
+        reviewedBy: ctx.user?.id || 'admin',
+        adminNotes: input.adminNotes,
+      };
+      
+      // TODO: Send email notification to counselor
+      // TODO: Create counselor account with login credentials
+      
+      console.log('[CounselorApplication] Application approved:', applications[applicationIndex].personalInfo.email);
+      
+      return {
+        success: true,
+        message: 'Application approved successfully. The counselor has been notified.',
+      };
+    } catch (error) {
+      console.error('[CounselorApplication] Error approving application:', error);
+      throw new Error(error instanceof Error ? error.message : 'Failed to approve application');
+    }
+  });
+
+// Reject application (Admin only)
+export const rejectApplicationProcedure = protectedProcedure
+  .input(z.object({
+    applicationId: z.string().min(1).max(100),
+    adminNotes: z.string().max(1000).optional(),
+  }))
+  .mutation(async ({ input, ctx }) => {
+    try {
+      console.log('[CounselorApplication] Rejecting application:', input.applicationId);
+      
+      const applicationIndex = applications.findIndex(app => app.id === input.applicationId);
+      
+      if (applicationIndex === -1) {
+        throw new Error('Application not found');
+      }
+      
+      // Update application status
+      applications[applicationIndex] = {
+        ...applications[applicationIndex],
+        status: 'rejected',
+        reviewedAt: new Date().toISOString(),
+        reviewedBy: ctx.user?.id || 'admin',
+        adminNotes: input.adminNotes,
+      };
+      
+      // TODO: Send email notification to counselor
+      // TODO: Schedule document deletion after 30 days
+      
+      console.log('[CounselorApplication] Application rejected:', applications[applicationIndex].personalInfo.email);
+      
+      return {
+        success: true,
+        message: 'Application rejected. The counselor has been notified.',
+      };
+    } catch (error) {
+      console.error('[CounselorApplication] Error rejecting application:', error);
+      throw new Error(error instanceof Error ? error.message : 'Failed to reject application');
     }
   });

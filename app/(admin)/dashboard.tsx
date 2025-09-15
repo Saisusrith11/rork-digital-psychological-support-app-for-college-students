@@ -22,7 +22,8 @@ import {
   X,
   Trash2,
   Shield,
-  Zap
+  Zap,
+  FileText
 } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
@@ -539,13 +540,17 @@ export default function AdminDashboard() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Quick Actions</Text>
             <View style={styles.quickActions}>
-              <TouchableOpacity style={styles.actionButton} testID="qa-analytics">
-                <BarChart3 size={24} color={Colors.primary} />
-                <Text style={styles.actionButtonText}>View Analytics</Text>
+              <TouchableOpacity 
+                style={styles.actionButton} 
+                testID="qa-counselor-apps"
+                onPress={() => router.push('/counselor-applications-admin')}
+              >
+                <FileText size={24} color={Colors.primary} />
+                <Text style={styles.actionButtonText}>Counselor Applications</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} testID="qa-users">
-                <Users size={24} color={Colors.success} />
-                <Text style={styles.actionButtonText}>Manage Users</Text>
+              <TouchableOpacity style={styles.actionButton} testID="qa-analytics">
+                <BarChart3 size={24} color={Colors.secondary} />
+                <Text style={styles.actionButtonText}>View Analytics</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.actionButton} testID="qa-feedback">
                 <MessageSquare size={24} color={Colors.warning} />
