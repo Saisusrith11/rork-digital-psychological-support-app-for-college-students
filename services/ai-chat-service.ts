@@ -351,7 +351,7 @@ You don't have to go through this alone. There are people who want to help and s
 
     if (topics.includes('social')) {
       actions.push({ label: 'Join Peer Support Forum', action: 'community' });
-      actions.push({ label: 'Campus Social Groups', action: 'resources:social' });
+      actions.push({ label: 'Resource', action: 'resources:social' });
     }
 
     return actions.slice(0, 3); // Limit to 3 actions
