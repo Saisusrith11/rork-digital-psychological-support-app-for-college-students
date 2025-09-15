@@ -1,6 +1,8 @@
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type TimeRange = '7d' | '30d' | '90d';
+
+type MoodType = 'great' | 'good' | 'okay' | 'low' | 'hard';
 
 interface UserEngagement {
   dailyActiveUsers: number;
@@ -61,6 +63,23 @@ interface TrendData {
   resources: number;
 }
 
+interface MoodEvent {
+  id: string;
+  userId: string;
+  mood: MoodType;
+  date: string;
+}
+
+interface MoodAnalytics {
+  averageMood: number;
+  moodTrend: 'improving' | 'declining' | 'stable';
+  totalEntries: number;
+  moodDistribution: Record<MoodType, number>;
+  weeklyData: MoodEvent[];
+}
+
+const MOOD_EVENTS_KEY = 'analytics_mood_events';
+
 class AnalyticsService {
   private static instance: AnalyticsService;
   private cache: Map<string, { data: any; timestamp: number }> = new Map();
@@ -81,12 +100,83 @@ class AnalyticsService {
 
   private async getCachedOrFetch<T>(key: string, fetchFn: () => Promise<T>): Promise<T> {
     if (this.isCacheValid(key)) {
-      return this.cache.get(key)!.data;
+      return this.cache.get(key)!.data as T;
     }
 
     const data = await fetchFn();
     this.cache.set(key, { data, timestamp: Date.now() });
     return data;
+  }
+
+  // Persisted mood analytics
+  async logMoodEvent(userId: string, mood: MoodType): Promise<void> {
+    try {
+      const raw = await AsyncStorage.getItem(MOOD_EVENTS_KEY);
+      const list: MoodEvent[] = raw ? JSON.parse(raw) : [];
+      const event: MoodEvent = {
+        id: `mood_${Date.now()}`,
+        userId,
+        mood,
+        date: new Date().toISOString(),
+      };
+      list.push(event);
+      await AsyncStorage.setItem(MOOD_EVENTS_KEY, JSON.stringify(list));
+      this.cache.delete(`mood_analytics_${userId}_7d`);
+      this.cache.delete(`mood_analytics_${userId}_30d`);
+      this.cache.delete(`mood_analytics_${userId}_90d`);
+    } catch (e) {
+      console.log('analyticsService.logMoodEvent error', e);
+    }
+  }
+
+  async getMoodAnalyticsReal(userId: string, range: TimeRange = '7d'): Promise<MoodAnalytics> {
+    const cacheKey = `mood_analytics_${userId}_${range}`;
+    return this.getCachedOrFetch(cacheKey, async () => {
+      const raw = await AsyncStorage.getItem(MOOD_EVENTS_KEY);
+      const list: MoodEvent[] = raw ? JSON.parse(raw) : [];
+      const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
+      const now = new Date();
+      const start = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+      const userEvents = list
+        .filter(e => e.userId === userId)
+        .filter(e => new Date(e.date) >= start && new Date(e.date) <= now)
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      if (userEvents.length === 0) {
+        return {
+          averageMood: 0,
+          moodTrend: 'stable',
+          totalEntries: 0,
+          moodDistribution: { great: 0, good: 0, okay: 0, low: 0, hard: 0 },
+          weeklyData: [],
+        } as MoodAnalytics;
+      }
+
+      const moodValues: Record<MoodType, number> = { great: 5, good: 4, okay: 3, low: 2, hard: 1 };
+      const distribution: Record<MoodType, number> = { great: 0, good: 0, okay: 0, low: 0, hard: 0 };
+      userEvents.forEach(e => { distribution[e.mood] += 1; });
+      const averageMood = userEvents.reduce((sum, e) => sum + moodValues[e.mood], 0) / userEvents.length;
+
+      const mid = Math.floor(userEvents.length / 2);
+      const first = userEvents.slice(0, mid);
+      const second = userEvents.slice(mid);
+      let trend: 'improving' | 'declining' | 'stable' = 'stable';
+      if (first.length && second.length) {
+        const firstAvg = first.reduce((s, e) => s + moodValues[e.mood], 0) / first.length;
+        const secondAvg = second.reduce((s, e) => s + moodValues[e.mood], 0) / second.length;
+        const diff = secondAvg - firstAvg;
+        if (diff > 0.3) trend = 'improving';
+        else if (diff < -0.3) trend = 'declining';
+      }
+
+      return {
+        averageMood,
+        moodTrend: trend,
+        totalEntries: userEvents.length,
+        moodDistribution: distribution,
+        weeklyData: userEvents,
+      } as MoodAnalytics;
+    });
   }
 
   // Generate realistic mock data based on current date and time
@@ -97,7 +187,6 @@ class AnalyticsService {
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     const isBusinessHours = hour >= 9 && hour <= 17;
 
-    // Base multipliers for realistic patterns
     const weekendMultiplier = isWeekend ? 0.6 : 1.0;
     const hourMultiplier = isBusinessHours ? 1.2 : 0.8;
     const seasonalMultiplier = this.getSeasonalMultiplier();
@@ -112,11 +201,9 @@ class AnalyticsService {
 
   private getSeasonalMultiplier(): number {
     const month = new Date().getMonth();
-    // Higher stress during exam periods (April-May, November-December)
     if (month === 3 || month === 4 || month === 10 || month === 11) {
       return 1.4;
     }
-    // Lower during summer break (June-July)
     if (month === 5 || month === 6) {
       return 0.7;
     }
@@ -127,14 +214,13 @@ class AnalyticsService {
     return this.getCachedOrFetch(`engagement_${range}`, async () => {
       const { totalMultiplier } = this.generateRealisticData();
       const baseUsers = range === '7d' ? 450 : range === '30d' ? 1247 : 2890;
-      
       return {
         dailyActiveUsers: Math.floor(612 * totalMultiplier),
         weeklyActiveUsers: Math.floor(892 * totalMultiplier),
         monthlyActiveUsers: Math.floor(baseUsers * totalMultiplier),
-        avgSessionDuration: 8.4 + (Math.random() * 2 - 1), // 7.4-9.4 minutes
+        avgSessionDuration: 8.4 + (Math.random() * 2 - 1),
         totalSessions: Math.floor(3420 * totalMultiplier),
-        bounceRate: 0.23 + (Math.random() * 0.1 - 0.05) // 18-28%
+        bounceRate: 0.23 + (Math.random() * 0.1 - 0.05)
       };
     });
   }
@@ -143,25 +229,23 @@ class AnalyticsService {
     return this.getCachedOrFetch(`assessments_${range}`, async () => {
       const { seasonalMultiplier } = this.generateRealisticData();
       const baseAssessments = range === '7d' ? 89 : range === '30d' ? 342 : 1156;
-      
       const total = Math.floor(baseAssessments * seasonalMultiplier);
       const phq9 = Math.floor(total * 0.45);
       const gad7 = Math.floor(total * 0.35);
       const ghq12 = Math.floor(total * 0.20);
-      
       return {
         totalAssessments: total,
         phq9Count: phq9,
         gad7Count: gad7,
         ghq12Count: ghq12,
-        averageScore: 12.3 + (seasonalMultiplier - 1) * 3, // Higher scores during stressful periods
+        averageScore: 12.3 + (seasonalMultiplier - 1) * 3,
         riskDistribution: {
           minimal: 38 - Math.floor((seasonalMultiplier - 1) * 10),
           mild: 32,
           moderate: 22 + Math.floor((seasonalMultiplier - 1) * 8),
           severe: 8 + Math.floor((seasonalMultiplier - 1) * 2)
         },
-        consentRate: 0.67 + (Math.random() * 0.1 - 0.05) // 62-72%
+        consentRate: 0.67 + (Math.random() * 0.1 - 0.05)
       };
     });
   }
@@ -169,7 +253,6 @@ class AnalyticsService {
   async getResourceUsage(range: TimeRange = '30d'): Promise<ResourceUsage[]> {
     return this.getCachedOrFetch(`resources_${range}`, async () => {
       const { totalMultiplier } = this.generateRealisticData();
-      
       const baseResources = [
         { id: 'breathing', title: 'Breathing Exercises', category: 'Mindfulness', baseViews: 1423 },
         { id: 'sleep', title: 'Sleep Hygiene Guide', category: 'Wellness', baseViews: 987 },
@@ -180,15 +263,14 @@ class AnalyticsService {
         { id: 'social-skills', title: 'Building Social Connections', category: 'Social', baseViews: 543 },
         { id: 'time-management', title: 'Time Management Tips', category: 'Academic', baseViews: 1098 }
       ];
-
       return baseResources.map(resource => ({
         id: resource.id,
         title: resource.title,
         category: resource.category,
         views: Math.floor(resource.baseViews * totalMultiplier),
-        avgTimeSpent: 4.2 + Math.random() * 3, // 4-7 minutes
-        completionRate: 0.65 + Math.random() * 0.25, // 65-90%
-        rating: 4.1 + Math.random() * 0.8 // 4.1-4.9
+        avgTimeSpent: 4.2 + Math.random() * 3,
+        completionRate: 0.65 + Math.random() * 0.25,
+        rating: 4.1 + Math.random() * 0.8
       })).sort((a, b) => b.views - a.views);
     });
   }
@@ -196,14 +278,13 @@ class AnalyticsService {
   async getCounselorMetrics(): Promise<CounselorMetrics> {
     return this.getCachedOrFetch('counselor_metrics', async () => {
       const { totalMultiplier } = this.generateRealisticData();
-      
       return {
         totalCounselors: 12,
         activeCounselors: Math.floor(8 * totalMultiplier),
         totalAppointments: Math.floor(156 * totalMultiplier),
         completedSessions: Math.floor(142 * totalMultiplier),
-        avgResponseTime: 2.3 + Math.random() * 1.5, // 2-4 hours
-        satisfactionScore: 4.6 + Math.random() * 0.3 // 4.6-4.9
+        avgResponseTime: 2.3 + Math.random() * 1.5,
+        satisfactionScore: 4.6 + Math.random() * 0.3
       };
     });
   }
@@ -211,11 +292,11 @@ class AnalyticsService {
   async getSystemHealth(): Promise<SystemHealth> {
     return this.getCachedOrFetch('system_health', async () => {
       return {
-        uptime: 99.2 + Math.random() * 0.7, // 99.2-99.9%
-        responseTime: 145 + Math.random() * 50, // 145-195ms
-        errorRate: 0.02 + Math.random() * 0.03, // 0.02-0.05%
+        uptime: 99.2 + Math.random() * 0.7,
+        responseTime: 145 + Math.random() * 50,
+        errorRate: 0.02 + Math.random() * 0.03,
         activeConnections: Math.floor(234 + Math.random() * 100),
-        serverLoad: 0.45 + Math.random() * 0.3 // 45-75%
+        serverLoad: 0.45 + Math.random() * 0.3
       };
     });
   }
@@ -224,19 +305,14 @@ class AnalyticsService {
     return this.getCachedOrFetch(`trends_${range}`, async () => {
       const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
       const data: TrendData[] = [];
-      
       for (let i = days - 1; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
-        
         const dayOfWeek = date.getDay();
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
         const multiplier = isWeekend ? 0.7 : 1.0;
-        
-        // Add some randomness and trends
         const trendFactor = 1 + (Math.sin(i / days * Math.PI) * 0.2);
         const randomFactor = 0.8 + Math.random() * 0.4;
-        
         data.push({
           date: date.toISOString().split('T')[0],
           users: Math.floor(45 * multiplier * trendFactor * randomFactor),
@@ -245,7 +321,6 @@ class AnalyticsService {
           resources: Math.floor(67 * multiplier * trendFactor * randomFactor)
         });
       }
-      
       return data;
     });
   }
@@ -258,22 +333,17 @@ class AnalyticsService {
     resolved: boolean;
   }[]> {
     return this.getCachedOrFetch('crisis_alerts', async () => {
-      const alerts = [];
+      const alerts = [] as { id: string; severity: 'high' | 'medium' | 'low'; message: string; timestamp: Date; resolved: boolean; }[];
       const { seasonalMultiplier } = this.generateRealisticData();
-      
-      // More alerts during stressful periods
       const alertCount = Math.floor(2 * seasonalMultiplier);
-      
       for (let i = 0; i < alertCount; i++) {
         const severities: ('high' | 'medium' | 'low')[] = ['high', 'medium', 'low'];
         const messages = {
           high: 'High-risk assessment detected - immediate attention required',
           medium: 'Student showing signs of moderate distress',
           low: 'Follow-up recommended for recent assessment'
-        };
-        
+        } as const;
         const severity = severities[Math.floor(Math.random() * severities.length)];
-        
         alerts.push({
           id: `alert_${i}_${Date.now()}`,
           severity,
@@ -282,7 +352,6 @@ class AnalyticsService {
           resolved: Math.random() > 0.3
         });
       }
-      
       return alerts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
     });
   }
@@ -297,17 +366,14 @@ class AnalyticsService {
     needsFollowUp: boolean;
   }[]> {
     return this.getCachedOrFetch('consented_assessments', async () => {
-      const assessments = [];
-      const count = 5 + Math.floor(Math.random() * 8); // 5-12 assessments
-      
-      const types = ['PHQ-9', 'GAD-7', 'GHQ-12'];
-      const riskLevels = ['Minimal', 'Mild', 'Moderate', 'Severe'];
-      
+      const assessments = [] as { id: string; anonymousCode: string; assessmentType: string; riskLevel: string; score: number; completedAt: Date; needsFollowUp: boolean; }[];
+      const count = 5 + Math.floor(Math.random() * 8);
+      const types = ['PHQ-9', 'GAD-7', 'GHQ-12'] as const;
+      const riskLevels = ['Minimal', 'Mild', 'Moderate', 'Severe'] as const;
       for (let i = 0; i < count; i++) {
         const type = types[Math.floor(Math.random() * types.length)];
         const riskLevel = riskLevels[Math.floor(Math.random() * riskLevels.length)];
         const maxScore = type === 'PHQ-9' ? 27 : type === 'GAD-7' ? 21 : 36;
-        
         assessments.push({
           id: `assessment_${i}_${Date.now()}`,
           anonymousCode: `AN-${Math.floor(Math.random() * 9000) + 1000}`,
@@ -318,30 +384,25 @@ class AnalyticsService {
           needsFollowUp: riskLevel === 'Moderate' || riskLevel === 'Severe'
         });
       }
-      
       return assessments.sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
     });
   }
 
-  // Clear cache (useful for testing or forced refresh)
   clearCache(): void {
     this.cache.clear();
   }
 
-  // Get cache status for debugging
   getCacheStatus(): { [key: string]: { age: number; size: number } } {
     const status: { [key: string]: { age: number; size: number } } = {};
-    
     this.cache.forEach((value, key) => {
       status[key] = {
         age: Date.now() - value.timestamp,
         size: JSON.stringify(value.data).length
       };
     });
-    
     return status;
   }
 }
 
 export const analyticsService = AnalyticsService.getInstance();
-export type { UserEngagement, AssessmentMetrics, ResourceUsage, CounselorMetrics, SystemHealth, TrendData };
+export type { UserEngagement, AssessmentMetrics, ResourceUsage, CounselorMetrics, SystemHealth, TrendData, MoodAnalytics, MoodType, MoodEvent };
