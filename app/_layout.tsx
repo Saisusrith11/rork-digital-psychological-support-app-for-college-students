@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { trpc, trpcClient } from "@/lib/trpc";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { StyleSheet } from "react-native";
+import { BackHandler, Platform, StyleSheet } from "react-native";
 import { AuthProvider } from "@/hooks/auth-store";
 import { MoodProvider } from "@/hooks/mood-store";
 import { AssessmentProvider } from "@/hooks/assessment-store";
@@ -29,6 +29,33 @@ const queryClient = new QueryClient({
 });
 
 function RootLayoutNav() {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+
+    const onBackPress = () => {
+      try {
+        const canGo = router.canGoBack?.() ?? false;
+        console.log("[BackHandler] Back pressed. canGoBack=", canGo);
+        if (!canGo) {
+          // Prevent GO_BACK action warning at root
+          return true;
+        }
+        router.back();
+        return true;
+      } catch (e) {
+        console.log("[BackHandler] Error handling back press:", e);
+        return true;
+      }
+    };
+
+    const sub = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+    return () => {
+      sub.remove();
+    };
+  }, [router]);
+
   return (
     <Stack
       initialRouteName="(tabs)"
