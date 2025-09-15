@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, Platform, ActivityIndicator, KeyboardAvoidingView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, Platform, ActivityIndicator, KeyboardAvoidingView, Modal } from 'react-native';
 import { ArrowLeft, Mic, Send, Bot, AlertTriangle, Phone, Heart, BookOpen, Users, Brain, Sparkles } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -39,6 +39,9 @@ export default function ChatScreen() {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [showQuickPrompts, setShowQuickPrompts] = useState(true);
+  const [messageCount, setMessageCount] = useState(0);
+  const [dailyLimit] = useState(50);
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
 
   useEffect(() => {
@@ -126,6 +129,12 @@ export default function ChatScreen() {
     const messageText = text || inputText;
     if (!messageText.trim()) return;
 
+    // Check daily message limit
+    if (messageCount >= dailyLimit) {
+      setShowLimitModal(true);
+      return;
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       text: messageText,
@@ -137,6 +146,7 @@ export default function ChatScreen() {
     setInputText('');
     setIsTyping(true);
     setShowQuickPrompts(false);
+    setMessageCount(prev => prev + 1);
 
     try {
       console.log('[ChatScreen] Processing message with advanced AI service');
@@ -219,6 +229,9 @@ export default function ChatScreen() {
           <View style={styles.headerTextContainer}>
             <Text style={styles.headerTitle}>{t('chat.title')}</Text>
             <Text style={styles.headerStatus}>{t('chat.subtitle')}</Text>
+            <Text style={styles.messageCounter}>
+              {messageCount}/{dailyLimit} messages today
+            </Text>
           </View>
           <TouchableOpacity onPress={showEmergencyContacts} style={styles.emergencyButton}>
             <Phone size={20} color={Colors.error} />
@@ -356,6 +369,44 @@ export default function ChatScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Message Limit Modal */}
+      <Modal
+        visible={showLimitModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLimitModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Daily Message Limit Reached</Text>
+            <Text style={styles.modalMessage}>
+              You've reached your daily limit of {dailyLimit} messages. This helps ensure quality support for all users.
+              {"\n\n"}For unlimited access or urgent support, please:
+              {"\n"}• Book a session with a counselor
+              {"\n"}• Contact emergency helplines if needed
+              {"\n"}• Try again tomorrow
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.cancelButton]} 
+                onPress={() => setShowLimitModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>OK</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.confirmButton]} 
+                onPress={() => {
+                  setShowLimitModal(false);
+                  router.push('/booking');
+                }}
+              >
+                <Text style={styles.confirmButtonText}>Book Session</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -491,6 +542,63 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 20,
     backgroundColor: Colors.surfaceLight,
+  },
+  messageCounter: {
+    fontSize: 10,
+    color: Colors.text.light,
+    marginTop: 2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 24,
+    marginHorizontal: 32,
+    width: '85%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: Colors.surfaceLight,
+  },
+  confirmButton: {
+    backgroundColor: Colors.primary,
+  },
+  cancelButtonText: {
+    color: Colors.text.secondary,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  confirmButtonText: {
+    color: Colors.text.white,
+    fontSize: 16,
+    fontWeight: '600',
   },
   urgentMessage: {
     borderLeftWidth: 4,

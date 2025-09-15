@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, Switch, TextInput, Platform, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, Switch, TextInput, Alert } from 'react-native';
 import { 
   Calendar, 
   TrendingUp, 
@@ -14,7 +14,7 @@ import {
   ChevronRight,
   User,
   Send,
-  Wifi,
+
   WifiOff
 } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
@@ -22,15 +22,18 @@ import { useAuth } from '@/hooks/auth-store';
 import { useNotifications } from '@/hooks/notification-store';
 import { useFeedback } from '@/hooks/feedback-store';
 import { useLanguage, type SupportedLanguage } from '@/hooks/language-store';
+import { useMood } from '@/hooks/mood-store';
+import MoodSelector from '@/components/MoodSelector';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const { notifications, unreadCount } = useNotifications();
   const { submitFeedback } = useFeedback();
   const { currentLanguage, setLanguage, t } = useLanguage();
+  const { todaysMood, addMoodEntry, realAnalytics, reloadRealAnalytics, setUserId } = useMood();
   const insets = useSafeAreaInsets();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
@@ -43,22 +46,12 @@ export default function ProfileScreen() {
   const [feedbackCategory, setFeedbackCategory] = useState<'bug' | 'feature' | 'general' | 'complaint'>('general');
   const [isOffline, setIsOffline] = useState(false);
   const [offlineData, setOfflineData] = useState<any>(null);
+  const [showMoodModal, setShowMoodModal] = useState(false);
+  const [showAnalyticsModal, setShowAnalyticsModal] = useState(false);
+  const [analyticsRange, setAnalyticsRange] = useState<'7d' | '30d' | '90d'>('7d');
 
   // Check offline status and load offline data
   useEffect(() => {
-    const loadOfflineData = async () => {
-      try {
-        const stored = await AsyncStorage.getItem('offline_profile_data');
-        if (stored) {
-          setOfflineData(JSON.parse(stored));
-        }
-      } catch (error) {
-        console.error('Error loading offline data:', error);
-      }
-    };
-    
-    loadOfflineData();
-    
     // Simulate network check (in real app, use NetInfo)
     const checkConnection = () => {
       // For demo purposes, assume we're online
@@ -68,10 +61,28 @@ export default function ProfileScreen() {
     checkConnection();
   }, []);
 
+  // Initialize mood tracking for current user
+  useEffect(() => {
+    if (user?.id) {
+      setUserId(user.id);
+    }
+  }, [user?.id, setUserId]);
+
+  const handleMoodSubmit = async (mood: 'great' | 'good' | 'okay' | 'low' | 'hard', notes?: string) => {
+    await addMoodEntry(mood, notes);
+    setShowMoodModal(false);
+  };
+
+  const handleViewAnalytics = async (range: '7d' | '30d' | '90d') => {
+    setAnalyticsRange(range);
+    await reloadRealAnalytics(range);
+    setShowAnalyticsModal(true);
+  };
+
   // Save data offline when changes are made
   const saveOfflineData = async (data: any) => {
     try {
-      await AsyncStorage.setItem('offline_profile_data', JSON.stringify(data));
+      // Store offline data in memory for demo
       setOfflineData(data);
     } catch (error) {
       console.error('Error saving offline data:', error);
@@ -185,6 +196,76 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        <View style={styles.moodSection}>
+          <Text style={styles.sectionTitle}>How are you feeling today?</Text>
+          <View style={styles.moodCard}>
+            {todaysMood ? (
+              <View style={styles.todayMoodContainer}>
+                <View style={styles.moodDisplay}>
+                  <Text style={styles.moodEmoji}>
+                    {todaysMood.mood === 'great' ? '😊' : 
+                     todaysMood.mood === 'good' ? '🙂' : 
+                     todaysMood.mood === 'okay' ? '😐' : 
+                     todaysMood.mood === 'low' ? '😔' : '😢'}
+                  </Text>
+                  <Text style={styles.moodLabel}>
+                    {todaysMood.mood.charAt(0).toUpperCase() + todaysMood.mood.slice(1)}
+                  </Text>
+                </View>
+                <TouchableOpacity 
+                  style={styles.updateMoodButton}
+                  onPress={() => setShowMoodModal(true)}
+                >
+                  <Text style={styles.updateMoodText}>Update</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={styles.addMoodButton}
+                onPress={() => setShowMoodModal(true)}
+              >
+                <Heart size={24} color={Colors.primary} />
+                <Text style={styles.addMoodText}>Track your mood</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          
+          {realAnalytics && (
+            <View style={styles.analyticsPreview}>
+              <Text style={styles.analyticsTitle}>Your Analytics ({analyticsRange})</Text>
+              <View style={styles.analyticsGrid}>
+                <View style={styles.analyticsItem}>
+                  <Text style={styles.analyticsNumber}>{realAnalytics.totalEntries}</Text>
+                  <Text style={styles.analyticsLabel}>Entries</Text>
+                </View>
+                <View style={styles.analyticsItem}>
+                  <Text style={[styles.analyticsNumber, { color: Colors.success }]}>
+                    {realAnalytics.averageMood.toFixed(1)}
+                  </Text>
+                  <Text style={styles.analyticsLabel}>Avg Mood</Text>
+                </View>
+                <View style={styles.analyticsItem}>
+                  <Text style={[styles.analyticsNumber, { 
+                    color: realAnalytics.moodTrend === 'improving' ? Colors.success : 
+                           realAnalytics.moodTrend === 'declining' ? Colors.warning : Colors.primary 
+                  }]}>
+                    {realAnalytics.moodTrend === 'improving' ? '↗️' : 
+                     realAnalytics.moodTrend === 'declining' ? '↘️' : '→'}
+                  </Text>
+                  <Text style={styles.analyticsLabel}>Trend</Text>
+                </View>
+              </View>
+              <TouchableOpacity 
+                style={styles.viewAnalyticsButton}
+                onPress={() => handleViewAnalytics(analyticsRange)}
+              >
+                <TrendingUp size={16} color={Colors.primary} />
+                <Text style={styles.viewAnalyticsText}>View Detailed Analytics</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
         <View style={styles.quickActions}>
           <TouchableOpacity 
             style={styles.actionCard}
@@ -200,12 +281,12 @@ export default function ProfileScreen() {
 
           <TouchableOpacity 
             style={styles.actionCard}
-            onPress={() => router.push('/weekly-report')}
+            onPress={() => router.push('/(tabs)/chat')}
           >
-            <TrendingUp size={24} color={Colors.success} />
+            <MessageSquare size={24} color={Colors.secondary} />
             <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>{t('profile.moodTracking')}</Text>
-              <Text style={styles.actionSubtitle}>{t('profile.viewInsights')}</Text>
+              <Text style={styles.actionTitle}>AI Chat Support</Text>
+              <Text style={styles.actionSubtitle}>24/7 mental health assistance</Text>
             </View>
             <ChevronRight size={20} color={Colors.text.secondary} />
           </TouchableOpacity>
@@ -590,6 +671,119 @@ export default function ProfileScreen() {
             <TouchableOpacity 
               style={styles.closeModalButton}
               onPress={() => setShowHelpModal(false)}
+            >
+              <Text style={styles.closeModalButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Mood Entry Modal */}
+      <Modal
+        visible={showMoodModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowMoodModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.moodModalContent}>
+            <Text style={styles.modalTitle}>How are you feeling today?</Text>
+            <MoodSelector
+              onMoodSelect={handleMoodSubmit}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Analytics Modal */}
+      <Modal
+        visible={showAnalyticsModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowAnalyticsModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.analyticsModalContent}>
+            <Text style={styles.modalTitle}>Mood Analytics ({analyticsRange})</Text>
+            <ScrollView style={styles.analyticsContent}>
+              {realAnalytics && (
+                <>
+                  <View style={styles.analyticsSection}>
+                    <Text style={styles.analyticsSectionTitle}>Overview</Text>
+                    <View style={styles.analyticsOverview}>
+                      <View style={styles.overviewItem}>
+                        <Text style={styles.overviewNumber}>{realAnalytics.totalEntries}</Text>
+                        <Text style={styles.overviewLabel}>Total Entries</Text>
+                      </View>
+                      <View style={styles.overviewItem}>
+                        <Text style={[styles.overviewNumber, { color: Colors.success }]}>
+                          {realAnalytics.averageMood.toFixed(1)}/5
+                        </Text>
+                        <Text style={styles.overviewLabel}>Average Mood</Text>
+                      </View>
+                      <View style={styles.overviewItem}>
+                        <Text style={[styles.overviewNumber, { 
+                          color: realAnalytics.moodTrend === 'improving' ? Colors.success : 
+                                 realAnalytics.moodTrend === 'declining' ? Colors.warning : Colors.primary 
+                        }]}>
+                          {realAnalytics.moodTrend.charAt(0).toUpperCase() + realAnalytics.moodTrend.slice(1)}
+                        </Text>
+                        <Text style={styles.overviewLabel}>Trend</Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  <View style={styles.analyticsSection}>
+                    <Text style={styles.analyticsSectionTitle}>Mood Distribution</Text>
+                    {Object.entries(realAnalytics.moodDistribution).map(([mood, count]) => (
+                      <View key={mood} style={styles.distributionItem}>
+                        <Text style={styles.distributionMood}>
+                          {mood === 'great' ? '😊 Great' : 
+                           mood === 'good' ? '🙂 Good' : 
+                           mood === 'okay' ? '😐 Okay' : 
+                           mood === 'low' ? '😔 Low' : '😢 Hard'}
+                        </Text>
+                        <View style={styles.distributionBar}>
+                          <View 
+                            style={[
+                              styles.distributionFill, 
+                              { width: `${(count / realAnalytics.totalEntries) * 100}%` }
+                            ]} 
+                          />
+                        </View>
+                        <Text style={styles.distributionCount}>{count}</Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  <View style={styles.analyticsSection}>
+                    <Text style={styles.analyticsSectionTitle}>Time Range</Text>
+                    <View style={styles.rangeButtons}>
+                      {(['7d', '30d', '90d'] as const).map((range) => (
+                        <TouchableOpacity
+                          key={range}
+                          style={[
+                            styles.rangeButton,
+                            analyticsRange === range && styles.selectedRangeButton
+                          ]}
+                          onPress={() => handleViewAnalytics(range)}
+                        >
+                          <Text style={[
+                            styles.rangeButtonText,
+                            analyticsRange === range && styles.selectedRangeButtonText
+                          ]}>
+                            {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : '90 Days'}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                </>
+              )}
+            </ScrollView>
+            <TouchableOpacity 
+              style={styles.closeModalButton}
+              onPress={() => setShowAnalyticsModal(false)}
             >
               <Text style={styles.closeModalButtonText}>Close</Text>
             </TouchableOpacity>
@@ -1088,5 +1282,203 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.warning,
     fontWeight: '600',
+  },
+  moodSection: {
+    paddingHorizontal: 16,
+    marginBottom: 24,
+  },
+  moodCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: Colors.shadow.light,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  todayMoodContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  moodDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  moodEmoji: {
+    fontSize: 32,
+    marginRight: 12,
+  },
+  moodLabel: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.text.primary,
+  },
+  updateMoodButton: {
+    backgroundColor: Colors.primary + '20',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  updateMoodText: {
+    color: Colors.primary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  addMoodButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+  },
+  addMoodText: {
+    fontSize: 16,
+    color: Colors.primary,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  analyticsPreview: {
+    marginTop: 16,
+    backgroundColor: Colors.surfaceLight,
+    borderRadius: 12,
+    padding: 16,
+  },
+  analyticsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 12,
+  },
+  analyticsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 16,
+  },
+  analyticsItem: {
+    alignItems: 'center',
+  },
+  analyticsNumber: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.primary,
+    marginBottom: 4,
+  },
+  analyticsLabel: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+  },
+  viewAnalyticsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary + '20',
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  viewAnalyticsText: {
+    color: Colors.primary,
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  moodModalContent: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 24,
+    marginHorizontal: 16,
+    maxHeight: '80%',
+  },
+  analyticsModalContent: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 24,
+    marginHorizontal: 16,
+    maxHeight: '90%',
+  },
+  analyticsContent: {
+    maxHeight: 500,
+  },
+  analyticsSection: {
+    marginBottom: 24,
+  },
+  analyticsSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 12,
+  },
+  analyticsOverview: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: Colors.background,
+    borderRadius: 8,
+    padding: 16,
+  },
+  overviewItem: {
+    alignItems: 'center',
+  },
+  overviewNumber: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.primary,
+    marginBottom: 4,
+  },
+  overviewLabel: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    textAlign: 'center',
+  },
+  distributionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  distributionMood: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.text.primary,
+    width: 80,
+  },
+  distributionBar: {
+    flex: 1,
+    height: 8,
+    backgroundColor: Colors.surfaceLight,
+    borderRadius: 4,
+    marginHorizontal: 12,
+  },
+  distributionFill: {
+    height: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: 4,
+  },
+  distributionCount: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text.secondary,
+    width: 30,
+    textAlign: 'right',
+  },
+  rangeButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  rangeButton: {
+    flex: 1,
+    backgroundColor: Colors.surfaceLight,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  selectedRangeButton: {
+    backgroundColor: Colors.primary,
+  },
+  rangeButtonText: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    fontWeight: '500',
+  },
+  selectedRangeButtonText: {
+    color: Colors.text.white,
   },
 });

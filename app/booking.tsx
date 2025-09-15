@@ -67,13 +67,37 @@ export default function BookingScreen() {
     setSelectedTime(sanitized);
   }, []);
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
     if (!selectedDate || !selectedTime || !selectedCounselor) {
       setShowErrorModal(true);
       return;
     }
 
-    setShowSuccessModal(true);
+    try {
+      // Send notification to counselor
+      const selectedCounselorData = counselors.find(c => c.id === selectedCounselor);
+      const notificationData = {
+        counselorId: selectedCounselor,
+        counselorName: selectedCounselorData?.name,
+        studentName: 'Student', // In real app, get from user context
+        date: selectedDate,
+        time: selectedTime,
+        type: 'session_booking',
+        message: `New session booking request for ${selectedDate} at ${selectedTime}`,
+        timestamp: new Date().toISOString()
+      };
+
+      // In a real app, this would be an API call
+      console.log('Sending notification to counselor:', notificationData);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error('Error booking session:', error);
+      setShowErrorModal(true);
+    }
   };
 
   const handleSuccessConfirm = () => {
@@ -253,7 +277,8 @@ export default function BookingScreen() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Booking Confirmed</Text>
             <Text style={styles.modalMessage}>
-              Your session has been booked for {selectedDate} at {selectedTime}
+              Your session has been booked for {selectedDate} at {selectedTime}.{"\n\n"}
+              The counselor has been notified and will confirm your appointment shortly.
             </Text>
             <TouchableOpacity 
               style={styles.modalButton} 
