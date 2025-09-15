@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   StyleSheet,
   TextInput,
   Platform,
+  BackHandler,
 } from 'react-native';
 import {
   Upload,
@@ -773,6 +774,22 @@ export default function CounselorApplicationForm() {
         return null;
     }
   };
+
+  useEffect(() => {
+    const onBackPress = () => {
+      try {
+        router.replace('/auth');
+      } catch (e) {
+        console.log('[CounselorApplication] back press error', e);
+      }
+      return true;
+    };
+
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => {
+      sub.remove();
+    };
+  }, []);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]} testID="counselor-application">
