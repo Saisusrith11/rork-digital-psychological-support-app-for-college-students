@@ -39,13 +39,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="resources-dynamic"
-        options={{
-          title: 'Dynamic',
-          tabBarIcon: ({ color, size }) => <BookOpen size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="chat"
         options={{
           title: t('nav.chat'),
