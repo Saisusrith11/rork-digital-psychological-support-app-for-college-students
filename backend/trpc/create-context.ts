@@ -19,3 +19,21 @@ const t = initTRPC.context<Context>().create({
 
 export const createTRPCRouter = t.router;
 export const publicProcedure = t.procedure;
+
+// Protected procedure (requires authentication)
+export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
+  // In production, verify JWT token and get user from database
+  // For now, simulate authenticated user
+  const user = {
+    id: 'admin-1',
+    role: 'admin',
+    email: 'admin@example.com',
+  };
+  
+  return next({
+    ctx: {
+      ...ctx,
+      user,
+    },
+  });
+});

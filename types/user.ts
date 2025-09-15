@@ -25,6 +25,49 @@ export interface Counselor extends User {
   isOnline: boolean;
   rating?: number;
   experience?: string;
+  applicationStatus?: 'pending' | 'approved' | 'rejected';
+  documents?: CounselorDocument[];
+  appliedAt?: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  rejectionReason?: string;
+}
+
+export interface CounselorDocument {
+  id: string;
+  type: 'degree_certificate' | 'transcripts' | 'rci_registration' | 'professional_registration' | 'experience_letter' | 'training_certificate' | 'government_id' | 'cv' | 'reference_contact';
+  fileName: string;
+  fileUrl: string;
+  uploadedAt: string;
+  fileSize: number;
+  mimeType: string;
+}
+
+export interface CounselorApplication {
+  id: string;
+  counselorId: string;
+  personalInfo: {
+    fullName: string;
+    email: string;
+    phone: string;
+    address: string;
+    dateOfBirth: string;
+  };
+  professionalInfo: {
+    specialization: string[];
+    experience: string;
+    languages: string[];
+    currentEmployment?: string;
+  };
+  documents: CounselorDocument[];
+  termsAccepted: boolean;
+  privacyAccepted: boolean;
+  status: 'pending' | 'approved' | 'rejected';
+  submittedAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  adminNotes?: string;
+  rejectionReason?: string;
 }
 
 export interface Admin extends User {

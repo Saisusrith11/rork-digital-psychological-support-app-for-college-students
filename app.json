@@ -15,7 +15,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.rork.digital-psychological-support-app-for-college-students"
+      "bundleIdentifier": "app.rork.digital-psychological-support-app-for-college-students",
+      "usesIcloudStorage": true
     },
     "android": {
       "adaptiveIcon": {
@@ -32,6 +33,12 @@
         "expo-router",
         {
           "origin": "https://rork.com/"
+        }
+      ],
+      [
+        "expo-document-picker",
+        {
+          "iCloudContainerEnvironment": "Production"
         }
       ]
     ],
