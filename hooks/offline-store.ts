@@ -24,6 +24,8 @@ export interface Helpline {
   name: string;
   phone: string;
   region?: string;
+  updatedAt: string;
+  deleted?: boolean;
 }
 
 const STORAGE_KEYS = {
@@ -32,13 +34,14 @@ const STORAGE_KEYS = {
 } as const;
 
 const DEFAULT_HELPLINES: Helpline[] = [
-  { id: 'nimhans', name: 'NIMHANS', phone: '18005990019', region: 'India' },
-  { id: 'icall', name: 'iCall', phone: '+919152987821', region: 'India' },
+  { id: 'nimhans', name: 'NIMHANS', phone: '18005990019', region: 'India', updatedAt: new Date(0).toISOString() },
+  { id: 'icall', name: 'iCall', phone: '+919152987821', region: 'India', updatedAt: new Date(0).toISOString() },
 ];
 
 export const [OfflineProvider, useOffline] = createContextHook(() => {
   const [downloads, setDownloads] = useState<OfflineResourceMeta[]>([]);
   const [helplines, setHelplines] = useState<Helpline[]>(DEFAULT_HELPLINES);
+  const [syncing, setSyncing] = useState<boolean>(false);
   const [isBusy, setIsBusy] = useState<boolean>(false);
 
   useEffect(() => {
@@ -67,13 +70,16 @@ export const [OfflineProvider, useOffline] = createContextHook(() => {
   }, []);
 
   const addHelpline = useCallback(async (h: Helpline) => {
-    const updated = [...helplines, h];
+    const withMeta: Helpline = { ...h, updatedAt: new Date().toISOString() };
+    const updated = [...helplines.filter(x => x.id !== h.id), withMeta];
     setHelplines(updated);
     await AsyncStorage.setItem(STORAGE_KEYS.helplines, JSON.stringify(updated.filter(x => !DEFAULT_HELPLINES.find(d => d.id === x.id))));
   }, [helplines]);
 
   const removeHelpline = useCallback(async (id: string) => {
-    const updated = helplines.filter(h => h.id !== id || !!DEFAULT_HELPLINES.find(d => d.id === id));
+    const updated = helplines
+      .map(h => h.id === id ? { ...h, deleted: true, updatedAt: new Date().toISOString() } : h)
+      .filter(h => h.id === id ? !DEFAULT_HELPLINES.find(d => d.id === id) : true);
     setHelplines(updated);
     await AsyncStorage.setItem(STORAGE_KEYS.helplines, JSON.stringify(updated.filter(x => !DEFAULT_HELPLINES.find(d => d.id === x.id))));
   }, [helplines]);
@@ -145,10 +151,56 @@ export const [OfflineProvider, useOffline] = createContextHook(() => {
     return sensitiveKeywords.some((k) => k && typeof k === 'string' && k.length > 1 && lower.includes(k.toLowerCase()));
   }, [sensitiveKeywords]);
 
+  const upsertHelplinesFromServer = useCallback(async (serverHelplines: Helpline[]) => {
+    try {
+      const map: Record<string, Helpline> = {};
+      [...DEFAULT_HELPLINES, ...helplines].forEach(h => { map[h.id] = h; });
+      serverHelplines.forEach(h => {
+        const existing = map[h.id];
+        if (!existing || new Date(h.updatedAt).getTime() > new Date(existing.updatedAt).getTime()) {
+          map[h.id] = h;
+        }
+      });
+      const merged = Object.values(map).filter(h => !h.deleted);
+      setHelplines(merged);
+      await AsyncStorage.setItem(STORAGE_KEYS.helplines, JSON.stringify(merged.filter(x => !DEFAULT_HELPLINES.find(d => d.id === x.id))));
+    } catch (e) {
+      console.log('[offline-store] merge from server failed', e);
+    }
+  }, [helplines]);
+
+  const getDirtyHelplines = useCallback((): Helpline[] => {
+    return helplines.filter(h => !DEFAULT_HELPLINES.find(d => d.id === h.id));
+  }, [helplines]);
+
+  useEffect(() => {
+    let timer: any;
+    const tick = async () => {
+      try {
+        setSyncing(true);
+        const { trpcClient } = await import('@/lib/trpc');
+        const server = await trpcClient.helplines.getAll.query();
+        await upsertHelplinesFromServer(server);
+        const dirty = getDirtyHelplines();
+        if (dirty.length > 0) {
+          await trpcClient.helplines.upsertMany.mutate({ helplines: dirty });
+        }
+      } catch (e) {
+        console.log('[offline-store] sync tick failed', e);
+      } finally {
+        setSyncing(false);
+        timer = setTimeout(tick, 60_000);
+      }
+    };
+    tick();
+    return () => { if (timer) clearTimeout(timer); };
+  }, [upsertHelplinesFromServer, getDirtyHelplines]);
+
   return {
     downloads,
     helplines,
     isBusy,
+    syncing,
     isDownloaded,
     getLocalUri,
     download,
@@ -156,5 +208,6 @@ export const [OfflineProvider, useOffline] = createContextHook(() => {
     addHelpline,
     removeHelpline,
     scanText,
+    upsertHelplinesFromServer,
   };
 });

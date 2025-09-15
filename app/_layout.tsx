@@ -13,6 +13,7 @@ import { NotificationProvider } from "@/hooks/notification-store";
 import { FeedbackProvider } from "@/hooks/feedback-store";
 import { ThemeProvider } from "@/hooks/theme-store";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { OfflineProvider } from "@/hooks/offline-store";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -103,7 +104,9 @@ export default function RootLayout() {
                     <FeedbackProvider>
                       <MoodProvider>
                         <AssessmentProvider>
-                          <RootLayoutNav />
+                          <OfflineProvider>
+                            <RootLayoutNav />
+                          </OfflineProvider>
                         </AssessmentProvider>
                       </MoodProvider>
                     </FeedbackProvider>
