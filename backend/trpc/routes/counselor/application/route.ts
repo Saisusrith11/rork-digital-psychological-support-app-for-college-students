@@ -1,6 +1,22 @@
 import { z } from 'zod';
 import { protectedProcedure, publicProcedure } from '@/backend/trpc/create-context';
 import type { CounselorApplication, CounselorDocument } from '@/types/user';
+import { Resend } from 'resend';
+
+// Initialize Resend with API key
+// To set up email sending:
+// 1. Sign up at https://resend.com
+// 2. Get your API key from the dashboard
+// 3. Set RESEND_API_KEY environment variable
+// 4. Set FROM_EMAIL environment variable (e.g., 'Mental Health Platform <noreply@yourdomain.com>')
+// 5. Verify your domain in Resend dashboard for production use
+const resend = new Resend(process.env.RESEND_API_KEY || 'your-resend-api-key-here');
+
+// Email configuration
+const EMAIL_CONFIG = {
+  fromEmail: process.env.FROM_EMAIL || 'Mental Health Platform <noreply@mentalhealth.com>',
+  replyTo: process.env.REPLY_TO_EMAIL || 'support@mentalhealth.com',
+};
 
 // Email service for sending notifications
 class EmailService {
@@ -49,8 +65,8 @@ class EmailService {
         `
       };
       
-      // Simulate email sending (replace with actual email service)
-      await this.simulateEmailSend(emailContent);
+      // Send actual email using Resend
+      await this.sendActualEmail(emailContent);
       
       console.log('[EmailService] Approval email sent successfully to:', counselorEmail);
       return true;
@@ -95,8 +111,8 @@ class EmailService {
         `
       };
       
-      // Simulate email sending (replace with actual email service)
-      await this.simulateEmailSend(emailContent);
+      // Send actual email using Resend
+      await this.sendActualEmail(emailContent);
       
       console.log('[EmailService] Rejection email sent successfully to:', counselorEmail);
       return true;
@@ -115,30 +131,40 @@ class EmailService {
     return password;
   }
   
-  private static async simulateEmailSend(emailContent: any): Promise<void> {
-    // In production, replace this with actual email service integration
-    // Example with SendGrid:
-    // const sgMail = require('@sendgrid/mail');
-    // sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-    // await sgMail.send(emailContent);
-    
-    // For now, simulate email sending with detailed logging
-    console.log('\n=== EMAIL NOTIFICATION ===');
-    console.log('To:', emailContent.to);
-    console.log('Subject:', emailContent.subject);
-    console.log('Timestamp:', new Date().toISOString());
-    console.log('Content Preview:', emailContent.html.substring(0, 200) + '...');
-    console.log('=========================\n');
-    
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // In a real implementation, you would:
-    // 1. Use environment variables for email service credentials
-    // 2. Handle email service errors properly
-    // 3. Implement retry logic for failed sends
-    // 4. Log email delivery status
-    // 5. Store email history in database
+  private static async sendActualEmail(emailContent: any): Promise<void> {
+    try {
+      // Send email using Resend
+      const { data, error } = await resend.emails.send({
+        from: EMAIL_CONFIG.fromEmail,
+        replyTo: EMAIL_CONFIG.replyTo,
+        to: [emailContent.to],
+        subject: emailContent.subject,
+        html: emailContent.html,
+      });
+
+      if (error) {
+        console.error('[EmailService] Resend error:', error);
+        throw new Error(`Failed to send email: ${error.message}`);
+      }
+
+      console.log('[EmailService] Email sent successfully via Resend:', data?.id);
+      console.log('[EmailService] Recipient:', emailContent.to);
+      console.log('[EmailService] Subject:', emailContent.subject);
+      
+    } catch (error) {
+      console.error('[EmailService] Error sending email:', error);
+      
+      // Fallback to logging if email service fails
+      console.log('\n=== EMAIL NOTIFICATION (FALLBACK) ===');
+      console.log('To:', emailContent.to);
+      console.log('Subject:', emailContent.subject);
+      console.log('Timestamp:', new Date().toISOString());
+      console.log('Content Preview:', emailContent.html.substring(0, 200) + '...');
+      console.log('Error:', error);
+      console.log('=====================================\n');
+      
+      throw error;
+    }
   }
 }
 
