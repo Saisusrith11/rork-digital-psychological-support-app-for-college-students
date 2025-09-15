@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { MoodEntry } from '@/types/user';
+import { safeJsonParse, safeJsonStringify } from '@/utils/safe-json-parse';
 
 export const [MoodProvider, useMood] = createContextHook(() => {
   const [moodEntries, setMoodEntries] = useState<MoodEntry[]>([]);
@@ -13,26 +14,19 @@ export const [MoodProvider, useMood] = createContextHook(() => {
     
     try {
       const entries = await AsyncStorage.getItem(`mood_entries_${currentUserId}`);
-      if (entries && entries.trim() && entries !== 'undefined' && entries !== 'null') {
-        try {
-          const parsedEntries = JSON.parse(entries);
-          if (Array.isArray(parsedEntries)) {
-            setMoodEntries(parsedEntries);
-            
-            // Check if there's an entry for today
-            const today = new Date().toDateString();
-            const todayEntry = parsedEntries.find((entry: MoodEntry) => 
-              new Date(entry.date).toDateString() === today
-            );
-            setTodaysMood(todayEntry || null);
-          }
-        } catch (parseError) {
-          console.error('Error parsing mood entries:', parseError);
-          // Clear corrupted data
-          await AsyncStorage.removeItem(`mood_entries_${currentUserId}`);
-          setMoodEntries([]);
-          setTodaysMood(null);
-        }
+      const parsedEntries = safeJsonParse<MoodEntry[]>(entries);
+      if (Array.isArray(parsedEntries)) {
+        setMoodEntries(parsedEntries);
+        
+        // Check if there's an entry for today
+        const today = new Date().toDateString();
+        const todayEntry = parsedEntries.find((entry: MoodEntry) => 
+          new Date(entry.date).toDateString() === today
+        );
+        setTodaysMood(todayEntry || null);
+      } else {
+        setMoodEntries([]);
+        setTodaysMood(null);
       }
     } catch (error) {
       console.error('Error loading mood entries:', error);
@@ -74,7 +68,10 @@ export const [MoodProvider, useMood] = createContextHook(() => {
         updatedEntries = [...moodEntries, newEntry];
       }
 
-      await AsyncStorage.setItem(`mood_entries_${currentUserId}`, JSON.stringify(updatedEntries));
+      const entriesJson = safeJsonStringify(updatedEntries);
+      if (entriesJson) {
+        await AsyncStorage.setItem(`mood_entries_${currentUserId}`, entriesJson);
+      }
       setMoodEntries(updatedEntries);
       setTodaysMood(newEntry);
     } catch (error) {

@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Feedback } from '@/types/user';
+import { safeJsonParse, safeJsonStringify } from '@/utils/safe-json-parse';
 
 export const [FeedbackProvider, useFeedback] = createContextHook(() => {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
@@ -10,18 +11,11 @@ export const [FeedbackProvider, useFeedback] = createContextHook(() => {
   const loadFeedbacks = useCallback(async () => {
     try {
       const stored = await AsyncStorage.getItem('feedbacks');
-      if (stored && stored.trim() && stored !== 'undefined' && stored !== 'null') {
-        try {
-          const parsedFeedbacks = JSON.parse(stored);
-          if (Array.isArray(parsedFeedbacks)) {
-            setFeedbacks(parsedFeedbacks);
-          }
-        } catch (parseError) {
-          console.error('Error parsing feedbacks:', parseError);
-          // Clear corrupted data
-          await AsyncStorage.removeItem('feedbacks');
-          setFeedbacks([]);
-        }
+      const parsedFeedbacks = safeJsonParse<Feedback[]>(stored);
+      if (Array.isArray(parsedFeedbacks)) {
+        setFeedbacks(parsedFeedbacks);
+      } else {
+        setFeedbacks([]);
       }
     } catch (error) {
       console.error('Error loading feedbacks:', error);
@@ -36,7 +30,10 @@ export const [FeedbackProvider, useFeedback] = createContextHook(() => {
 
   const saveFeedbacks = useCallback(async (newFeedbacks: Feedback[]) => {
     try {
-      await AsyncStorage.setItem('feedbacks', JSON.stringify(newFeedbacks));
+      const feedbacksJson = safeJsonStringify(newFeedbacks);
+      if (feedbacksJson) {
+        await AsyncStorage.setItem('feedbacks', feedbacksJson);
+      }
     } catch (error) {
       console.error('Error saving feedbacks:', error);
     }

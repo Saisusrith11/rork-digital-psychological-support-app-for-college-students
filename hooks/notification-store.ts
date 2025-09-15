@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Notification } from '@/types/user';
+import { safeJsonParse, safeJsonStringify } from '@/utils/safe-json-parse';
 
 export const [NotificationProvider, useNotifications] = createContextHook(() => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -10,18 +11,11 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
   const loadNotifications = useCallback(async () => {
     try {
       const stored = await AsyncStorage.getItem('notifications');
-      if (stored && stored.trim() && stored !== 'undefined' && stored !== 'null') {
-        try {
-          const parsedNotifications = JSON.parse(stored);
-          if (Array.isArray(parsedNotifications)) {
-            setNotifications(parsedNotifications);
-          }
-        } catch (parseError) {
-          console.error('Error parsing notifications:', parseError);
-          // Clear corrupted data
-          await AsyncStorage.removeItem('notifications');
-          setNotifications([]);
-        }
+      const parsedNotifications = safeJsonParse<Notification[]>(stored);
+      if (Array.isArray(parsedNotifications)) {
+        setNotifications(parsedNotifications);
+      } else {
+        setNotifications([]);
       }
     } catch (error) {
       console.error('Error loading notifications:', error);
@@ -36,7 +30,10 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
 
   const saveNotifications = useCallback(async (newNotifications: Notification[]) => {
     try {
-      await AsyncStorage.setItem('notifications', JSON.stringify(newNotifications));
+      const notificationsJson = safeJsonStringify(newNotifications);
+      if (notificationsJson) {
+        await AsyncStorage.setItem('notifications', notificationsJson);
+      }
     } catch (error) {
       console.error('Error saving notifications:', error);
     }

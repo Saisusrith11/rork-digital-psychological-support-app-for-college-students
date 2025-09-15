@@ -1,6 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { safeJsonParse } from '@/utils/safe-json-parse';
 
 export type SupportedLanguage = 'en' | 'ta' | 'te' | 'hi';
 
@@ -370,8 +371,10 @@ export const [LanguageProvider, useLanguage] = createContextHook(() => {
   const loadLanguage = useCallback(async () => {
     try {
       const savedLanguage = await AsyncStorage.getItem('app_language');
-      if (savedLanguage && ['en', 'ta', 'te', 'hi'].includes(savedLanguage)) {
-        setCurrentLanguage(savedLanguage as SupportedLanguage);
+      // Language is stored as a plain string, not JSON
+      const lang = typeof savedLanguage === 'string' ? savedLanguage : safeJsonParse<string>(savedLanguage);
+      if (lang && ['en', 'ta', 'te', 'hi'].includes(lang)) {
+        setCurrentLanguage(lang as SupportedLanguage);
       }
     } catch (error) {
       console.error('Error loading language:', error);

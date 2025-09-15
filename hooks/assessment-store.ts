@@ -5,6 +5,7 @@ import { Assessment, AssessmentResponse, AssessmentResult } from '@/types/assess
 import { getAssessmentResult } from '@/constants/assessment-questions';
 import { trpcClient } from '@/lib/trpc';
 import { useAuth } from './auth-store';
+import { safeJsonParse, safeJsonStringify } from '@/utils/safe-json-parse';
 
 const ASSESSMENT_STORAGE_KEY = 'assessments';
 
@@ -18,26 +19,19 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
     try {
       setIsLoading(true);
       const stored = await AsyncStorage.getItem(ASSESSMENT_STORAGE_KEY);
-      if (stored && stored.trim() && stored !== 'undefined' && stored !== 'null') {
-        try {
-          const parsedData = JSON.parse(stored);
-          if (Array.isArray(parsedData)) {
-            const parsedAssessments = parsedData.map((assessment: any) => ({
-              ...assessment,
-              completedAt: new Date(assessment.completedAt),
-              result: {
-                ...assessment.result,
-                completedAt: new Date(assessment.result.completedAt),
-              },
-            }));
-            setAssessments(parsedAssessments);
-          }
-        } catch (parseError) {
-          console.error('Error parsing assessments:', parseError);
-          // Clear corrupted data
-          await AsyncStorage.removeItem(ASSESSMENT_STORAGE_KEY);
-          setAssessments([]);
-        }
+      const parsedData = safeJsonParse<any[]>(stored);
+      if (Array.isArray(parsedData)) {
+        const parsedAssessments = parsedData.map((assessment: any) => ({
+          ...assessment,
+          completedAt: new Date(assessment.completedAt),
+          result: {
+            ...assessment.result,
+            completedAt: new Date(assessment.result.completedAt),
+          },
+        }));
+        setAssessments(parsedAssessments);
+      } else {
+        setAssessments([]);
       }
     } catch (error) {
       console.error('Error loading assessments:', error);
@@ -77,7 +71,10 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
       const updatedAssessments = [newAssessment, ...assessments];
       setAssessments(updatedAssessments);
       
-      await AsyncStorage.setItem(ASSESSMENT_STORAGE_KEY, JSON.stringify(updatedAssessments));
+      const assessmentsJson = safeJsonStringify(updatedAssessments);
+      if (assessmentsJson) {
+        await AsyncStorage.setItem(ASSESSMENT_STORAGE_KEY, assessmentsJson);
+      }
       
       return newAssessment;
     } catch (error) {
@@ -132,7 +129,10 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
         a.id === assessment.id ? updatedAssessment : a
       );
       setAssessments(updatedAssessments);
-      await AsyncStorage.setItem(ASSESSMENT_STORAGE_KEY, JSON.stringify(updatedAssessments));
+      const assessmentsJson = safeJsonStringify(updatedAssessments);
+      if (assessmentsJson) {
+        await AsyncStorage.setItem(ASSESSMENT_STORAGE_KEY, assessmentsJson);
+      }
       console.log('Assessments updated in storage');
       
       setPendingConsent(null);
@@ -179,7 +179,10 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
           : a
       );
       setAssessments(updatedAssessments);
-      await AsyncStorage.setItem(ASSESSMENT_STORAGE_KEY, JSON.stringify(updatedAssessments));
+      const assessmentsJson = safeJsonStringify(updatedAssessments);
+      if (assessmentsJson) {
+        await AsyncStorage.setItem(ASSESSMENT_STORAGE_KEY, assessmentsJson);
+      }
       
       return { success: true, message: 'Consent revoked successfully' };
     } catch (error) {

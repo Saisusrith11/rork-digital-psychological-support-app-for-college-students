@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { User } from '@/types/user';
+import { safeJsonParse, safeJsonStringify } from '@/utils/safe-json-parse';
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
   const [user, setUser] = useState<User | null>(null);
@@ -10,17 +11,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const loadUser = useCallback(async () => {
     try {
       const userData = await AsyncStorage.getItem('user');
-      if (userData && userData.trim() && userData !== 'undefined' && userData !== 'null') {
-        try {
-          const parsedUser = JSON.parse(userData);
-          if (parsedUser && typeof parsedUser === 'object') {
-            setUser(parsedUser);
-          }
-        } catch (parseError) {
-          console.error('Error parsing user data:', parseError);
-          // Clear corrupted data
-          await AsyncStorage.removeItem('user');
-        }
+      const parsedUser = safeJsonParse<User>(userData);
+      if (parsedUser && typeof parsedUser === 'object') {
+        setUser(parsedUser);
       }
     } catch (error) {
       console.error('Error loading user:', error);
@@ -99,7 +92,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         };
       }
       
-      await AsyncStorage.setItem('user', JSON.stringify(mockUser));
+      const userJson = safeJsonStringify(mockUser);
+      if (userJson) {
+        await AsyncStorage.setItem('user', userJson);
+      }
       setUser(mockUser);
       return { success: true, user: mockUser } as const;
     } catch (error) {
@@ -122,7 +118,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         createdAt: new Date().toISOString(),
       };
       
-      await AsyncStorage.setItem('user', JSON.stringify(newUser));
+      const userJson = safeJsonStringify(newUser);
+      if (userJson) {
+        await AsyncStorage.setItem('user', userJson);
+      }
       setUser(newUser);
       return { success: true, user: newUser } as const;
     } catch (error) {

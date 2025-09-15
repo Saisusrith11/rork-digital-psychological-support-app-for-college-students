@@ -2,6 +2,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '@/constants/colors';
+import { safeJsonParse, safeJsonStringify } from '@/utils/safe-json-parse';
 
 export interface ThemeSettings {
   isDarkMode: boolean;
@@ -43,8 +44,8 @@ export const [ThemeProvider, useTheme] = createContextHook(() => {
   const loadSettings = useCallback(async () => {
     try {
       const savedSettings = await AsyncStorage.getItem('theme_settings');
-      if (savedSettings) {
-        const parsed = JSON.parse(savedSettings);
+      const parsed = safeJsonParse<ThemeSettings>(savedSettings);
+      if (parsed) {
         setSettings({ ...defaultSettings, ...parsed });
       }
     } catch (error) {
@@ -59,7 +60,10 @@ export const [ThemeProvider, useTheme] = createContextHook(() => {
   const updateSettings = useCallback(async (updates: Partial<ThemeSettings>) => {
     try {
       const newSettings = { ...settings, ...updates };
-      await AsyncStorage.setItem('theme_settings', JSON.stringify(newSettings));
+      const settingsJson = safeJsonStringify(newSettings);
+      if (settingsJson) {
+        await AsyncStorage.setItem('theme_settings', settingsJson);
+      }
       setSettings(newSettings);
     } catch (error) {
       console.error('Error saving theme settings:', error);
