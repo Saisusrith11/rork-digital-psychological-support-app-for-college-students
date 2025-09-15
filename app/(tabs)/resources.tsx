@@ -1,95 +1,142 @@
-import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { Target, Moon, Wind, Brain, BookOpen, Zap, Shield, TrendingUp } from 'lucide-react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, TextInput, ActivityIndicator, Platform } from 'react-native';
+import { Target, Moon, Wind, Brain, BookOpen, Zap, Shield, TrendingUp, Video, FileAudio, FileText, Sparkles, X, Search } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { resourcesData, resourceCategories, ResourceContent } from '@/constants/resources-data';
-import { useLanguage } from '@/hooks/language-store';
+import * as WebBrowser from 'expo-web-browser';
+import { trpc } from '@/lib/trpc';
+
+const TYPES = ['all','video','audio','pdf','meditation'] as const;
+
+type FilterType = typeof TYPES[number];
+
+type TrpcResource = {
+  id: string;
+  title: string;
+  description: string;
+  type: 'video' | 'audio' | 'pdf' | 'meditation';
+  category: string;
+  fileUrl: string;
+  duration?: string;
+  mimeType: string;
+};
 
 export default function ResourcesScreen() {
   const insets = useSafeAreaInsets();
-  const { t, currentLanguage } = useLanguage();
+  const [search, setSearch] = useState<string>('');
+  const [type, setType] = useState<FilterType>('all');
+  const [category, setCategory] = useState<string>('');
 
-  const getIcon = (iconName: string) => {
-    const iconProps = { size: 24, color: Colors.primary };
-    switch (iconName) {
-      case 'target':
-        return <Target {...iconProps} />;
-      case 'moon':
-        return <Moon {...iconProps} />;
-      case 'wind':
-        return <Wind {...iconProps} />;
-      case 'brain':
-        return <Brain {...iconProps} />;
-      case 'book-open':
-        return <BookOpen {...iconProps} />;
-      case 'zap':
-        return <Zap {...iconProps} />;
-      case 'shield':
-        return <Shield {...iconProps} />;
-      case 'trending-up':
-        return <TrendingUp {...iconProps} />;
+  const categoriesQuery = trpc.resources.getCategories.useQuery();
+  const listQuery = trpc.resources.getAll.useQuery({ type, category: category || undefined, search: search || undefined, limit: 100, offset: 0 });
+
+  const categories: string[] = useMemo(() => categoriesQuery.data?.categories ?? [], [categoriesQuery.data?.categories]);
+  const data: TrpcResource[] = useMemo(() => listQuery.data?.resources ?? [], [listQuery.data?.resources]);
+
+  const grouped = useMemo(() => {
+    return {
+      video: data.filter(r => r.type === 'video'),
+      audio: data.filter(r => r.type === 'audio'),
+      pdf: data.filter(r => r.type === 'pdf'),
+      meditation: data.filter(r => r.type === 'meditation'),
+    } as Record<'video'|'audio'|'pdf'|'meditation', TrpcResource[]>;
+  }, [data]);
+
+  const onOpen = useCallback(async (url: string) => {
+    console.log('ResourcesScreen onOpen', { url });
+    if (Platform.OS === 'web') {
+      window.open(url, '_blank');
+      return;
+    }
+    await WebBrowser.openBrowserAsync(url);
+  }, []);
+
+  const getIcon = (k: string) => {
+    const iconProps = { size: 16, color: Colors.surface } as const;
+    switch (k) {
+      case 'video':
+        return <Video {...iconProps} />;
+      case 'audio':
+        return <FileAudio {...iconProps} />;
+      case 'pdf':
+        return <FileText {...iconProps} />;
+      case 'meditation':
+        return <Sparkles {...iconProps} />;
       default:
-        return <Target {...iconProps} />;
+        return <Sparkles {...iconProps} />;
     }
   };
 
-  const filteredByLanguage: ResourceContent[] = useMemo(() => {
-    const itemsForLang = resourcesData.filter(r => r.language === currentLanguage);
-    if (itemsForLang.length > 0) return itemsForLang;
-    return resourcesData.filter(r => r.language === 'en');
-  }, [currentLanguage]);
-
-  const handleResourcePress = (resourceId: string) => {
-    router.push(`/resource-detail?id=${resourceId}`);
-  };
-
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{t('resources.title')}</Text>
-        <Text style={styles.subtitle}>{t('resources.subtitle')}</Text>
-      </View>
+    <View style={[styles.container, { paddingTop: insets.top }]}> 
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <Text style={styles.header} testID="resources-header">Resources</Text>
+        <View style={styles.searchRow}>
+          <Search size={18} color={Colors.text.secondary} />
+          <TextInput
+            testID="resources-search"
+            placeholder="Search resources"
+            placeholderTextColor={Colors.text.light}
+            style={styles.searchInput}
+            value={search}
+            onChangeText={setSearch}
+          />
+          {!!search && (
+            <TouchableOpacity accessibilityRole="button" onPress={() => setSearch('')} style={styles.clearBtn} testID="resources-clear-search">
+              <X size={16} color={Colors.text.secondary} />
+            </TouchableOpacity>
+          )}
+        </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
-        {/* Category Sections */}
-        {resourceCategories.map((category) => {
-          const categoryResources = filteredByLanguage.filter(resource => 
-            resource.category === category.name
-          );
-          
-          if (categoryResources.length === 0) return null;
-          
-          return (
-            <View key={category.id} style={styles.categorySection}>
-              <Text style={styles.categoryTitle}>{category.name}</Text>
-              
-              {categoryResources.map((resource) => (
-                <TouchableOpacity 
-                  key={resource.id} 
-                  style={[styles.resourceCard, { backgroundColor: category.color }]}
-                  onPress={() => handleResourcePress(resource.id)}
-                >
-                  <View style={styles.resourceIcon}>
-                    {getIcon(resource.icon)}
-                  </View>
-                  <View style={styles.resourceContent}>
-                    <Text style={styles.resourceTitle}>{resource.title}</Text>
-                    <Text style={styles.resourceDescription}>{resource.description}</Text>
-                    <View style={styles.resourceMeta}>
-                      <Text style={styles.resourceType}>{resource.type.toUpperCase()}</Text>
-                      {resource.duration && (
-                        <Text style={styles.resourceDuration}>{resource.duration}</Text>
-                      )}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.typeRow}>
+          {TYPES.map(t => (
+            <TouchableOpacity key={t} testID={`filter-type-${t}`} onPress={() => setType(t)} style={[styles.typeChip, type === t && styles.typeChipActive]}>
+              {t !== 'all' && getIcon(t)}
+              <Text style={[styles.typeText, type === t && styles.typeTextActive]}>{t.toUpperCase()}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catRow}>
+          <TouchableOpacity key="all" testID="filter-cat-all" onPress={() => setCategory('')} style={[styles.catChip, !category && styles.catChipActive]}>
+            <Text style={[styles.catText, !category && styles.catTextActive]}>All Categories</Text>
+          </TouchableOpacity>
+          {categories.map((c) => (
+            <TouchableOpacity key={c} testID={`filter-cat-${c}`} onPress={() => setCategory(c)} style={[styles.catChip, category === c && styles.catChipActive]}>
+              <Text style={[styles.catText, category === c && styles.catTextActive]}>{c}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {listQuery.isLoading && (
+          <View style={styles.center}>
+            <ActivityIndicator color={Colors.primary} />
+          </View>
+        )}
+        {listQuery.error && (
+          <Text style={styles.errorText}>Failed to load resources</Text>
+        )}
+
+        {!listQuery.isLoading && !listQuery.error && (
+          <>
+            {(type === 'all' ? (['video','audio','pdf','meditation'] as const) : [type as Exclude<FilterType,'all'>]).map((t) => (
+              <View key={t} style={styles.section}>
+                <Text style={styles.sectionTitle}>{t.toUpperCase()}</Text>
+                {grouped[t].length === 0 && <Text style={styles.empty}>No items</Text>}
+                {grouped[t].map((r) => (
+                  <TouchableOpacity key={r.id} style={styles.itemCard} onPress={() => onOpen(r.fileUrl)} testID={`open-${r.id}`}>
+                    <View style={styles.itemIcon}>{getIcon(r.type)}</View>
+                    <View style={styles.flex1}>
+                      <Text style={styles.itemTitle}>{r.title}</Text>
+                      <Text style={styles.itemDesc} numberOfLines={2}>{r.description}</Text>
+                      <Text style={styles.itemMeta}>{r.category}</Text>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          );
-        })}
-        
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ))}
+          </>
+        )}
         <View style={styles.bottomSpacer} />
       </ScrollView>
     </View>
@@ -97,100 +144,32 @@ export default function ResourcesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceLight,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    lineHeight: 22,
-  },
-  content: {
-    flex: 1,
-  },
-  categorySection: {
-    marginBottom: 32,
-  },
-  categoryTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: Colors.text.primary,
-    marginBottom: 16,
-    paddingHorizontal: 20,
-  },
-  resourceCard: {
-    borderRadius: 16,
-    padding: 20,
-    marginHorizontal: 16,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    shadowColor: Colors.shadow.light,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  resourceIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-    shadowColor: Colors.shadow.light,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  resourceContent: {
-    flex: 1,
-  },
-  resourceTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.text.primary,
-    marginBottom: 6,
-    lineHeight: 24,
-  },
-  resourceDescription: {
-    fontSize: 15,
-    color: Colors.text.secondary,
-    marginBottom: 12,
-    lineHeight: 22,
-  },
-  resourceMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  resourceType: {
-    fontSize: 11,
-    color: Colors.primary,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  resourceDuration: {
-    fontSize: 12,
-    color: Colors.text.light,
-    fontWeight: '500',
-  },
-  bottomSpacer: {
-    height: 40,
-  },
+  container: { flex: 1, backgroundColor: Colors.background },
+  scroll: { padding: 16 },
+  header: { fontSize: 24, fontWeight: '700', color: Colors.text.primary, marginBottom: 12 },
+  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.surface, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
+  searchInput: { flex: 1, color: Colors.text.primary },
+  clearBtn: { padding: 4, borderRadius: 8, backgroundColor: Colors.background },
+  typeRow: { gap: 8, paddingVertical: 12 },
+  typeChip: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: Colors.surfaceLight, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: Colors.background, marginRight: 8 },
+  typeChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  typeText: { fontSize: 12, color: Colors.text.secondary, fontWeight: '600', letterSpacing: 0.5 },
+  typeTextActive: { color: Colors.surface },
+  catRow: { gap: 8, paddingVertical: 6 },
+  catChip: { borderWidth: 1, borderColor: Colors.surfaceLight, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: Colors.background, marginRight: 8 },
+  catChipActive: { backgroundColor: Colors.surface, borderColor: Colors.primary },
+  catText: { fontSize: 12, color: Colors.text.secondary, fontWeight: '600' },
+  catTextActive: { color: Colors.primary },
+  section: { marginTop: 16 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: Colors.text.secondary, marginBottom: 8 },
+  empty: { color: Colors.text.light, fontSize: 13 },
+  itemCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface, borderRadius: 12, padding: 12, marginBottom: 8, gap: 12 },
+  itemIcon: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.primary },
+  itemTitle: { fontSize: 15, fontWeight: '600', color: Colors.text.primary },
+  itemDesc: { fontSize: 12, color: Colors.text.secondary, marginTop: 2 },
+  itemMeta: { fontSize: 11, color: Colors.primary, marginTop: 6, fontWeight: '700' },
+  flex1: { flex: 1 },
+  errorText: { color: Colors.error, textAlign: 'center', marginTop: 16 },
+  center: { alignItems: 'center', justifyContent: 'center', paddingVertical: 24 },
+  bottomSpacer: { height: 48 },
 });

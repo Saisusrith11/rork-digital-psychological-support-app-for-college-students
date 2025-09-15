@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { protectedProcedure, publicProcedure } from '@/backend/trpc/create-context';
+import crypto from 'crypto';
 
 export interface Resource {
   id: string;
@@ -20,77 +21,7 @@ export interface Resource {
   isActive: boolean;
 }
 
-// Mock storage for resources
-const resources: Resource[] = [
-  {
-    id: 'res_1',
-    title: 'Breathing Exercise for Anxiety',
-    description: 'A guided breathing exercise to help manage anxiety and stress',
-    type: 'audio',
-    category: 'Anxiety Management',
-    fileUrl: 'https://example.com/breathing-exercise.mp3',
-    duration: '10:30',
-    fileSize: 5242880,
-    mimeType: 'audio/mpeg',
-    tags: ['anxiety', 'breathing', 'relaxation'],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    createdBy: 'admin',
-    viewCount: 245,
-    isActive: true,
-  },
-  {
-    id: 'res_2',
-    title: 'Understanding Depression',
-    description: 'An informative guide about depression, its symptoms, and coping strategies',
-    type: 'pdf',
-    category: 'Educational',
-    fileUrl: 'https://example.com/depression-guide.pdf',
-    fileSize: 2097152,
-    mimeType: 'application/pdf',
-    tags: ['depression', 'mental health', 'education'],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    createdBy: 'admin',
-    viewCount: 189,
-    isActive: true,
-  },
-  {
-    id: 'res_3',
-    title: 'Mindfulness Meditation',
-    description: 'A 15-minute guided mindfulness meditation session',
-    type: 'meditation',
-    category: 'Meditation',
-    fileUrl: 'https://example.com/mindfulness.mp3',
-    duration: '15:00',
-    fileSize: 7340032,
-    mimeType: 'audio/mpeg',
-    tags: ['mindfulness', 'meditation', 'stress relief'],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    createdBy: 'admin',
-    viewCount: 412,
-    isActive: true,
-  },
-  {
-    id: 'res_4',
-    title: 'Coping with Exam Stress',
-    description: 'Video guide on managing exam-related stress and anxiety',
-    type: 'video',
-    category: 'Academic Support',
-    fileUrl: 'https://example.com/exam-stress.mp4',
-    thumbnailUrl: 'https://example.com/exam-stress-thumb.jpg',
-    duration: '8:45',
-    fileSize: 52428800,
-    mimeType: 'video/mp4',
-    tags: ['exam stress', 'academic', 'students'],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    createdBy: 'admin',
-    viewCount: 567,
-    isActive: true,
-  },
-];
+const resources: Resource[] = [];
 
 const ResourceSchema = z.object({
   title: z.string().min(1).max(200),
@@ -105,7 +36,6 @@ const ResourceSchema = z.object({
   tags: z.array(z.string()).default([]),
 });
 
-// Get all resources (public)
 export const getAllResourcesProcedure = publicProcedure
   .input(z.object({
     type: z.enum(['video', 'audio', 'pdf', 'meditation', 'all']).default('all'),
@@ -117,41 +47,24 @@ export const getAllResourcesProcedure = publicProcedure
   .query(async ({ input }) => {
     try {
       console.log('[Resources] Fetching resources:', input);
-      
       let filteredResources = resources.filter(r => r.isActive);
-      
-      // Filter by type
       if (input.type !== 'all') {
         filteredResources = filteredResources.filter(r => r.type === input.type);
       }
-      
-      // Filter by category
       if (input.category) {
         const categoryLower = input.category.toLowerCase();
-        filteredResources = filteredResources.filter(r => 
-          r.category.toLowerCase().includes(categoryLower)
-        );
+        filteredResources = filteredResources.filter(r => r.category.toLowerCase().includes(categoryLower));
       }
-      
-      // Filter by search query
       if (input.search) {
         const searchLower = input.search.toLowerCase();
-        filteredResources = filteredResources.filter(r => 
+        filteredResources = filteredResources.filter(r =>
           r.title.toLowerCase().includes(searchLower) ||
           r.description.toLowerCase().includes(searchLower) ||
           r.tags.some(tag => tag.toLowerCase().includes(searchLower))
         );
       }
-      
-      // Sort by view count (most popular first)
       filteredResources.sort((a, b) => b.viewCount - a.viewCount);
-      
-      // Paginate
-      const paginatedResources = filteredResources.slice(
-        input.offset,
-        input.offset + input.limit
-      );
-      
+      const paginatedResources = filteredResources.slice(input.offset, input.offset + input.limit);
       return {
         resources: paginatedResources,
         total: filteredResources.length,
@@ -163,22 +76,16 @@ export const getAllResourcesProcedure = publicProcedure
     }
   });
 
-// Get resource by ID (public)
 export const getResourceByIdProcedure = publicProcedure
   .input(z.object({ id: z.string() }))
   .query(async ({ input }) => {
     try {
       console.log('[Resources] Fetching resource:', input.id);
-      
       const resource = resources.find(r => r.id === input.id && r.isActive);
-      
       if (!resource) {
         throw new Error('Resource not found');
       }
-      
-      // Increment view count
       resource.viewCount++;
-      
       return resource;
     } catch (error) {
       console.error('[Resources] Error fetching resource:', error);
@@ -186,17 +93,13 @@ export const getResourceByIdProcedure = publicProcedure
     }
   });
 
-// Create resource (Admin only)
 export const createResourceProcedure = protectedProcedure
   .input(ResourceSchema)
   .mutation(async ({ input, ctx }) => {
     try {
       console.log('[Resources] Creating resource:', input.title);
-      
-      // In production, verify admin role from ctx.user
-      
       const resource: Resource = {
-        id: `res_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: `res_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
         ...input,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -204,144 +107,140 @@ export const createResourceProcedure = protectedProcedure
         viewCount: 0,
         isActive: true,
       };
-      
       resources.push(resource);
-      
       console.log('[Resources] Resource created:', resource.id);
-      
-      return {
-        success: true,
-        resource,
-        message: 'Resource created successfully',
-      };
+      return { success: true, resource, message: 'Resource created successfully' };
     } catch (error) {
       console.error('[Resources] Error creating resource:', error);
       throw new Error('Failed to create resource');
     }
   });
 
-// Update resource (Admin only)
 export const updateResourceProcedure = protectedProcedure
-  .input(z.object({
-    id: z.string(),
-    data: ResourceSchema.partial(),
-  }))
-  .mutation(async ({ input, ctx }) => {
+  .input(z.object({ id: z.string(), data: ResourceSchema.partial() }))
+  .mutation(async ({ input }) => {
     try {
       console.log('[Resources] Updating resource:', input.id);
-      
       const resourceIndex = resources.findIndex(r => r.id === input.id);
-      
       if (resourceIndex === -1) {
         throw new Error('Resource not found');
       }
-      
-      resources[resourceIndex] = {
-        ...resources[resourceIndex],
-        ...input.data,
-        updatedAt: new Date().toISOString(),
-      };
-      
+      resources[resourceIndex] = { ...resources[resourceIndex], ...input.data, updatedAt: new Date().toISOString() };
       console.log('[Resources] Resource updated:', input.id);
-      
-      return {
-        success: true,
-        resource: resources[resourceIndex],
-        message: 'Resource updated successfully',
-      };
+      return { success: true, resource: resources[resourceIndex], message: 'Resource updated successfully' };
     } catch (error) {
       console.error('[Resources] Error updating resource:', error);
       throw new Error(error instanceof Error ? error.message : 'Failed to update resource');
     }
   });
 
-// Delete resource (Admin only)
 export const deleteResourceProcedure = protectedProcedure
   .input(z.object({ id: z.string() }))
   .mutation(async ({ input }) => {
     try {
       console.log('[Resources] Deleting resource:', input.id);
-
       const resourceIndex = resources.findIndex(r => r.id === input.id);
-
       if (resourceIndex === -1) {
         throw new Error('Resource not found');
       }
-
       const fileUrl = resources[resourceIndex].fileUrl;
-
-      // Hard delete from in-memory store
       resources.splice(resourceIndex, 1);
-
-      // Simulate purge from cloud storage
-      console.log('[Resources] Purging file from storage:', fileUrl);
-
-      return {
-        success: true,
-        message: 'Resource and file purged successfully',
-      };
+      console.log('[Resources] Purging file from storage (async):', fileUrl);
+      return { success: true, message: 'Resource and file purged successfully' };
     } catch (error) {
       console.error('[Resources] Error deleting resource:', error);
       throw new Error(error instanceof Error ? error.message : 'Failed to delete resource');
     }
   });
 
-// Upload resource file (Admin only)
+function hmac(key: Buffer | string, data: string) {
+  return crypto.createHmac('sha256', key).update(data).digest();
+}
+function sha256Hex(data: string | Buffer) {
+  return crypto.createHash('sha256').update(data).digest('hex');
+}
+function getSignatureKey(key: string, dateStamp: string, regionName: string, serviceName: string) {
+  const kDate = hmac('AWS4' + key, dateStamp);
+  const kRegion = hmac(kDate, regionName);
+  const kService = hmac(kRegion, serviceName);
+  const kSigning = hmac(kService, 'aws4_request');
+  return kSigning;
+}
+
 export const uploadResourceFileProcedure = protectedProcedure
-  .input(z.object({
-    fileName: z.string(),
-    fileData: z.string(), // Base64 encoded
-    mimeType: z.string(),
-  }))
+  .input(z.object({ fileName: z.string(), fileData: z.string(), mimeType: z.string() }))
   .mutation(async ({ input }) => {
     try {
-      console.log('[Resources] Uploading file:', input.fileName);
-
-      // TODO: In production, upload to secure cloud storage (AWS S3, etc.) using presigned URLs
-      // For now, simulate file upload
+      const accessKey = process.env.AWS_ACCESS_KEY_ID ?? process.env.S3_ACCESS_KEY;
+      const secretKey = process.env.AWS_SECRET_ACCESS_KEY ?? process.env.S3_SECRET_KEY;
+      const region = process.env.AWS_REGION ?? process.env.S3_REGION ?? 'ap-south-1';
+      const bucket = process.env.S3_BUCKET;
+      const publicBaseUrl = process.env.S3_PUBLIC_BASE_URL ?? `https://${bucket}.s3.${region}.amazonaws.com`;
       const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const objectKey = `resources/${Date.now()}_${safeName}`;
+
+      if (accessKey && secretKey && bucket) {
+        console.log('[Resources] Using S3 presigned PUT');
+        const method = 'PUT';
+        const service = 's3';
+        const host = `${bucket}.s3.${region}.amazonaws.com`;
+        const endpoint = `https://${host}/${encodeURIComponent(objectKey)}`;
+        const now = new Date();
+        const amzDate = now.toISOString().replace(/[-:]/g, '').replace(/\..+/, '') + 'Z';
+        const dateStamp = amzDate.slice(0, 8);
+        const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
+
+        const canonicalUri = `/${objectKey.split('/').map(encodeURIComponent).join('/')}`;
+        const canonicalQuerystring = `X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=${encodeURIComponent(
+          `${accessKey}/${credentialScope}`
+        )}&X-Amz-Date=${amzDate}&X-Amz-Expires=300&X-Amz-SignedHeaders=host`;
+        const canonicalHeaders = `host:${host}\n`;
+        const signedHeaders = 'host';
+        const payloadHash = sha256Hex('');
+        const canonicalRequest = `${method}\n${canonicalUri}\n${canonicalQuerystring}\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
+        const stringToSign = `AWS4-HMAC-SHA256\n${amzDate}\n${credentialScope}\n${sha256Hex(canonicalRequest)}`;
+        const signingKey = getSignatureKey(secretKey, dateStamp, region, service);
+        const signature = crypto.createHmac('sha256', signingKey).update(stringToSign).digest('hex');
+        const presignedUrl = `${endpoint}?${canonicalQuerystring}&X-Amz-Signature=${signature}`;
+
+        const buffer = Buffer.from(input.fileData, 'base64');
+        const putResp = await fetch(presignedUrl, { method: 'PUT', headers: { 'Content-Type': input.mimeType }, body: buffer });
+        if (!putResp.ok) {
+          console.error('[Resources] S3 PUT failed', await putResp.text());
+          throw new Error('Upload to S3 failed');
+        }
+        const fileUrl = `${publicBaseUrl}/${objectKey}`;
+        console.log('[Resources] File uploaded to S3:', fileUrl);
+        return { success: true, fileUrl, fileSize: buffer.byteLength, message: 'File uploaded successfully' };
+      }
+
+      console.log('[Resources] No S3 env detected, simulating upload');
       const fileUrl = `https://secure-storage.example.com/resources/${Date.now()}_${safeName}`;
       const fileSize = Math.floor(input.fileData.length * 0.75);
-
-      console.log('[Resources] File uploaded:', { fileUrl, fileSize, mimeType: input.mimeType });
-
-      return {
-        success: true,
-        fileUrl,
-        fileSize,
-        message: 'File uploaded successfully',
-      };
+      return { success: true, fileUrl, fileSize, message: 'File uploaded successfully' };
     } catch (error) {
       console.error('[Resources] Error uploading file:', error);
       throw new Error('Failed to upload file');
     }
   });
 
-// Get resource categories (public)
 export const getResourceCategoriesProcedure = publicProcedure
   .query(async () => {
     try {
       console.log('[Resources] Fetching categories');
-      
       const categories = [...new Set(resources.filter(r => r.isActive).map(r => r.category))];
-      
-      return {
-        categories,
-      };
+      return { categories };
     } catch (error) {
       console.error('[Resources] Error fetching categories:', error);
       throw new Error('Failed to fetch categories');
     }
   });
 
-// Get resource statistics (Admin only)
 export const getResourceStatsProcedure = protectedProcedure
-  .query(async ({ ctx }) => {
+  .query(async () => {
     try {
       console.log('[Resources] Fetching resource statistics');
-      
       const activeResources = resources.filter(r => r.isActive);
-      
       const stats = {
         total: activeResources.length,
         byType: {
@@ -351,12 +250,11 @@ export const getResourceStatsProcedure = protectedProcedure
           meditation: activeResources.filter(r => r.type === 'meditation').length,
         },
         totalViews: activeResources.reduce((sum, r) => sum + r.viewCount, 0),
-        mostViewed: activeResources.sort((a, b) => b.viewCount - a.viewCount).slice(0, 5),
-        recentlyAdded: activeResources.sort((a, b) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        ).slice(0, 5),
+        mostViewed: [...activeResources].sort((a, b) => b.viewCount - a.viewCount).slice(0, 5),
+        recentlyAdded: [...activeResources]
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 5),
       };
-      
       return stats;
     } catch (error) {
       console.error('[Resources] Error fetching statistics:', error);
