@@ -425,7 +425,6 @@ export const rejectApplicationProcedure = protectedProcedure
         reviewedBy: ctx.user?.id || 'admin',
         adminNotes: input.adminNotes,
         rejectionReason: input.rejectionReason,
-        documentDeletionScheduled: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
       };
       
       // TODO: Send rejection email notification to counselor with specific reason

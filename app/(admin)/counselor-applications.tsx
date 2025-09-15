@@ -154,7 +154,7 @@ export default function CounselorApplicationsAdmin() {
 
   // Send immediate notification when new application is submitted
   useEffect(() => {
-    if (statsQuery.data?.pending > 0) {
+    if (statsQuery.data?.pending && statsQuery.data.pending > 0) {
       // This would be triggered by a real-time system in production
       const hasNewApplications = statsQuery.data.pending > 0;
       if (hasNewApplications) {
@@ -559,19 +559,19 @@ export default function CounselorApplicationsAdmin() {
       {/* Statistics */}
       <View style={styles.statsContainer}>
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{statsQuery.data?.pending || 0}</Text>
+          <Text style={styles.statNumber}>{statsQuery.data?.pending ?? 0}</Text>
           <Text style={styles.statLabel}>Pending</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{statsQuery.data?.approved || 0}</Text>
+          <Text style={styles.statNumber}>{statsQuery.data?.approved ?? 0}</Text>
           <Text style={styles.statLabel}>Approved</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{statsQuery.data?.rejected || 0}</Text>
+          <Text style={styles.statNumber}>{statsQuery.data?.rejected ?? 0}</Text>
           <Text style={styles.statLabel}>Rejected</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{statsQuery.data?.total || 0}</Text>
+          <Text style={styles.statNumber}>{statsQuery.data?.total ?? 0}</Text>
           <Text style={styles.statLabel}>Total</Text>
         </View>
       </View>
