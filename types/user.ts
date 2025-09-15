@@ -68,6 +68,7 @@ export interface CounselorApplication {
   reviewedBy?: string;
   adminNotes?: string;
   rejectionReason?: string;
+  documentDeletionScheduled?: string;
 }
 
 export interface Admin extends User {

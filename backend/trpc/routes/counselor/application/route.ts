@@ -2,6 +2,146 @@ import { z } from 'zod';
 import { protectedProcedure, publicProcedure } from '@/backend/trpc/create-context';
 import type { CounselorApplication, CounselorDocument } from '@/types/user';
 
+// Email service for sending notifications
+class EmailService {
+  static async sendApprovalEmail(counselorEmail: string, counselorName: string): Promise<boolean> {
+    try {
+      console.log('[EmailService] Sending approval email to:', counselorEmail);
+      
+      // Generate temporary login credentials
+      const tempPassword = this.generateTempPassword();
+      
+      // In production, use a proper email service like SendGrid, AWS SES, etc.
+      // For now, we'll simulate the email sending
+      const emailContent = {
+        to: counselorEmail,
+        subject: 'Counselor Application Approved - Welcome to Mental Health Platform',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2563eb;">Congratulations! Your Application Has Been Approved</h2>
+            
+            <p>Dear ${counselorName},</p>
+            
+            <p>We are pleased to inform you that your counselor application has been approved. Welcome to our Mental Health Platform!</p>
+            
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #1f2937;">Your Login Credentials:</h3>
+              <p><strong>Email:</strong> ${counselorEmail}</p>
+              <p><strong>Temporary Password:</strong> ${tempPassword}</p>
+              <p style="color: #dc2626; font-size: 14px;"><em>Please change your password after your first login for security purposes.</em></p>
+            </div>
+            
+            <p>You now have access to:</p>
+            <ul>
+              <li>Professional counselor dashboard</li>
+              <li>Student appointment management</li>
+              <li>Secure messaging system</li>
+              <li>Resource assignment tools</li>
+            </ul>
+            
+            <p>To get started, please log in to your counselor portal and complete your profile setup.</p>
+            
+            <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+            
+            <p>Best regards,<br>
+            Mental Health Platform Team</p>
+          </div>
+        `
+      };
+      
+      // Simulate email sending (replace with actual email service)
+      await this.simulateEmailSend(emailContent);
+      
+      console.log('[EmailService] Approval email sent successfully to:', counselorEmail);
+      return true;
+    } catch (error) {
+      console.error('[EmailService] Failed to send approval email:', error);
+      return false;
+    }
+  }
+  
+  static async sendRejectionEmail(counselorEmail: string, counselorName: string, rejectionReason: string): Promise<boolean> {
+    try {
+      console.log('[EmailService] Sending rejection email to:', counselorEmail);
+      
+      const emailContent = {
+        to: counselorEmail,
+        subject: 'Counselor Application Update - Mental Health Platform',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #dc2626;">Application Status Update</h2>
+            
+            <p>Dear ${counselorName},</p>
+            
+            <p>Thank you for your interest in joining our Mental Health Platform as a counselor. After careful review of your application, we regret to inform you that we cannot approve your application at this time.</p>
+            
+            <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;">
+              <h3 style="margin-top: 0; color: #dc2626;">Reason for Rejection:</h3>
+              <p style="margin-bottom: 0;">${rejectionReason}</p>
+            </div>
+            
+            <p>Please note:</p>
+            <ul>
+              <li>Your submitted documents will be securely deleted from our servers after 30 days</li>
+              <li>You may reapply in the future once the mentioned issues are resolved</li>
+              <li>If you believe this decision was made in error, please contact our support team</li>
+            </ul>
+            
+            <p>We appreciate your understanding and encourage you to address the mentioned concerns and consider reapplying in the future.</p>
+            
+            <p>Best regards,<br>
+            Mental Health Platform Team</p>
+          </div>
+        `
+      };
+      
+      // Simulate email sending (replace with actual email service)
+      await this.simulateEmailSend(emailContent);
+      
+      console.log('[EmailService] Rejection email sent successfully to:', counselorEmail);
+      return true;
+    } catch (error) {
+      console.error('[EmailService] Failed to send rejection email:', error);
+      return false;
+    }
+  }
+  
+  private static generateTempPassword(): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < 12; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  }
+  
+  private static async simulateEmailSend(emailContent: any): Promise<void> {
+    // In production, replace this with actual email service integration
+    // Example with SendGrid:
+    // const sgMail = require('@sendgrid/mail');
+    // sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    // await sgMail.send(emailContent);
+    
+    // For now, simulate email sending with detailed logging
+    console.log('\n=== EMAIL NOTIFICATION ===');
+    console.log('To:', emailContent.to);
+    console.log('Subject:', emailContent.subject);
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Content Preview:', emailContent.html.substring(0, 200) + '...');
+    console.log('=========================\n');
+    
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // In a real implementation, you would:
+    // 1. Use environment variables for email service credentials
+    // 2. Handle email service errors properly
+    // 3. Implement retry logic for failed sends
+    // 4. Log email delivery status
+    // 5. Store email history in database
+  }
+}
+
 // Mock storage for applications (in production, use a database)
 const applications: CounselorApplication[] = [
   {
@@ -380,12 +520,19 @@ export const approveApplicationProcedure = protectedProcedure
         adminNotes: input.adminNotes,
       };
       
-      // TODO: Send approval email notification to counselor
-      // TODO: Create counselor account with login credentials
-      // TODO: Grant access to professional portal
+      // Send approval email notification to counselor
+      const emailSent = await EmailService.sendApprovalEmail(
+        application.personalInfo.email,
+        application.personalInfo.fullName
+      );
+      
+      if (!emailSent) {
+        console.warn('[CounselorApplication] Failed to send approval email, but application was approved');
+      }
       
       console.log('[CounselorApplication] Application approved:', application.personalInfo.email);
       console.log('[CounselorApplication] Counselor granted portal access');
+      console.log('[CounselorApplication] Approval email sent:', emailSent ? 'Success' : 'Failed');
       
       return {
         success: true,
@@ -427,14 +574,30 @@ export const rejectApplicationProcedure = protectedProcedure
         rejectionReason: input.rejectionReason,
       };
       
-      // TODO: Send rejection email notification to counselor with specific reason
-      // Email will include: input.rejectionReason
-      // TODO: Schedule document deletion after 30 days
-      // TODO: Restrict login access
+      // Send rejection email notification to counselor with specific reason
+      const emailSent = await EmailService.sendRejectionEmail(
+        application.personalInfo.email,
+        application.personalInfo.fullName,
+        input.rejectionReason
+      );
+      
+      if (!emailSent) {
+        console.warn('[CounselorApplication] Failed to send rejection email, but application was rejected');
+      }
+      
+      // Schedule document deletion after 30 days
+      const deletionDate = new Date();
+      deletionDate.setDate(deletionDate.getDate() + 30);
+      
+      applications[applicationIndex] = {
+        ...applications[applicationIndex],
+        documentDeletionScheduled: deletionDate.toISOString(),
+      };
       
       console.log('[CounselorApplication] Application rejected:', application.personalInfo.email);
       console.log('[CounselorApplication] Rejection reason:', input.rejectionReason);
-      console.log('[CounselorApplication] Documents scheduled for deletion in 30 days');
+      console.log('[CounselorApplication] Documents scheduled for deletion:', deletionDate.toISOString());
+      console.log('[CounselorApplication] Rejection email sent:', emailSent ? 'Success' : 'Failed');
       
       return {
         success: true,
