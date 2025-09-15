@@ -33,6 +33,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { analyticsService } from '@/services/analytics-service';
 import type { UserEngagement, AssessmentMetrics, SystemHealth } from '@/services/analytics-service';
+import { trpc } from '@/lib/trpc';
 
 type RangeKey = '7d' | '30d' | '90d';
 
@@ -74,6 +75,7 @@ function ErrorBoundary({ children }: { children: React.ReactNode }) {
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const { feedbacks, pendingCount } = useFeedback();
+  const reportStatsQuery = trpc.reports.getStats.useQuery();
   const { notifications, unreadCount, addNotification, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
   const insets = useSafeAreaInsets();
   const [showLogoutModal, setShowLogoutModal] = useState<boolean>(false);
@@ -557,12 +559,17 @@ export default function AdminDashboard() {
                 <Text style={styles.actionButtonText}>Manage Students</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={styles.actionButton}
-                testID="qa-manage-colleges"
-                onPress={() => router.push('/(admin)/manage-colleges')}
+                style={[styles.actionButton, { position: 'relative' }]}
+                testID="qa-review-queue"
+                onPress={() => router.push('/(admin)/review-queue')}
               >
                 <FileText size={24} color={Colors.warning} />
-                <Text style={styles.actionButtonText}>Manage Colleges</Text>
+                <Text style={styles.actionButtonText}>Review Queue</Text>
+                {(reportStatsQuery.data?.pending || 0) > 0 && (
+                  <View style={styles.pendingBadge}>
+                    <Text style={styles.pendingBadgeText}>{reportStatsQuery.data?.pending}</Text>
+                  </View>
+                )}
               </TouchableOpacity>
             </View>
             <Text style={styles.privacyNote}>Admin view shows only anonymized aggregates. No individual identities or notes are visible.</Text>
@@ -1280,5 +1287,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: Colors.text.primary,
+  },
+  pendingBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: Colors.error,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pendingBadgeText: {
+    color: Colors.text.white,
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });

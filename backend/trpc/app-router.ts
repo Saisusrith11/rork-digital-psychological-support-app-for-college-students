@@ -45,6 +45,7 @@ import {
 } from "./routes/chat/route";
 import { syncAssessmentsProcedure } from "./routes/assessments/route";
 import helplinesRouter from "./routes/helplines/route";
+import reportsRouter from "./routes/reports/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -103,6 +104,7 @@ export const appRouter = createTRPCRouter({
     sync: syncAssessmentsProcedure,
   }),
   helplines: helplinesRouter,
+  reports: reportsRouter,
 });
 
 export type AppRouter = typeof appRouter;
