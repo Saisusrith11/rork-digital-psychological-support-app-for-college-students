@@ -16,6 +16,7 @@ export interface ThemeContextType {
   toggleDarkMode: () => Promise<void>;
   toggleCompactUI: () => Promise<void>;
   colors: typeof Colors;
+  isLoaded: boolean;
 }
 
 const defaultSettings: ThemeSettings = {
@@ -38,8 +39,18 @@ const darkColors = {
   },
 };
 
+const defaultThemeContext: ThemeContextType = {
+  settings: defaultSettings,
+  updateSettings: async () => {},
+  toggleDarkMode: async () => {},
+  toggleCompactUI: async () => {},
+  colors: Colors,
+  isLoaded: false,
+};
+
 export const [ThemeProvider, useTheme] = createContextHook(() => {
   const [settings, setSettings] = useState<ThemeSettings>(defaultSettings);
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
   const loadSettings = useCallback(async () => {
     try {
@@ -50,6 +61,8 @@ export const [ThemeProvider, useTheme] = createContextHook(() => {
       }
     } catch (error) {
       console.error('Error loading theme settings:', error);
+    } finally {
+      setIsLoaded(true);
     }
   }, []);
 
@@ -88,5 +101,6 @@ export const [ThemeProvider, useTheme] = createContextHook(() => {
     toggleDarkMode,
     toggleCompactUI,
     colors,
-  }), [settings, updateSettings, toggleDarkMode, toggleCompactUI, colors]);
-});
+    isLoaded,
+  }), [settings, updateSettings, toggleDarkMode, toggleCompactUI, colors, isLoaded]);
+}, defaultThemeContext);

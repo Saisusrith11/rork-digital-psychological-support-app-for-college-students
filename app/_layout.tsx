@@ -11,6 +11,7 @@ import { AssessmentProvider } from "@/hooks/assessment-store";
 import { LanguageProvider } from "@/hooks/language-store";
 import { NotificationProvider } from "@/hooks/notification-store";
 import { FeedbackProvider } from "@/hooks/feedback-store";
+import { ThemeProvider } from "@/hooks/theme-store";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 SplashScreen.preventAutoHideAsync();
@@ -60,19 +61,21 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
           <GestureHandlerRootView style={styles.container}>
-            <LanguageProvider>
-              <AuthProvider>
-                <NotificationProvider>
-                  <FeedbackProvider>
-                    <MoodProvider>
-                      <AssessmentProvider>
-                        <RootLayoutNav />
-                      </AssessmentProvider>
-                    </MoodProvider>
-                  </FeedbackProvider>
-                </NotificationProvider>
-              </AuthProvider>
-            </LanguageProvider>
+            <ThemeProvider>
+              <LanguageProvider>
+                <AuthProvider>
+                  <NotificationProvider>
+                    <FeedbackProvider>
+                      <MoodProvider>
+                        <AssessmentProvider>
+                          <RootLayoutNav />
+                        </AssessmentProvider>
+                      </MoodProvider>
+                    </FeedbackProvider>
+                  </NotificationProvider>
+                </AuthProvider>
+              </LanguageProvider>
+            </ThemeProvider>
           </GestureHandlerRootView>
         </trpc.Provider>
       </QueryClientProvider>
