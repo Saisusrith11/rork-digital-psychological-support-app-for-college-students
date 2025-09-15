@@ -7,6 +7,8 @@ import {
   StyleSheet,
   TextInput,
   Linking,
+  Modal,
+  Alert,
 } from 'react-native';
 import {
   FileText,
@@ -28,7 +30,6 @@ import {
 } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
 import { AlertModal } from '@/components/AlertModal';
 import { trpc } from '@/lib/trpc';
 
@@ -57,6 +58,7 @@ interface CounselorApplication {
     mimeType: string;
   }[];
   adminNotes?: string;
+  rejectionReason?: string;
   reviewedBy?: string;
   reviewedAt?: string;
 }
@@ -65,12 +67,13 @@ type FilterStatus = 'all' | 'pending' | 'approved' | 'rejected';
 
 export default function CounselorApplicationsAdmin() {
   const insets = useSafeAreaInsets();
-
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('pending');
   const [selectedApplication, setSelectedApplication] = useState<CounselorApplication | null>(null);
   const [showDetailModal, setShowDetailModal] = useState<boolean>(false);
   const [adminNotes, setAdminNotes] = useState<string>('');
+  const [rejectionReason, setRejectionReason] = useState<string>('');
+  const [showRejectionModal, setShowRejectionModal] = useState<boolean>(false);
   const [alertModal, setAlertModal] = useState<{
     visible: boolean;
     title: string;
@@ -96,7 +99,7 @@ export default function CounselorApplicationsAdmin() {
       setAlertModal({
         visible: true,
         title: 'Success',
-        message: 'Application approved successfully. The counselor has been notified.',
+        message: 'Application approved successfully. The counselor has been notified and granted access.',
         type: 'success',
         buttons: [{ text: 'OK', onPress: () => {} }],
       });
@@ -116,10 +119,12 @@ export default function CounselorApplicationsAdmin() {
     onSuccess: () => {
       applicationsQuery.refetch();
       setShowDetailModal(false);
+      setShowRejectionModal(false);
+      setRejectionReason('');
       setAlertModal({
         visible: true,
         title: 'Success',
-        message: 'Application rejected. The counselor has been notified.',
+        message: 'Application rejected. The counselor has been notified with the rejection reason.',
         type: 'success',
         buttons: [{ text: 'OK', onPress: () => {} }],
       });
@@ -136,7 +141,6 @@ export default function CounselorApplicationsAdmin() {
   });
 
   const handleViewApplication = useCallback((application: CounselorApplication) => {
-    if (!application?.id?.trim() || application.id.length > 100) return;
     setSelectedApplication(application);
     setAdminNotes(application.adminNotes || '');
     setShowDetailModal(true);
@@ -159,9 +163,6 @@ export default function CounselorApplicationsAdmin() {
         {
           text: 'Approve',
           onPress: () => {
-            if (!selectedApplication.id?.trim() || selectedApplication.id.length > 100) return;
-            if (adminNotes && adminNotes.length > 1000) return;
-            
             approveApplicationMutation.mutate({
               applicationId: selectedApplication.id,
               adminNotes: adminNotes.trim(),
@@ -175,45 +176,33 @@ export default function CounselorApplicationsAdmin() {
 
   const handleRejectApplication = useCallback(() => {
     if (!selectedApplication) return;
+    setShowRejectionModal(true);
+  }, [selectedApplication]);
 
-    setAlertModal({
-      visible: true,
-      title: 'Reject Application',
-      message: `Are you sure you want to reject ${selectedApplication.personalInfo.fullName}'s application? This action cannot be undone.`,
-      type: 'warning',
-      buttons: [
-        {
-          text: 'Cancel',
-          onPress: () => {},
-          style: 'cancel',
-        },
-        {
-          text: 'Reject',
-          onPress: () => {
-            if (!selectedApplication.id?.trim() || selectedApplication.id.length > 100) return;
-            if (adminNotes && adminNotes.length > 1000) return;
-            
-            rejectApplicationMutation.mutate({
-              applicationId: selectedApplication.id,
-              adminNotes: adminNotes.trim(),
-            });
-          },
-          style: 'destructive',
-        },
-      ],
+  const confirmRejectApplication = useCallback(() => {
+    if (!selectedApplication || !rejectionReason.trim()) {
+      setAlertModal({
+        visible: true,
+        title: 'Error',
+        message: 'Please provide a reason for rejection. This will be included in the email to the counselor.',
+        type: 'error',
+        buttons: [{ text: 'OK', onPress: () => {} }],
+      });
+      return;
+    }
+
+    rejectApplicationMutation.mutate({
+      applicationId: selectedApplication.id,
+      rejectionReason: rejectionReason.trim(),
+      adminNotes: adminNotes.trim(),
     });
-  }, [selectedApplication, adminNotes, rejectApplicationMutation]);
+  }, [selectedApplication, rejectionReason, adminNotes, rejectApplicationMutation]);
 
   const handleDownloadDocument = useCallback(async (fileUrl: string, fileName: string) => {
     try {
-      if (!fileUrl?.trim() || fileUrl.length > 2000) return;
-      if (!fileName?.trim() || fileName.length > 255) return;
-      
-      const sanitizedUrl = fileUrl.trim();
-      const canOpen = await Linking.canOpenURL(sanitizedUrl);
-      
+      const canOpen = await Linking.canOpenURL(fileUrl);
       if (canOpen) {
-        await Linking.openURL(sanitizedUrl);
+        await Linking.openURL(fileUrl);
       } else {
         setAlertModal({
           visible: true,
@@ -236,10 +225,7 @@ export default function CounselorApplicationsAdmin() {
   }, []);
 
   const getStatusColor = (status: string) => {
-    if (!status?.trim() || status.length > 20) return Colors.warning;
-    const sanitizedStatus = status.trim();
-    
-    switch (sanitizedStatus) {
+    switch (status) {
       case 'approved':
         return Colors.success;
       case 'rejected':
@@ -265,67 +251,126 @@ export default function CounselorApplicationsAdmin() {
   const filteredApplications = applicationsQuery.data?.applications || [];
 
   const renderApplicationCard = (application: CounselorApplication) => {
-    if (!application?.id?.trim()) return null;
-    
     return (
       <TouchableOpacity
         key={application.id}
         style={styles.applicationCard}
-        onPress={() => {
-          if (!application?.id?.trim() || application.id.length > 100) return;
-          handleViewApplication(application);
-        }}
+        onPress={() => handleViewApplication(application)}
         testID={`application-${application.id}`}
       >
-      <View style={styles.applicationHeader}>
-        <View style={styles.applicationInfo}>
-          <Text style={styles.applicantName}>{application.personalInfo.fullName}</Text>
-          <Text style={styles.applicantEmail}>{application.personalInfo.email}</Text>
-          <Text style={styles.submissionDate}>
-            Submitted: {new Date(application.submittedAt).toLocaleDateString()}
-          </Text>
-        </View>
-        <View style={styles.statusContainer}>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(application.status) + '20' }]}>
-            {getStatusIcon(application.status)}
-            <Text style={[styles.statusText, { color: getStatusColor(application.status) }]}>
-              {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+        <View style={styles.applicationHeader}>
+          <View style={styles.applicationInfo}>
+            <Text style={styles.applicantName}>{application.personalInfo.fullName}</Text>
+            <Text style={styles.applicantEmail}>{application.personalInfo.email}</Text>
+            <Text style={styles.submissionDate}>
+              Submitted: {new Date(application.submittedAt).toLocaleDateString()}
             </Text>
           </View>
+          <View style={styles.statusContainer}>
+            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(application.status) + '20' }]}>
+              {getStatusIcon(application.status)}
+              <Text style={[styles.statusText, { color: getStatusColor(application.status) }]}>
+                {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+              </Text>
+            </View>
+          </View>
         </View>
-      </View>
-      
-      <View style={styles.applicationPreview}>
-        <Text style={styles.previewLabel}>Specializations:</Text>
-        <Text style={styles.previewText} numberOfLines={2}>
-          {application.professionalInfo.specialization.join(', ')}
-        </Text>
         
-        <Text style={styles.previewLabel}>Languages:</Text>
-        <Text style={styles.previewText} numberOfLines={1}>
-          {application.professionalInfo.languages.join(', ')}
-        </Text>
+        <View style={styles.applicationPreview}>
+          <Text style={styles.previewLabel}>Specializations:</Text>
+          <Text style={styles.previewText} numberOfLines={2}>
+            {application.professionalInfo.specialization.join(', ')}
+          </Text>
+          
+          <Text style={styles.previewLabel}>Experience:</Text>
+          <Text style={styles.previewText} numberOfLines={1}>
+            {application.professionalInfo.experience}
+          </Text>
+          
+          <Text style={styles.previewLabel}>Documents:</Text>
+          <Text style={styles.previewText}>
+            {application.documents.length} document(s) uploaded
+          </Text>
+        </View>
         
-        <Text style={styles.previewLabel}>Documents:</Text>
-        <Text style={styles.previewText}>
-          {application.documents.length} document(s) uploaded
-        </Text>
-      </View>
-      
-      <View style={styles.applicationActions}>
-        <TouchableOpacity
-          style={styles.viewButton}
-          onPress={() => {
-            if (!application?.id?.trim() || application.id.length > 100) return;
-            handleViewApplication(application);
-          }}
-          testID={`view-${application.id}`}
-        >
-          <Eye size={16} color={Colors.primary} />
-          <Text style={styles.viewButtonText}>View Details</Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
+        <View style={styles.applicationActions}>
+          <TouchableOpacity
+            style={styles.viewButton}
+            onPress={() => handleViewApplication(application)}
+            testID={`view-${application.id}`}
+          >
+            <Eye size={16} color={Colors.primary} />
+            <Text style={styles.viewButtonText}>View Details</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderRejectionModal = () => {
+    return (
+      <Modal
+        visible={showRejectionModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowRejectionModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.rejectionModalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Provide Rejection Reason</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowRejectionModal(false);
+                  setRejectionReason('');
+                }}
+                style={styles.closeButton}
+              >
+                <XCircle size={24} color={Colors.text.secondary} />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.rejectionModalBody}>
+              <Text style={styles.rejectionModalDescription}>
+                Please provide a reason for rejecting this application. This reason will be included in the email sent to the counselor.
+              </Text>
+              
+              <TextInput
+                style={styles.rejectionReasonInput}
+                value={rejectionReason}
+                onChangeText={setRejectionReason}
+                placeholder="Enter rejection reason (e.g., 'RCI registration number invalid', 'Missing degree certificate')..."
+                multiline
+                numberOfLines={4}
+                testID="rejection-reason-input"
+              />
+              
+              <View style={styles.rejectionModalActions}>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.cancelButton]}
+                  onPress={() => {
+                    setShowRejectionModal(false);
+                    setRejectionReason('');
+                  }}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.rejectButton]}
+                  onPress={confirmRejectApplication}
+                  disabled={!rejectionReason.trim() || rejectApplicationMutation.isPending}
+                >
+                  <XCircle size={20} color={Colors.text.white} />
+                  <Text style={styles.rejectButtonText}>
+                    {rejectApplicationMutation.isPending ? 'Rejecting...' : 'Reject Application'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
     );
   };
 
@@ -333,167 +378,174 @@ export default function CounselorApplicationsAdmin() {
     if (!selectedApplication) return null;
 
     return (
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Application Details</Text>
-            <TouchableOpacity
-              onPress={() => setShowDetailModal(false)}
-              style={styles.closeButton}
-              testID="close-modal"
-            >
-              <XCircle size={24} color={Colors.text.secondary} />
-            </TouchableOpacity>
-          </View>
-          
-          <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
-            {/* Personal Information */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <User size={20} color={Colors.primary} />
-                <Text style={styles.sectionTitle}>Personal Information</Text>
-              </View>
-              
-              <View style={styles.infoRow}>
-                <User size={16} color={Colors.text.secondary} />
-                <Text style={styles.infoLabel}>Full Name:</Text>
-                <Text style={styles.infoValue}>{selectedApplication.personalInfo.fullName}</Text>
-              </View>
-              
-              <View style={styles.infoRow}>
-                <Mail size={16} color={Colors.text.secondary} />
-                <Text style={styles.infoLabel}>Email:</Text>
-                <Text style={styles.infoValue}>{selectedApplication.personalInfo.email}</Text>
-              </View>
-              
-              <View style={styles.infoRow}>
-                <Phone size={16} color={Colors.text.secondary} />
-                <Text style={styles.infoLabel}>Phone:</Text>
-                <Text style={styles.infoValue}>{selectedApplication.personalInfo.phone}</Text>
-              </View>
-              
-              <View style={styles.infoRow}>
-                <MapPin size={16} color={Colors.text.secondary} />
-                <Text style={styles.infoLabel}>Address:</Text>
-                <Text style={styles.infoValue}>{selectedApplication.personalInfo.address}</Text>
-              </View>
-              
-              <View style={styles.infoRow}>
-                <Calendar size={16} color={Colors.text.secondary} />
-                <Text style={styles.infoLabel}>Date of Birth:</Text>
-                <Text style={styles.infoValue}>{selectedApplication.personalInfo.dateOfBirth}</Text>
-              </View>
+      <Modal
+        visible={showDetailModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowDetailModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Application Details</Text>
+              <TouchableOpacity
+                onPress={() => setShowDetailModal(false)}
+                style={styles.closeButton}
+                testID="close-modal"
+              >
+                <XCircle size={24} color={Colors.text.secondary} />
+              </TouchableOpacity>
             </View>
             
-            {/* Professional Information */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Briefcase size={20} color={Colors.primary} />
-                <Text style={styles.sectionTitle}>Professional Information</Text>
-              </View>
-              
-              <View style={styles.infoRow}>
-                <Award size={16} color={Colors.text.secondary} />
-                <Text style={styles.infoLabel}>Specializations:</Text>
-                <Text style={styles.infoValue}>
-                  {selectedApplication.professionalInfo.specialization.join(', ')}
-                </Text>
-              </View>
-              
-              <View style={styles.infoRow}>
-                <Languages size={16} color={Colors.text.secondary} />
-                <Text style={styles.infoLabel}>Languages:</Text>
-                <Text style={styles.infoValue}>
-                  {selectedApplication.professionalInfo.languages.join(', ')}
-                </Text>
-              </View>
-              
-              <View style={styles.infoRow}>
-                <Briefcase size={16} color={Colors.text.secondary} />
-                <Text style={styles.infoLabel}>Current Employment:</Text>
-                <Text style={styles.infoValue}>
-                  {selectedApplication.professionalInfo.currentEmployment || 'Not specified'}
-                </Text>
-              </View>
-              
-              <View style={styles.experienceSection}>
-                <Text style={styles.infoLabel}>Experience:</Text>
-                <Text style={styles.experienceText}>
-                  {selectedApplication.professionalInfo.experience}
-                </Text>
-              </View>
-            </View>
-            
-            {/* Documents */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <FileText size={20} color={Colors.primary} />
-                <Text style={styles.sectionTitle}>Documents</Text>
-              </View>
-              
-              {selectedApplication.documents.map((doc) => (
-                <View key={`${doc.type}-${doc.fileName}`} style={styles.documentRow}>
-                  <FileText size={16} color={Colors.text.secondary} />
-                  <View style={styles.documentInfo}>
-                    <Text style={styles.documentName}>{doc.fileName}</Text>
-                    <Text style={styles.documentType}>{doc.type.replace('_', ' ').toUpperCase()}</Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => handleDownloadDocument(doc.fileUrl, doc.fileName)}
-                    style={styles.downloadButton}
-                    testID={`download-${doc.type}`}
-                  >
-                    <Download size={16} color={Colors.primary} />
-                  </TouchableOpacity>
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+              {/* Personal Information */}
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <User size={20} color={Colors.primary} />
+                  <Text style={styles.sectionTitle}>Personal Information</Text>
                 </View>
-              ))}
-            </View>
-            
-            {/* Admin Notes */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Admin Notes</Text>
-              <TextInput
-                style={styles.notesInput}
-                value={adminNotes}
-                onChangeText={setAdminNotes}
-                placeholder="Add notes about this application..."
-                multiline
-                numberOfLines={4}
-                testID="admin-notes"
-              />
-            </View>
-          </ScrollView>
-          
-          {/* Action Buttons */}
-          {selectedApplication.status === 'pending' && (
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.rejectButton]}
-                onPress={handleRejectApplication}
-                disabled={rejectApplicationMutation.isPending}
-                testID="reject-button"
-              >
-                <XCircle size={20} color={Colors.text.white} />
-                <Text style={styles.rejectButtonText}>
-                  {rejectApplicationMutation.isPending ? 'Rejecting...' : 'Reject'}
-                </Text>
-              </TouchableOpacity>
+                
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Full Name:</Text>
+                  <Text style={styles.infoValue}>{selectedApplication.personalInfo.fullName}</Text>
+                </View>
+                
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Email:</Text>
+                  <Text style={styles.infoValue}>{selectedApplication.personalInfo.email}</Text>
+                </View>
+                
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Phone:</Text>
+                  <Text style={styles.infoValue}>{selectedApplication.personalInfo.phone}</Text>
+                </View>
+                
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Address:</Text>
+                  <Text style={styles.infoValue}>{selectedApplication.personalInfo.address}</Text>
+                </View>
+                
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Date of Birth:</Text>
+                  <Text style={styles.infoValue}>{selectedApplication.personalInfo.dateOfBirth}</Text>
+                </View>
+              </View>
               
-              <TouchableOpacity
-                style={[styles.actionButton, styles.approveButton]}
-                onPress={handleApproveApplication}
-                disabled={approveApplicationMutation.isPending}
-                testID="approve-button"
-              >
-                <CheckCircle size={20} color={Colors.text.white} />
-                <Text style={styles.approveButtonText}>
-                  {approveApplicationMutation.isPending ? 'Approving...' : 'Approve'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
+              {/* Professional Information */}
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Briefcase size={20} color={Colors.primary} />
+                  <Text style={styles.sectionTitle}>Professional Information</Text>
+                </View>
+                
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Specializations:</Text>
+                  <Text style={styles.infoValue}>
+                    {selectedApplication.professionalInfo.specialization.join(', ')}
+                  </Text>
+                </View>
+                
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Languages:</Text>
+                  <Text style={styles.infoValue}>
+                    {selectedApplication.professionalInfo.languages.join(', ')}
+                  </Text>
+                </View>
+                
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Current Employment:</Text>
+                  <Text style={styles.infoValue}>
+                    {selectedApplication.professionalInfo.currentEmployment || 'Not specified'}
+                  </Text>
+                </View>
+                
+                <View style={styles.experienceSection}>
+                  <Text style={styles.infoLabel}>Experience:</Text>
+                  <Text style={styles.experienceText}>
+                    {selectedApplication.professionalInfo.experience}
+                  </Text>
+                </View>
+              </View>
+              
+              {/* Documents */}
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <FileText size={20} color={Colors.primary} />
+                  <Text style={styles.sectionTitle}>Uploaded Documents</Text>
+                </View>
+                
+                {selectedApplication.documents.map((doc, index) => (
+                  <View key={`${doc.type}-${index}`} style={styles.documentRow}>
+                    <FileText size={16} color={Colors.text.secondary} />
+                    <View style={styles.documentInfo}>
+                      <Text style={styles.documentName}>{doc.fileName}</Text>
+                      <Text style={styles.documentType}>{doc.type.replace(/_/g, ' ').toUpperCase()}</Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => handleDownloadDocument(doc.fileUrl, doc.fileName)}
+                      style={styles.downloadButton}
+                      testID={`download-${doc.type}`}
+                    >
+                      <Download size={16} color={Colors.primary} />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+              
+              {/* Admin Notes */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Admin Notes (Private)</Text>
+                <TextInput
+                  style={styles.notesInput}
+                  value={adminNotes}
+                  onChangeText={setAdminNotes}
+                  placeholder="Add private notes about this application..."
+                  multiline
+                  numberOfLines={4}
+                  testID="admin-notes"
+                />
+              </View>
+              
+              {/* Previous Rejection Reason */}
+              {selectedApplication.status === 'rejected' && selectedApplication.rejectionReason && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Rejection Reason</Text>
+                  <Text style={styles.rejectionReasonText}>
+                    {selectedApplication.rejectionReason}
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
+            
+            {/* Action Buttons */}
+            {selectedApplication.status === 'pending' && (
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.rejectButton]}
+                  onPress={handleRejectApplication}
+                  disabled={rejectApplicationMutation.isPending}
+                  testID="reject-button"
+                >
+                  <XCircle size={20} color={Colors.text.white} />
+                  <Text style={styles.rejectButtonText}>Reject</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.approveButton]}
+                  onPress={handleApproveApplication}
+                  disabled={approveApplicationMutation.isPending}
+                  testID="approve-button"
+                >
+                  <CheckCircle size={20} color={Colors.text.white} />
+                  <Text style={styles.approveButtonText}>
+                    {approveApplicationMutation.isPending ? 'Approving...' : 'Approve'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
         </View>
-      </View>
+      </Modal>
     );
   };
 
@@ -519,29 +571,24 @@ export default function CounselorApplicationsAdmin() {
         <View style={styles.filterContainer}>
           <Filter size={16} color={Colors.text.secondary} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {(['all', 'pending', 'approved', 'rejected'] as FilterStatus[]).map((status) => {
-              if (!status?.trim() || status.length > 20) return null;
-              const sanitizedStatus = status.trim();
-              
-              return (
-                <TouchableOpacity
-                  key={sanitizedStatus}
-                  style={[
-                    styles.filterChip,
-                    filterStatus === sanitizedStatus && styles.filterChipActive,
-                  ]}
-                  onPress={() => setFilterStatus(sanitizedStatus as FilterStatus)}
-                  testID={`filter-${sanitizedStatus}`}
-                >
-                  <Text style={[
-                    styles.filterChipText,
-                    filterStatus === sanitizedStatus && styles.filterChipTextActive,
-                  ]}>
-                    {sanitizedStatus.charAt(0).toUpperCase() + sanitizedStatus.slice(1)}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+            {(['all', 'pending', 'approved', 'rejected'] as FilterStatus[]).map((status) => (
+              <TouchableOpacity
+                key={status}
+                style={[
+                  styles.filterChip,
+                  filterStatus === status && styles.filterChipActive,
+                ]}
+                onPress={() => setFilterStatus(status)}
+                testID={`filter-${status}`}
+              >
+                <Text style={[
+                  styles.filterChipText,
+                  filterStatus === status && styles.filterChipTextActive,
+                ]}>
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </ScrollView>
         </View>
       </View>
@@ -568,7 +615,10 @@ export default function CounselorApplicationsAdmin() {
       </ScrollView>
       
       {/* Detail Modal */}
-      {showDetailModal && renderDetailModal()}
+      {renderDetailModal()}
+      
+      {/* Rejection Modal */}
+      {renderRejectionModal()}
       
       {/* Alert Modal */}
       <AlertModal
@@ -596,7 +646,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     color: Colors.text.primary,
   },
   searchContainer: {
@@ -635,7 +685,7 @@ const styles = StyleSheet.create({
   },
   filterChipText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '500' as const,
     color: Colors.text.secondary,
   },
   filterChipTextActive: {
@@ -663,7 +713,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     color: Colors.text.primary,
     marginTop: 16,
     marginBottom: 8,
@@ -694,7 +744,7 @@ const styles = StyleSheet.create({
   },
   applicantName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     color: Colors.text.primary,
     marginBottom: 4,
   },
@@ -719,7 +769,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     marginLeft: 4,
   },
   applicationPreview: {
@@ -727,7 +777,7 @@ const styles = StyleSheet.create({
   },
   previewLabel: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     color: Colors.text.secondary,
     marginTop: 8,
     marginBottom: 2,
@@ -751,7 +801,7 @@ const styles = StyleSheet.create({
   },
   viewButtonText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '500' as const,
     color: Colors.primary,
     marginLeft: 4,
   },
@@ -773,6 +823,47 @@ const styles = StyleSheet.create({
     maxHeight: '80%',
     maxWidth: 600,
   },
+  rejectionModalContent: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    width: '90%',
+    maxWidth: 500,
+    padding: 20,
+  },
+  rejectionModalBody: {
+    marginTop: 16,
+  },
+  rejectionModalDescription: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  rejectionReasonInput: {
+    borderWidth: 1,
+    borderColor: Colors.surfaceLight,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    color: Colors.text.primary,
+    backgroundColor: Colors.background,
+    textAlignVertical: 'top',
+    minHeight: 100,
+    marginBottom: 20,
+  },
+  rejectionModalActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  rejectionReasonText: {
+    fontSize: 14,
+    color: Colors.error,
+    padding: 12,
+    backgroundColor: Colors.error + '10',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.error + '30',
+  },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -783,7 +874,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     color: Colors.text.primary,
   },
   closeButton: {
@@ -803,7 +894,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     color: Colors.text.primary,
     marginLeft: 8,
   },
@@ -814,10 +905,9 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '500' as const,
     color: Colors.text.secondary,
-    marginLeft: 8,
-    minWidth: 80,
+    minWidth: 100,
   },
   infoValue: {
     flex: 1,
@@ -852,7 +942,7 @@ const styles = StyleSheet.create({
   },
   documentName: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '500' as const,
     color: Colors.text.primary,
   },
   documentType: {
@@ -894,16 +984,24 @@ const styles = StyleSheet.create({
   rejectButton: {
     backgroundColor: Colors.error,
   },
+  cancelButton: {
+    backgroundColor: Colors.text.light,
+  },
   approveButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     color: Colors.text.white,
     marginLeft: 8,
   },
   rejectButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     color: Colors.text.white,
     marginLeft: 8,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.text.primary,
   },
 });

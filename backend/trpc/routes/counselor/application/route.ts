@@ -374,6 +374,7 @@ export const approveApplicationProcedure = protectedProcedure
 export const rejectApplicationProcedure = protectedProcedure
   .input(z.object({
     applicationId: z.string().min(1).max(100),
+    rejectionReason: z.string().min(1).max(500),
     adminNotes: z.string().max(1000).optional(),
   }))
   .mutation(async ({ input, ctx }) => {
@@ -393,16 +394,19 @@ export const rejectApplicationProcedure = protectedProcedure
         reviewedAt: new Date().toISOString(),
         reviewedBy: ctx.user?.id || 'admin',
         adminNotes: input.adminNotes,
+        rejectionReason: input.rejectionReason,
       };
       
-      // TODO: Send email notification to counselor
+      // TODO: Send email notification to counselor with rejection reason
+      // Email will include: input.rejectionReason
       // TODO: Schedule document deletion after 30 days
       
       console.log('[CounselorApplication] Application rejected:', applications[applicationIndex].personalInfo.email);
+      console.log('[CounselorApplication] Rejection reason:', input.rejectionReason);
       
       return {
         success: true,
-        message: 'Application rejected. The counselor has been notified.',
+        message: 'Application rejected. The counselor has been notified with the rejection reason.',
       };
     } catch (error) {
       console.error('[CounselorApplication] Error rejecting application:', error);
