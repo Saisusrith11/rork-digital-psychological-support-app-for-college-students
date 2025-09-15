@@ -23,7 +23,12 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.digital-psychological-support-app-for-college-students"
+      "package": "app.rork.digital-psychological-support-app-for-college-students",
+      "permissions": [
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "INTERNET"
+      ]
     },
     "web": {
       "favicon": "./assets/images/favicon.png"

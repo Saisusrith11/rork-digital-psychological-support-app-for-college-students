@@ -5,7 +5,8 @@ import {
   Users, 
   MessageSquare, 
   Settings,
-  FileText
+  FileText,
+  LibraryBig
 } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 
@@ -28,6 +29,15 @@ export default function AdminTabLayout() {
           title: 'Dashboard',
           tabBarIcon: ({ color, size }) => (
             <BarChart3 size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="resources"
+        options={{
+          title: 'Resources',
+          tabBarIcon: ({ color, size }) => (
+            <LibraryBig size={size} color={color} />
           ),
         }}
       />

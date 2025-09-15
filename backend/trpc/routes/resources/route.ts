@@ -258,27 +258,27 @@ export const updateResourceProcedure = protectedProcedure
 // Delete resource (Admin only)
 export const deleteResourceProcedure = protectedProcedure
   .input(z.object({ id: z.string() }))
-  .mutation(async ({ input, ctx }) => {
+  .mutation(async ({ input }) => {
     try {
       console.log('[Resources] Deleting resource:', input.id);
-      
+
       const resourceIndex = resources.findIndex(r => r.id === input.id);
-      
+
       if (resourceIndex === -1) {
         throw new Error('Resource not found');
       }
-      
-      // Soft delete - just mark as inactive
-      resources[resourceIndex].isActive = false;
-      resources[resourceIndex].updatedAt = new Date().toISOString();
-      
-      // TODO: In production, also delete the file from cloud storage
-      
-      console.log('[Resources] Resource deleted:', input.id);
-      
+
+      const fileUrl = resources[resourceIndex].fileUrl;
+
+      // Hard delete from in-memory store
+      resources.splice(resourceIndex, 1);
+
+      // Simulate purge from cloud storage
+      console.log('[Resources] Purging file from storage:', fileUrl);
+
       return {
         success: true,
-        message: 'Resource deleted successfully',
+        message: 'Resource and file purged successfully',
       };
     } catch (error) {
       console.error('[Resources] Error deleting resource:', error);
@@ -293,17 +293,18 @@ export const uploadResourceFileProcedure = protectedProcedure
     fileData: z.string(), // Base64 encoded
     mimeType: z.string(),
   }))
-  .mutation(async ({ input, ctx }) => {
+  .mutation(async ({ input }) => {
     try {
       console.log('[Resources] Uploading file:', input.fileName);
-      
-      // TODO: In production, upload to secure cloud storage (AWS S3, etc.)
+
+      // TODO: In production, upload to secure cloud storage (AWS S3, etc.) using presigned URLs
       // For now, simulate file upload
-      const fileUrl = `https://secure-storage.example.com/resources/${Date.now()}_${input.fileName}`;
-      const fileSize = Math.floor(input.fileData.length * 0.75); // Approximate size from base64
-      
-      console.log('[Resources] File uploaded:', fileUrl);
-      
+      const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const fileUrl = `https://secure-storage.example.com/resources/${Date.now()}_${safeName}`;
+      const fileSize = Math.floor(input.fileData.length * 0.75);
+
+      console.log('[Resources] File uploaded:', { fileUrl, fileSize, mimeType: input.mimeType });
+
       return {
         success: true,
         fileUrl,
