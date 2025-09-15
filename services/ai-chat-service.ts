@@ -6,6 +6,7 @@ export interface Message {
   isUser: boolean;
   timestamp: Date;
   type?: 'normal' | 'urgent' | 'coping' | 'assessment' | 'resource';
+  flagged?: boolean;
   actions?: Array<{
     label: string;
     action: () => void;

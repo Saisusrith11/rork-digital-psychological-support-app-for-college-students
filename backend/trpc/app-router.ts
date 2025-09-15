@@ -43,6 +43,7 @@ import {
   markMessagesAsReadProcedure,
   cleanupInactiveConversationsProcedure,
 } from "./routes/chat/route";
+import { syncAssessmentsProcedure } from "./routes/assessments/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -96,6 +97,9 @@ export const appRouter = createTRPCRouter({
     subscribeToNotifications: subscribeToNotificationsProcedure,
     markAsRead: markMessagesAsReadProcedure,
     cleanup: cleanupInactiveConversationsProcedure,
+  }),
+  assessments: createTRPCRouter({
+    sync: syncAssessmentsProcedure,
   }),
 });
 

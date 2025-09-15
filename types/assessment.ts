@@ -32,6 +32,7 @@ export interface Assessment {
   consentTimestamp?: Date;
   studentId?: string;
   anonymousCode?: string;
+  synced?: boolean;
 }
 
 export interface ConsentRequest {
@@ -48,4 +49,12 @@ export interface CounselorAssessmentView {
   completedAt: Date;
   consentGranted: boolean;
   studentId?: string;
+}
+
+export interface AssessmentSyncItem {
+  id: string;
+  studentId?: string;
+  totalScore: number;
+  category: 'minimal' | 'mild' | 'moderate' | 'severe';
+  completedAt: string;
 }
