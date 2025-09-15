@@ -548,13 +548,21 @@ export default function AdminDashboard() {
                 <FileText size={24} color={Colors.primary} />
                 <Text style={styles.actionButtonText}>Counselor Applications</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} testID="qa-analytics">
-                <BarChart3 size={24} color={Colors.secondary} />
-                <Text style={styles.actionButtonText}>View Analytics</Text>
+              <TouchableOpacity 
+                style={styles.actionButton} 
+                testID="qa-students"
+                onPress={() => router.push('/(admin)/students')}
+              >
+                <Users size={24} color={Colors.secondary} />
+                <Text style={styles.actionButtonText}>Manage Students</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} testID="qa-feedback">
-                <MessageSquare size={24} color={Colors.warning} />
-                <Text style={styles.actionButtonText}>Review Feedback</Text>
+              <TouchableOpacity 
+                style={styles.actionButton}
+                testID="qa-manage-colleges"
+                onPress={() => router.push('/(admin)/manage-colleges')}
+              >
+                <FileText size={24} color={Colors.warning} />
+                <Text style={styles.actionButtonText}>Manage Colleges</Text>
               </TouchableOpacity>
             </View>
             <Text style={styles.privacyNote}>Admin view shows only anonymized aggregates. No individual identities or notes are visible.</Text>

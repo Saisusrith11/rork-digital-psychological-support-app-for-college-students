@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -15,7 +15,7 @@ import { useAuth } from '@/hooks/auth-store';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { UserRole } from '@/types/user';
-import { trpcClient } from '@/lib/trpc';
+import { trpc, trpcClient } from '@/lib/trpc';
 
 type AuthForm = {
   username: string;
@@ -27,6 +27,73 @@ type AuthForm = {
   course: string;
   role: UserRole;
 };
+
+function CollegeTypeahead({ value, onChange, email }: { value: string; onChange: (text: string) => void; email: string }) {
+  const [query, setQuery] = useState<string>(value ?? '');
+  const [showList, setShowList] = useState<boolean>(false);
+  const suggestionsQuery = trpc.students.getCollegeSuggestions.useQuery({ query: query }, { enabled: query.length >= 2 });
+
+  const onSelect = useCallback((name: string) => {
+    const sanitized = (name ?? '').slice(0, 200);
+    onChange(sanitized);
+    setQuery(sanitized);
+    setShowList(false);
+  }, [onChange]);
+
+  return (
+    <View>
+      <TextInput
+        style={styles.input}
+        value={query}
+        onChangeText={(text) => { setQuery(text); onChange(text); setShowList(true); }}
+        placeholder="Search college"
+        placeholderTextColor={Colors.text.light}
+        autoCapitalize="words"
+        testID="college-typeahead"
+      />
+      {showList && query.length >= 2 && (
+        <View style={styles.suggestionsWrap}>
+          {suggestionsQuery.isLoading ? (
+            <Text style={styles.suggestionItemText}>Searching...</Text>
+          ) : (
+            <>
+              {(suggestionsQuery.data?.suggestions?.length ?? 0) > 0 ? (
+                <>
+                  {suggestionsQuery.data?.suggestions?.map((s) => (
+                    <TouchableOpacity key={s.id} onPress={() => onSelect(s.name)} style={styles.suggestionItem} testID={`college-sugg-${s.id}`}>
+                      <Text style={styles.suggestionItemText}>{s.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <Text style={styles.suggestionItemText}>No matches. You can submit this college for review.</Text>
+                  <TouchableOpacity
+                    style={styles.submitCollegeButton}
+                    onPress={async () => {
+                      try {
+                        const name = query.trim();
+                        if (!name) return;
+                        await trpcClient.students.submitCollegeForReview.mutate({ name, submittedBy: email || 'unknown@example.com' });
+                      } catch (e) {
+                        console.log('[Typeahead] submit college error', e);
+                      } finally {
+                        setShowList(false);
+                      }
+                    }}
+                    testID="submit-college-review"
+                  >
+                    <Text style={styles.submitCollegeText}>Submit &quot;{query}&quot;</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </>
+          )}
+        </View>
+      )}
+    </View>
+  );
+}
 
 export default function AuthScreen() {
   const { login, register, loginAnonymous } = useAuth();
@@ -99,7 +166,7 @@ export default function AuthScreen() {
       }
     } else {
       if (!formData.username || !formData.email || !formData.fullName || 
-          !formData.password) {
+          !formData.password || !formData.college) {
         showError('Please fill in required fields');
         return;
       }
@@ -108,6 +175,15 @@ export default function AuthScreen() {
         router.replace('/counselor-application');
         return;
       }
+      try {
+        if (formData.role === 'student' && formData.college && formData.email) {
+          try {
+            await trpcClient.students.submitCollegeForReview.mutate({ name: formData.college, submittedBy: formData.email });
+          } catch (e) {
+            console.log('[Auth] submitCollegeForReview failed (non-blocking)', e);
+          }
+        }
+      } catch {}
       const result = await register({
         username: formData.username,
         email: formData.email,
@@ -245,13 +321,11 @@ export default function AuthScreen() {
             <>
               <View style={styles.inputRow}>
                 <View style={[styles.inputContainer, { flex: 1, marginRight: 8 }]}>
-                  <Text style={styles.inputLabel}>College</Text>
-                  <TextInput
-                    style={styles.input}
+                  <Text style={styles.inputLabel}>College/University Name</Text>
+                  <CollegeTypeahead
                     value={formData.college}
-                    onChangeText={(text) => setFormData(prev => ({ ...prev, college: text }))}
-                    placeholder="College name"
-                    placeholderTextColor={Colors.text.light}
+                    onChange={(text) => setFormData(prev => ({ ...prev, college: text }))}
+                    email={formData.email}
                   />
                 </View>
                 <View style={[styles.inputContainer, { flex: 1, marginLeft: 8 }]}>
@@ -472,6 +546,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.text.primary,
     backgroundColor: Colors.background,
+  },
+  suggestionsWrap: {
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.surfaceLight,
+    borderRadius: 10,
+    marginTop: 6,
+    overflow: 'hidden',
+  },
+  suggestionItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.surfaceLight,
+  },
+  suggestionItemText: {
+    fontSize: 14,
+    color: Colors.text.primary,
+  },
+  submitCollegeButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    backgroundColor: Colors.primary + '10',
+  },
+  submitCollegeText: {
+    color: Colors.primary,
+    fontWeight: '600',
   },
   submitButton: {
     backgroundColor: Colors.primary,
