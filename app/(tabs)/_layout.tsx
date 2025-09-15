@@ -32,17 +32,17 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="chat"
-        options={{
-          title: t('nav.chat'),
-          tabBarIcon: ({ color, size }) => <MessageCircle size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="resources"
         options={{
           title: t('nav.resources'),
           tabBarIcon: ({ color, size }) => <BookOpen size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          title: t('nav.chat'),
+          tabBarIcon: ({ color, size }) => <MessageCircle size={size} color={color} />,
         }}
       />
       <Tabs.Screen

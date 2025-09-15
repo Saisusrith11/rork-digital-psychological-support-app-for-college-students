@@ -161,6 +161,10 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
       // Use current user ID if assessment doesn't have studentId
       const studentId = assessment.studentId || user?.id || `anonymous_${Date.now()}`;
       
+      if (!studentId || studentId.trim() === '') {
+        throw new Error('Assessment not found or missing student ID');
+      }
+      
       console.log('Revoking consent for:', { assessmentId, studentId, assessment });
 
       await trpcClient.consent.revoke.mutate({
@@ -168,10 +172,10 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
         studentId,
       });
 
-      // Update local assessment
+      // Update local assessment with studentId to ensure consistency
       const updatedAssessments = assessments.map(a => 
         a.id === assessmentId 
-          ? { ...a, consentStatus: 'denied' as const, consentTimestamp: new Date() }
+          ? { ...a, studentId, consentStatus: 'denied' as const, consentTimestamp: new Date() }
           : a
       );
       setAssessments(updatedAssessments);
