@@ -9,7 +9,6 @@ import {
   FlatList 
 } from 'react-native';
 import { 
-  BarChart3, 
   Users, 
   MessageSquare, 
   TrendingUp, 
@@ -76,6 +75,7 @@ export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const { feedbacks, pendingCount } = useFeedback();
   const reportStatsQuery = trpc.reports.getStats.useQuery();
+  const applicationStatsQuery = trpc.counselor.application.getStats.useQuery();
   const { notifications, unreadCount, addNotification, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
   const insets = useSafeAreaInsets();
   const [showLogoutModal, setShowLogoutModal] = useState<boolean>(false);
@@ -137,7 +137,14 @@ export default function AdminDashboard() {
 
         if (notifications.length === 0) {
           sampleNotifications.forEach(notification => {
-            addNotification(notification);
+            if (!notification?.title?.trim()) return;
+            if (notification.title.length > 100) return;
+            const sanitizedNotification = {
+              ...notification,
+              title: notification.title.trim(),
+              message: notification.message.trim(),
+            };
+            addNotification(sanitizedNotification);
           });
         }
       } catch (error) {
@@ -351,22 +358,27 @@ export default function AdminDashboard() {
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionTitle}>Trends</Text>
               <View style={styles.rangePills}>
-                {(['7d','30d','90d'] as RangeKey[]).map((k) => (
-                  <TouchableOpacity
-                    key={k}
-                    onPress={() => setRange(k)}
-                    style={[styles.pill, range === k ? styles.pillActive : undefined]}
-                    testID={`range-${k}`}
-                  >
-                    <Text style={[styles.pillText, range === k ? styles.pillTextActive : undefined]}>{k}</Text>
-                  </TouchableOpacity>
-                ))}
+                {(['7d','30d','90d'] as RangeKey[]).map((k) => {
+                  if (!k?.trim()) return null;
+                  if (k.length > 10) return null;
+                  const sanitizedK = k.trim();
+                  return (
+                    <TouchableOpacity
+                      key={sanitizedK}
+                      onPress={() => setRange(sanitizedK as RangeKey)}
+                      style={[styles.pill, range === sanitizedK ? styles.pillActive : undefined]}
+                      testID={`range-${sanitizedK}`}
+                    >
+                      <Text style={[styles.pillText, range === sanitizedK ? styles.pillTextActive : undefined]}>{sanitizedK}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
             <View style={styles.card} testID="trend-card">
               <View style={styles.trendRow}>
                 {trendData.map((p, idx) => (
-                  <View key={idx} style={styles.trendBarWrap}>
+                  <View key={`trend-${p.label}-${idx}`} style={styles.trendBarWrap}>
                     <View
                       style={[styles.trendBar, { height: Math.max(8, (p.value / maxTrend) * 100) }]}
                       testID={`trend-bar-${idx}`}
@@ -543,12 +555,17 @@ export default function AdminDashboard() {
             <Text style={styles.sectionTitle}>Quick Actions</Text>
             <View style={styles.quickActions}>
               <TouchableOpacity 
-                style={styles.actionButton} 
+                style={[styles.actionButton, { position: 'relative' }]}
                 testID="qa-counselor-apps"
-                onPress={() => router.push('/counselor-applications-admin')}
+                onPress={() => router.push('/(admin)/counselor-applications')}
               >
                 <FileText size={24} color={Colors.primary} />
                 <Text style={styles.actionButtonText}>Counselor Applications</Text>
+                {(applicationStatsQuery.data?.pending || 0) > 0 && (
+                  <View style={styles.pendingBadge}>
+                    <Text style={styles.pendingBadgeText}>{applicationStatsQuery.data?.pending}</Text>
+                  </View>
+                )}
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.actionButton} 

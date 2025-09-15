@@ -69,6 +69,15 @@ export default function AdminTabLayout() {
         }}
       />
       <Tabs.Screen
+        name="counselor-applications"
+        options={{
+          title: 'Applications',
+          tabBarIcon: ({ color, size }) => (
+            <FileText size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',

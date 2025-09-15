@@ -11,6 +11,7 @@ import {
   getAllApplicationsProcedure,
   approveApplicationProcedure,
   rejectApplicationProcedure,
+  getApplicationStatsProcedure,
 } from "./routes/counselor/application/route";
 import {
   getAllResourcesProcedure,
@@ -67,6 +68,7 @@ export const appRouter = createTRPCRouter({
       getAll: getAllApplicationsProcedure,
       approve: approveApplicationProcedure,
       reject: rejectApplicationProcedure,
+      getStats: getApplicationStatsProcedure,
     }),
   }),
   resources: createTRPCRouter({

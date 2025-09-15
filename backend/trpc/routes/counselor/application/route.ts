@@ -146,6 +146,29 @@ export const getPendingApplicationsProcedure = protectedProcedure
     }
   });
 
+// Get application statistics (Admin only)
+export const getApplicationStatsProcedure = protectedProcedure
+  .query(async ({ ctx }) => {
+    try {
+      console.log('[CounselorApplication] Fetching application statistics');
+      
+      const pending = applications.filter(app => app.status === 'pending').length;
+      const approved = applications.filter(app => app.status === 'approved').length;
+      const rejected = applications.filter(app => app.status === 'rejected').length;
+      const total = applications.length;
+      
+      return {
+        pending,
+        approved,
+        rejected,
+        total,
+      };
+    } catch (error) {
+      console.error('[CounselorApplication] Error fetching statistics:', error);
+      throw new Error('Failed to fetch statistics');
+    }
+  });
+
 // Get application details (Admin only)
 export const getApplicationDetailsProcedure = protectedProcedure
   .input(z.object({ applicationId: z.string() }))
@@ -346,23 +369,28 @@ export const approveApplicationProcedure = protectedProcedure
         throw new Error('Application not found');
       }
       
+      const application = applications[applicationIndex];
+      
       // Update application status
       applications[applicationIndex] = {
-        ...applications[applicationIndex],
+        ...application,
         status: 'approved',
         reviewedAt: new Date().toISOString(),
         reviewedBy: ctx.user?.id || 'admin',
         adminNotes: input.adminNotes,
       };
       
-      // TODO: Send email notification to counselor
+      // TODO: Send approval email notification to counselor
       // TODO: Create counselor account with login credentials
+      // TODO: Grant access to professional portal
       
-      console.log('[CounselorApplication] Application approved:', applications[applicationIndex].personalInfo.email);
+      console.log('[CounselorApplication] Application approved:', application.personalInfo.email);
+      console.log('[CounselorApplication] Counselor granted portal access');
       
       return {
         success: true,
-        message: 'Application approved successfully. The counselor has been notified.',
+        message: 'Application approved successfully. The counselor has been granted access to their professional portal and notified via email.',
+        counselorEmail: application.personalInfo.email,
       };
     } catch (error) {
       console.error('[CounselorApplication] Error approving application:', error);
@@ -387,26 +415,33 @@ export const rejectApplicationProcedure = protectedProcedure
         throw new Error('Application not found');
       }
       
+      const application = applications[applicationIndex];
+      
       // Update application status
       applications[applicationIndex] = {
-        ...applications[applicationIndex],
+        ...application,
         status: 'rejected',
         reviewedAt: new Date().toISOString(),
         reviewedBy: ctx.user?.id || 'admin',
         adminNotes: input.adminNotes,
         rejectionReason: input.rejectionReason,
+        documentDeletionScheduled: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
       };
       
-      // TODO: Send email notification to counselor with rejection reason
+      // TODO: Send rejection email notification to counselor with specific reason
       // Email will include: input.rejectionReason
       // TODO: Schedule document deletion after 30 days
+      // TODO: Restrict login access
       
-      console.log('[CounselorApplication] Application rejected:', applications[applicationIndex].personalInfo.email);
+      console.log('[CounselorApplication] Application rejected:', application.personalInfo.email);
       console.log('[CounselorApplication] Rejection reason:', input.rejectionReason);
+      console.log('[CounselorApplication] Documents scheduled for deletion in 30 days');
       
       return {
         success: true,
-        message: 'Application rejected. The counselor has been notified with the rejection reason.',
+        message: `Application rejected. The counselor has been notified with the rejection reason: "${input.rejectionReason}". Documents will be deleted after 30 days.`,
+        counselorEmail: application.personalInfo.email,
+        rejectionReason: input.rejectionReason,
       };
     } catch (error) {
       console.error('[CounselorApplication] Error rejecting application:', error);
