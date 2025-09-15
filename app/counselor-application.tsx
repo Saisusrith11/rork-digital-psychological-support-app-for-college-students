@@ -778,7 +778,7 @@ export default function CounselorApplicationForm() {
     <View style={[styles.container, { paddingTop: insets.top }]} testID="counselor-application">
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => router.replace('/auth')}
           style={styles.backButton}
           testID="back-button"
         >
