@@ -15,6 +15,7 @@ import { useAuth } from '@/hooks/auth-store';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { UserRole } from '@/types/user';
+import { trpcClient } from '@/lib/trpc';
 
 type AuthForm = {
   username: string;
@@ -73,6 +74,25 @@ export default function AuthScreen() {
       }
       const result = await login(formData.username, formData.password);
       if (result.success) {
+        try {
+          if (result.user?.role === 'counselor') {
+            const email = result.user.email ?? '';
+            if (!email) {
+              showError('Counselor account missing email. Contact support.');
+              return;
+            }
+            console.log('[Auth] Checking counselor approval status for', email);
+            const status = await trpcClient.counselor.application.checkStatus.query({ email });
+            if (!status.hasApplication || status.status !== 'approved') {
+              showError(status.hasApplication ? 'Your counselor application is not approved yet.' : 'No counselor application found. Please apply first.');
+              return;
+            }
+          }
+        } catch (e) {
+          console.log('[Auth] Counselor status check failed', e);
+          showError('Unable to verify counselor status. Please try again later.');
+          return;
+        }
         navigateAfterAuth(result.user?.role);
       } else {
         showError(result.error || 'Login failed');
@@ -81,6 +101,11 @@ export default function AuthScreen() {
       if (!formData.username || !formData.email || !formData.fullName || 
           !formData.password) {
         showError('Please fill in required fields');
+        return;
+      }
+      if (formData.role === 'counselor') {
+        console.log('[Auth] Redirecting to counselor application');
+        router.replace('/counselor-application');
         return;
       }
       const result = await register({
@@ -252,6 +277,16 @@ export default function AuthScreen() {
                   placeholderTextColor={Colors.text.light}
                 />
               </View>
+
+              {formData.role === 'counselor' && (
+                <TouchableOpacity 
+                  style={styles.counselorApplyButton}
+                  onPress={() => router.replace('/counselor-application')}
+                  testID="applyCounselorCTA"
+                >
+                  <Text style={styles.counselorApplyText}>Apply as Counselor (document submission required)</Text>
+                </TouchableOpacity>
+              )}
             </>
           )}
 
@@ -525,5 +560,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     textAlign: 'center',
+  },
+  counselorApplyButton: {
+    backgroundColor: '#EEF6FF',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  counselorApplyText: {
+    color: Colors.primary,
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
