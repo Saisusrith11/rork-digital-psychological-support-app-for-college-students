@@ -90,6 +90,40 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'chat.coping.label': 'Coping Strategy',
     'chat.actions.callHelpline': 'Call Emergency Helpline',
     'chat.actions.bookCounselor': 'Book Counselor',
+    
+    // Counselor Dashboard
+    'counselor.dashboard.greeting': 'Good morning',
+    'counselor.dashboard.todaySessions': "Today's Sessions",
+    'counselor.dashboard.pendingRequests': 'Pending Requests',
+    'counselor.dashboard.consentedStudents': 'Consented Students',
+    'counselor.dashboard.urgentCases': 'Urgent Cases',
+    'counselor.dashboard.quickActions': 'Quick Actions',
+    'counselor.dashboard.viewSchedule': 'View Schedule',
+    'counselor.dashboard.studentList': 'Student List',
+    'counselor.dashboard.privacyCenter': 'Privacy Center',
+    
+    // Settings
+    'settings.general': 'General',
+    'settings.darkMode': 'Dark Mode',
+    'settings.darkModeHint': 'Reduce eye strain with darker colors',
+    'settings.compactUI': 'Compact UI',
+    'settings.compactUIHint': 'Fit more content on screen by reducing paddings',
+    'settings.language': 'Language',
+    'settings.notifications': 'Notifications',
+    'settings.privacy': 'Privacy & Security',
+    'settings.communications': 'Communication Settings',
+    
+    // Assessment Details
+    'assessment.details.title': 'Assessment Details',
+    'assessment.details.studentInfo': 'Student Information',
+    'assessment.details.anonymousCode': 'Anonymous Code',
+    'assessment.details.riskCategory': 'Risk Category',
+    'assessment.details.results': 'Assessment Results',
+    'assessment.details.totalScore': 'Total Score',
+    'assessment.details.completedDate': 'Completed Date',
+    'assessment.details.recommendations': 'Recommendations',
+    'assessment.details.scheduleFollowup': 'Schedule Follow-up',
+    'assessment.details.viewDetails': 'View Details'
   },
   ta: {
     // Navigation (Tamil)

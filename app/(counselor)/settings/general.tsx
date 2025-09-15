@@ -1,39 +1,77 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, Switch, ScrollView } from 'react-native';
-import { Colors } from '@/constants/colors';
+import { useTheme } from '@/hooks/theme-store';
+import { useLanguage } from '@/hooks/language-store';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function GeneralSettings() {
-  const [darkMode, setDarkMode] = useState<boolean>(false);
-  const [compactUI, setCompactUI] = useState<boolean>(false);
+  const { settings, toggleDarkMode, toggleCompactUI, colors } = useTheme();
+  const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
+
+  const styles = StyleSheet.create({
+    container: { 
+      flex: 1, 
+      backgroundColor: colors.background,
+      paddingTop: insets.top 
+    },
+    title: { 
+      fontSize: 22, 
+      fontWeight: '700', 
+      color: colors.text.primary, 
+      margin: 16 
+    },
+    card: { 
+      backgroundColor: colors.surface, 
+      marginHorizontal: 16, 
+      marginVertical: 8, 
+      borderRadius: 12, 
+      padding: settings.isCompactUI ? 12 : 16 
+    },
+    rowBetween: { 
+      flexDirection: 'row', 
+      alignItems: 'center', 
+      justifyContent: 'space-between' 
+    },
+    itemTitle: { 
+      fontSize: 16, 
+      fontWeight: '600', 
+      color: colors.text.primary 
+    },
+    hint: { 
+      marginTop: 6, 
+      fontSize: 12, 
+      color: colors.text.secondary 
+    },
+  });
 
   return (
     <ScrollView style={styles.container} testID="general-settings-screen">
-      <Text style={styles.title}>General</Text>
+      <Text style={styles.title}>{t('settings.general') || 'General'}</Text>
 
       <View style={styles.card}>
         <View style={styles.rowBetween}>
-          <Text style={styles.itemTitle}>Dark mode</Text>
-          <Switch value={darkMode} onValueChange={setDarkMode} testID="switch-dark-mode" />
+          <Text style={styles.itemTitle}>{t('settings.darkMode') || 'Dark mode'}</Text>
+          <Switch 
+            value={settings.isDarkMode} 
+            onValueChange={toggleDarkMode} 
+            testID="switch-dark-mode" 
+          />
         </View>
-        <Text style={styles.hint}>Reduce eye strain with darker colors.</Text>
+        <Text style={styles.hint}>{t('settings.darkModeHint') || 'Reduce eye strain with darker colors.'}</Text>
       </View>
 
       <View style={styles.card}>
         <View style={styles.rowBetween}>
-          <Text style={styles.itemTitle}>Compact UI</Text>
-          <Switch value={compactUI} onValueChange={setCompactUI} testID="switch-compact-ui" />
+          <Text style={styles.itemTitle}>{t('settings.compactUI') || 'Compact UI'}</Text>
+          <Switch 
+            value={settings.isCompactUI} 
+            onValueChange={toggleCompactUI} 
+            testID="switch-compact-ui" 
+          />
         </View>
-        <Text style={styles.hint}>Fit more content on screen by reducing paddings.</Text>
+        <Text style={styles.hint}>{t('settings.compactUIHint') || 'Fit more content on screen by reducing paddings.'}</Text>
       </View>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  title: { fontSize: 22, fontWeight: '700', color: Colors.text.primary, margin: 16 },
-  card: { backgroundColor: Colors.surface, marginHorizontal: 16, marginVertical: 8, borderRadius: 12, padding: 16 },
-  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  itemTitle: { fontSize: 16, fontWeight: '600', color: Colors.text.primary },
-  hint: { marginTop: 6, fontSize: 12, color: Colors.text.secondary },
-});

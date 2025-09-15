@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { 
   View, 
   Text, 
@@ -15,13 +15,16 @@ import {
   Bell,
   Globe
 } from 'lucide-react-native';
-import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
+import { useTheme } from '@/hooks/theme-store';
+import { useLanguage } from '@/hooks/language-store';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 export default function CounselorProfile() {
   const { user, logout } = useAuth();
+  const { colors, settings } = useTheme();
+  const { t } = useLanguage();
   const insets = useSafeAreaInsets();
 
   const handleLogout = useCallback(async () => {
@@ -35,6 +38,7 @@ export default function CounselorProfile() {
   }, [logout]);
 
   const go = useCallback((path: string) => {
+    if (!path?.trim()) return;
     try {
       console.log('[CounselorProfile] Navigate to', path);
       router.push(path as any);
@@ -55,6 +59,131 @@ export default function CounselorProfile() {
     .filter(Boolean)
     .map((n) => n[0])
     .join('');
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    profileHeader: {
+      alignItems: 'center',
+      paddingVertical: settings.isCompactUI ? 24 : 32,
+      paddingHorizontal: 16,
+    },
+    avatar: {
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+      backgroundColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 16,
+    },
+    avatarText: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      color: colors.text.white,
+    },
+    userName: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: colors.text.primary,
+      marginBottom: 4,
+    },
+    specialization: {
+      fontSize: 16,
+      color: colors.primary,
+      marginBottom: 4,
+    },
+    experience: {
+      fontSize: 14,
+      color: colors.text.secondary,
+    },
+    statsSection: {
+      paddingHorizontal: 16,
+      marginBottom: settings.isCompactUI ? 16 : 24,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: colors.text.primary,
+      marginBottom: 16,
+    },
+    statsGrid: {
+      flexDirection: 'row',
+      backgroundColor: colors.surface,
+      borderRadius: 16,
+      padding: settings.isCompactUI ? 16 : 20,
+    },
+    statItem: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    statNumber: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: colors.primary,
+    },
+    statLabel: {
+      fontSize: 12,
+      color: colors.text.secondary,
+      marginTop: 4,
+      textAlign: 'center',
+    },
+    languagesSection: {
+      paddingHorizontal: 16,
+      marginBottom: settings.isCompactUI ? 16 : 24,
+    },
+    languagesList: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    languageChip: {
+      backgroundColor: colors.primary + '20',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 16,
+    },
+    languageText: {
+      fontSize: 14,
+      color: colors.primary,
+      fontWeight: '500',
+    },
+    settingsSection: {
+      paddingHorizontal: 16,
+      marginBottom: settings.isCompactUI ? 16 : 24,
+    },
+    settingItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      padding: settings.isCompactUI ? 12 : 16,
+      marginBottom: 8,
+    },
+    settingText: {
+      fontSize: 16,
+      color: colors.text.primary,
+      marginLeft: 12,
+    },
+    logoutButton: {
+      backgroundColor: colors.warning,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 16,
+      marginHorizontal: 16,
+      marginBottom: 32,
+      borderRadius: 12,
+      gap: 8,
+    },
+    logoutText: {
+      color: colors.text.white,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+  }), [colors, settings.isCompactUI]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]} testID="counselor-profile-screen">
@@ -78,13 +207,13 @@ export default function CounselorProfile() {
               <Text style={styles.statLabel}>Total Sessions</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statNumber, { color: Colors.success }]}>
+              <Text style={[styles.statNumber, { color: colors.success }]}>
                 {profileStats.activeStudents}
               </Text>
               <Text style={styles.statLabel}>Active Students</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statNumber, { color: Colors.warning }]}>
+              <Text style={[styles.statNumber, { color: colors.warning }]}>
                 {profileStats.avgRating}
               </Text>
               <Text style={styles.statLabel}>Avg Rating</Text>
@@ -93,7 +222,7 @@ export default function CounselorProfile() {
         </View>
 
         <View style={styles.languagesSection}>
-          <Text style={styles.sectionTitle}>Languages</Text>
+          <Text style={styles.sectionTitle}>{t('settings.language') || 'Languages'}</Text>
           <View style={styles.languagesList}>
             {(user?.languages ?? ['English']).map((language, index) => (
               <View key={`lang-${index}`} style={styles.languageChip}>
@@ -104,14 +233,14 @@ export default function CounselorProfile() {
         </View>
 
         <View style={styles.settingsSection}>
-          <Text style={styles.sectionTitle}>Settings</Text>
+          <Text style={styles.sectionTitle}>{t('profile.settings') || 'Settings'}</Text>
           
           <TouchableOpacity
             testID="btn-availability-settings"
             style={styles.settingItem}
             onPress={() => go('/(counselor)/settings/availability')}
           >
-            <Calendar size={20} color={Colors.text.secondary} />
+            <Calendar size={20} color={colors.text.secondary} />
             <Text style={styles.settingText}>Availability Settings</Text>
           </TouchableOpacity>
 
@@ -120,8 +249,8 @@ export default function CounselorProfile() {
             style={styles.settingItem}
             onPress={() => go('/(counselor)/settings/notifications')}
           >
-            <Bell size={20} color={Colors.text.secondary} />
-            <Text style={styles.settingText}>Notification Preferences</Text>
+            <Bell size={20} color={colors.text.secondary} />
+            <Text style={styles.settingText}>{t('settings.notifications') || 'Notification Preferences'}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -129,8 +258,8 @@ export default function CounselorProfile() {
             style={styles.settingItem}
             onPress={() => go('/(counselor)/settings/language')}
           >
-            <Globe size={20} color={Colors.text.secondary} />
-            <Text style={styles.settingText}>Language Preferences</Text>
+            <Globe size={20} color={colors.text.secondary} />
+            <Text style={styles.settingText}>{t('settings.language') || 'Language Preferences'}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -138,8 +267,8 @@ export default function CounselorProfile() {
             style={styles.settingItem}
             onPress={() => go('/(counselor)/settings/privacy')}
           >
-            <Shield size={20} color={Colors.text.secondary} />
-            <Text style={styles.settingText}>Privacy & Security</Text>
+            <Shield size={20} color={colors.text.secondary} />
+            <Text style={styles.settingText}>{t('settings.privacy') || 'Privacy & Security'}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -147,8 +276,8 @@ export default function CounselorProfile() {
             style={styles.settingItem}
             onPress={() => go('/(counselor)/settings/communications')}
           >
-            <MessageSquare size={20} color={Colors.text.secondary} />
-            <Text style={styles.settingText}>Communication Settings</Text>
+            <MessageSquare size={20} color={colors.text.secondary} />
+            <Text style={styles.settingText}>{t('settings.communications') || 'Communication Settings'}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -156,141 +285,16 @@ export default function CounselorProfile() {
             style={styles.settingItem}
             onPress={() => go('/(counselor)/settings/general')}
           >
-            <Settings size={20} color={Colors.text.secondary} />
-            <Text style={styles.settingText}>General Settings</Text>
+            <Settings size={20} color={colors.text.secondary} />
+            <Text style={styles.settingText}>{t('settings.general') || 'General Settings'}</Text>
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} testID="btn-logout">
-          <LogOut size={20} color={Colors.text.white} />
-          <Text style={styles.logoutText}>Log Out</Text>
+          <LogOut size={20} color={colors.text.white} />
+          <Text style={styles.logoutText}>{t('profile.logout') || 'Log Out'}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  profileHeader: {
-    alignItems: 'center',
-    paddingVertical: 32,
-    paddingHorizontal: 16,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  avatarText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: Colors.text.white,
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.text.primary,
-    marginBottom: 4,
-  },
-  specialization: {
-    fontSize: 16,
-    color: Colors.primary,
-    marginBottom: 4,
-  },
-  experience: {
-    fontSize: 14,
-    color: Colors.text.secondary,
-  },
-  statsSection: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.text.primary,
-    marginBottom: 16,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 20,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: Colors.primary,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: Colors.text.secondary,
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  languagesSection: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
-  },
-  languagesList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  languageChip: {
-    backgroundColor: Colors.primary + '20',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  languageText: {
-    fontSize: 14,
-    color: Colors.primary,
-    fontWeight: '500',
-  },
-  settingsSection: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
-  },
-  settingText: {
-    fontSize: 16,
-    color: Colors.text.primary,
-    marginLeft: 12,
-  },
-  logoutButton: {
-    backgroundColor: Colors.warning,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    marginHorizontal: 16,
-    marginBottom: 32,
-    borderRadius: 12,
-    gap: 8,
-  },
-  logoutText: {
-    color: Colors.text.white,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
