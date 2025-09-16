@@ -2,22 +2,22 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { trpc, trpcClient } from "@/lib/trpc";
 import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BackHandler, Platform, StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "@/hooks/auth-store";
 import { MoodProvider } from "@/hooks/mood-store";
 import { AssessmentProvider } from "@/hooks/assessment-store";
-import { LanguageProvider, useLanguage } from "@/hooks/language-store";
+import { LanguageProvider } from "@/hooks/language-store";
 import { NotificationProvider } from "@/hooks/notification-store";
 import { FeedbackProvider } from "@/hooks/feedback-store";
 import { ThemeProvider } from "@/hooks/theme-store";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OfflineProvider } from "@/hooks/offline-store";
 import { WellnessProvider } from "@/hooks/wellness-store";
-import NotificationBell from "@/components/NotificationBell";
-import NotificationCenter from "@/components/NotificationCenter";
+// import NotificationBell from "@/components/NotificationBell";
+// import NotificationCenter from "@/components/NotificationCenter";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -35,21 +35,17 @@ const queryClient = new QueryClient({
 
 function RootLayoutNav() {
   const router = useRouter();
-  const { isRTL } = useLanguage();
-  const [centerOpen, setCenterOpen] = useState<boolean>(false);
+  // const { isRTL } = useLanguage();
+  // const [centerOpen, setCenterOpen] = useState<boolean>(false);
 
-  const openCenter = useCallback(() => setCenterOpen(true), []);
-  const closeCenter = useCallback(() => setCenterOpen(false), []);
+  // const openCenter = useCallback(() => setCenterOpen(true), []);
+  // const closeCenter = useCallback(() => setCenterOpen(false), []);
 
   useEffect(() => {
     if (Platform.OS !== "android") return;
 
     const onBackPress = () => {
       try {
-        if (centerOpen) {
-          setCenterOpen(false);
-          return true;
-        }
         const canGo = router.canGoBack?.() ?? false;
         console.log("[BackHandler] Back pressed. canGoBack=", canGo);
         if (!canGo) {
@@ -67,12 +63,11 @@ function RootLayoutNav() {
     return () => {
       sub.remove();
     };
-  }, [router, centerOpen]);
+  }, [router]);
 
   return (
     <View style={styles.container}>
       <Stack
-        initialRouteName="(tabs)"
         screenOptions={{
           headerBackTitle: "Back",
           headerBackVisible: false,
@@ -92,8 +87,8 @@ function RootLayoutNav() {
         <Stack.Screen name="counselor-applications-admin" options={{ headerShown: false }} />
         <Stack.Screen name="enter-counselor" options={{ headerShown: false }} />
       </Stack>
-      <NotificationBell onOpenCenter={openCenter} />
-      <NotificationCenter visible={centerOpen} onClose={closeCenter} />
+      {/* <NotificationBell onOpenCenter={openCenter} />
+      <NotificationCenter visible={centerOpen} onClose={closeCenter} /> */}
     </View>
   );
 }
@@ -106,6 +101,7 @@ const styles = StyleSheet.create({
 
 export default function RootLayout() {
   useEffect(() => {
+    console.log('[RootLayout] Initializing app...');
     SplashScreen.hideAsync();
   }, []);
 
