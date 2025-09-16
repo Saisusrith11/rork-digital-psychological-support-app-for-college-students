@@ -65,7 +65,7 @@ export const startConversationProcedure = protectedProcedure
           participants: [
             {
               id: ctx.user?.id || '',
-              name: 'User', // In production, get from user profile
+              name: ctx.user?.name ?? 'User',
               role: (ctx.user?.role || 'student') as 'student' | 'counselor' | 'volunteer',
             },
             {
@@ -115,7 +115,7 @@ export const sendMessageProcedure = protectedProcedure
         id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         conversationId: input.conversationId,
         senderId: ctx.user?.id || '',
-        senderName: 'User', // In production, get from user profile
+        senderName: ctx.user?.name ?? 'User',
         senderRole: (ctx.user?.role || 'student') as 'student' | 'counselor' | 'volunteer',
         recipientId: input.recipientId,
         content: input.content, // In production, encrypt this

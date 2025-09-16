@@ -3,8 +3,9 @@ import React, { useCallback, useMemo } from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { useAuth } from '@/hooks/auth-store';
 import { router } from 'expo-router';
-import { LogOut } from 'lucide-react-native';
+import { LogOut, MessageSquareMore } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
+import NotificationBell from '@/components/NotificationBell';
 
 export default function VolunteerLayout() {
   const { logout } = useAuth();
@@ -19,9 +20,27 @@ export default function VolunteerLayout() {
     }
   }, [logout]);
 
+  const goToChatList = useCallback(() => {
+    try {
+      router.push('/(volunteer)/student-chat');
+    } catch (e) {
+      console.error('[VolunteerLayout] Nav to chat list error', e);
+    }
+  }, []);
+
   const headerRightComponent = useMemo(() => {
     return () => (
       <View style={styles.headerRightWrap}>
+        <NotificationBell />
+        <TouchableOpacity
+          onPress={goToChatList}
+          style={styles.chatBtn}
+          testID="open-student-chat"
+          accessibilityLabel="Chat with Student"
+        >
+          <MessageSquareMore size={18} color={Colors.text.white} />
+          <Text style={styles.chatText}>Chat</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           onPress={handleLogout}
           style={styles.logoutBtn}
@@ -33,7 +52,7 @@ export default function VolunteerLayout() {
         </TouchableOpacity>
       </View>
     );
-  }, [handleLogout]);
+  }, [handleLogout, goToChatList]);
 
   return (
     <Stack
@@ -44,12 +63,24 @@ export default function VolunteerLayout() {
       }}
     >
       <Stack.Screen name="dashboard" options={{ title: 'Volunteer Dashboard' }} />
+      <Stack.Screen name="student-chat/index" options={{ title: 'Chat with Student' }} />
+      <Stack.Screen name="student-chat/[studentId]" options={{ title: 'Student Chat' }} />
     </Stack>
   );
 }
 
 const styles = StyleSheet.create({
-  headerRightWrap: { paddingRight: 8 },
+  headerRightWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 8 },
+  chatBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+  },
+  chatText: { color: Colors.text.white, fontSize: 12, fontWeight: '700' },
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
