@@ -3,7 +3,8 @@ const path = require('path');
 const webpack = require('webpack');
 
 // Set the app root environment variable
-process.env.EXPO_ROUTER_APP_ROOT = process.env.EXPO_ROUTER_APP_ROOT || path.resolve(process.cwd(), 'app');
+const appRoot = path.resolve(process.cwd(), 'app');
+process.env.EXPO_ROUTER_APP_ROOT = appRoot;
 
 module.exports = async function (env, argv) {
   const config = await createExpoWebpackConfigAsync({
@@ -46,8 +47,9 @@ module.exports = async function (env, argv) {
     [path.resolve(process.cwd(), 'app/api/[[...route]].ts')]: path.resolve(process.cwd(), 'app/api/[[...route]].client.ts'),
     // Ensure app directory is properly resolved
     '@': path.resolve(process.cwd()),
-    // Fix Expo Router context resolution
+    // Fix Expo Router context resolution - use absolute path
     'expo-router/_ctx.web.js': path.resolve(process.cwd(), 'expo-router-ctx.js'),
+    'expo-router/_ctx.web': path.resolve(process.cwd(), 'expo-router-ctx.js'),
   };
   
   // Ensure proper module resolution
@@ -61,10 +63,18 @@ module.exports = async function (env, argv) {
   if (config.plugins) {
     config.plugins.push(
       new webpack.DefinePlugin({
-        'process.env.EXPO_ROUTER_APP_ROOT': JSON.stringify(path.resolve(process.cwd(), 'app')),
+        'process.env.EXPO_ROUTER_APP_ROOT': JSON.stringify(appRoot),
       })
     );
   }
+  
+  // Add a custom plugin to handle context resolution
+  config.plugins.push(
+    new webpack.NormalModuleReplacementPlugin(
+      /expo-router\/_ctx\.web(\.js)?$/,
+      path.resolve(process.cwd(), 'expo-router-ctx.js')
+    )
+  );
   
   // Add fallbacks for Node.js modules
   config.resolve.fallback = {
