@@ -4,8 +4,11 @@ import superjson from "superjson";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 
-// Use any type to avoid importing server code during bundling
-export const trpc = createTRPCReact<any>();
+// Define a minimal type interface to avoid importing server code
+type AppRouter = any;
+
+// Use the minimal type to avoid importing server code during bundling
+export const trpc = createTRPCReact<AppRouter>();
 
 const normalizeToHttpOrigin = (uri: string): string => {
   if (!uri) return "";
@@ -60,7 +63,7 @@ const resolvedApiUrl = (() => {
   return candidate;
 })();
 
-export const trpcClient = createTRPCClient<any>({
+export const trpcClient = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
       url: resolvedApiUrl,
