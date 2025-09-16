@@ -1,4 +1,4 @@
-import { WellnessActivity, RiskLevel } from '@/types/wellness';
+import { WellnessActivity, RiskLevel, WellnessBadge, WellnessReward, WellnessTier } from '@/types/wellness';
 
 export const WELLNESS_ACTIVITIES: Record<RiskLevel, WellnessActivity[]> = {
   minimal: [
@@ -119,7 +119,7 @@ export const WELLNESS_ACTIVITIES: Record<RiskLevel, WellnessActivity[]> = {
   ],
 };
 
-export const LEVEL_THRESHOLDS = [0, 100, 250, 500, 1000, 1500, 2500, 4000, 6000, 9000, 12000];
+export const LEVEL_THRESHOLDS = [0, 100, 250, 500, 1000, 1500, 2500, 4000, 6000, 9000, 12000, 15000, 20000];
 
 export const CATEGORY_COLORS = {
   mood: '#FF6B6B',
@@ -155,4 +155,244 @@ export const WELLNESS_QUOTES = [
   "Each day is a new opportunity for growth.",
   "Your feelings are valid and important.",
   "Healing is not linear, and that's okay.",
+];
+
+export const TIER_THRESHOLDS: Record<WellnessTier, number> = {
+  bronze: 0,
+  silver: 500,
+  gold: 1500,
+  platinum: 3500,
+};
+
+export const TIER_NAMES: Record<WellnessTier, string> = {
+  bronze: 'Seeker',
+  silver: 'Explorer', 
+  gold: 'Navigator',
+  platinum: 'Mentor',
+};
+
+export const TIER_COLORS: Record<WellnessTier, string> = {
+  bronze: '#CD7F32',
+  silver: '#C0C0C0',
+  gold: '#FFD700',
+  platinum: '#E5E4E2',
+};
+
+export const WELLNESS_BADGES: WellnessBadge[] = [
+  // Streak Badges
+  {
+    id: 'streak_7',
+    title: '7-Day Mindfulness Streak',
+    description: 'Complete activities for 7 consecutive days',
+    icon: 'flame',
+    type: 'streak',
+    requirement: { type: 'streak', value: 7 },
+    points: 50,
+    tier: 'bronze',
+  },
+  {
+    id: 'streak_30',
+    title: '30-Day Journaling Habit',
+    description: 'Complete activities for 30 consecutive days',
+    icon: 'flame',
+    type: 'streak',
+    requirement: { type: 'streak', value: 30 },
+    points: 200,
+    tier: 'silver',
+  },
+  {
+    id: 'streak_100',
+    title: 'Wellness Champion',
+    description: 'Complete activities for 100 consecutive days',
+    icon: 'flame',
+    type: 'streak',
+    requirement: { type: 'streak', value: 100 },
+    points: 500,
+    tier: 'gold',
+  },
+  // Discovery Badges
+  {
+    id: 'anxiety_explorer',
+    title: 'Anxiety Toolkit Explorer',
+    description: 'Complete 5 mindfulness activities',
+    icon: 'brain',
+    type: 'discovery',
+    requirement: { type: 'category', value: 5, category: 'mindfulness' },
+    points: 75,
+    tier: 'bronze',
+  },
+  {
+    id: 'social_connector',
+    title: 'Social Wellness Champion',
+    description: 'Complete 10 social connection activities',
+    icon: 'users',
+    type: 'discovery',
+    requirement: { type: 'category', value: 10, category: 'social' },
+    points: 100,
+    tier: 'silver',
+  },
+  {
+    id: 'mood_master',
+    title: 'Mood Tracking Master',
+    description: 'Complete 20 mood-related activities',
+    icon: 'heart',
+    type: 'discovery',
+    requirement: { type: 'category', value: 20, category: 'mood' },
+    points: 150,
+    tier: 'gold',
+  },
+  // Milestone Badges
+  {
+    id: 'minutes_100',
+    title: 'Completed 100 Wellness Minutes',
+    description: 'Spend 100 minutes on wellness activities',
+    icon: 'clock',
+    type: 'milestone',
+    requirement: { type: 'points', value: 100 },
+    points: 100,
+    tier: 'bronze',
+  },
+  {
+    id: 'points_1000',
+    title: 'Wellness Warrior',
+    description: 'Earn 1000 wellness points',
+    icon: 'trophy',
+    type: 'milestone',
+    requirement: { type: 'points', value: 1000 },
+    points: 200,
+    tier: 'silver',
+  },
+  {
+    id: 'activities_50',
+    title: 'Activity Champion',
+    description: 'Complete 50 wellness activities',
+    icon: 'target',
+    type: 'milestone',
+    requirement: { type: 'activities', value: 50 },
+    points: 250,
+    tier: 'gold',
+  },
+  // Achievement Badges
+  {
+    id: 'early_bird',
+    title: 'Early Bird',
+    description: 'Complete activities in the morning for 7 days',
+    icon: 'sunrise',
+    type: 'achievement',
+    requirement: { type: 'days', value: 7 },
+    points: 75,
+    tier: 'bronze',
+  },
+  {
+    id: 'consistency_king',
+    title: 'Consistency Champion',
+    description: 'Complete at least one activity every day for a month',
+    icon: 'calendar',
+    type: 'achievement',
+    requirement: { type: 'days', value: 30 },
+    points: 300,
+    tier: 'platinum',
+  },
+];
+
+export const WELLNESS_REWARDS: WellnessReward[] = [
+  // Bronze Tier Rewards
+  {
+    id: 'meditation_basic',
+    title: 'Basic Meditation Sessions',
+    description: 'Unlock 5 guided meditation sessions',
+    type: 'content',
+    cost: 100,
+    tier: 'bronze',
+    unlocked: false,
+    category: 'mindfulness',
+  },
+  {
+    id: 'theme_nature',
+    title: 'Nature Theme',
+    description: 'Calming nature-inspired app theme',
+    type: 'theme',
+    cost: 150,
+    tier: 'bronze',
+    unlocked: false,
+  },
+  // Silver Tier Rewards
+  {
+    id: 'meditation_advanced',
+    title: 'Advanced Meditation Library',
+    description: 'Access to 20+ advanced meditation sessions',
+    type: 'content',
+    cost: 300,
+    tier: 'silver',
+    unlocked: false,
+    category: 'mindfulness',
+  },
+  {
+    id: 'stress_workshop',
+    title: 'Stress Management Workshop',
+    description: 'In-depth video workshop on stress management',
+    type: 'content',
+    cost: 400,
+    tier: 'silver',
+    unlocked: false,
+    category: 'education',
+  },
+  {
+    id: 'theme_ocean',
+    title: 'Ocean Sounds Theme',
+    description: 'Relaxing ocean sounds and blue theme',
+    type: 'theme',
+    cost: 250,
+    tier: 'silver',
+    unlocked: false,
+  },
+  // Gold Tier Rewards
+  {
+    id: 'anxiety_masterclass',
+    title: 'Anxiety Management Masterclass',
+    description: 'Comprehensive course on managing anxiety',
+    type: 'content',
+    cost: 600,
+    tier: 'gold',
+    unlocked: false,
+    category: 'education',
+  },
+  {
+    id: 'speaking_workshop',
+    title: 'Public Speaking Confidence',
+    description: 'Workshop to overcome public speaking anxiety',
+    type: 'content',
+    cost: 700,
+    tier: 'gold',
+    unlocked: false,
+    category: 'education',
+  },
+  {
+    id: 'theme_premium',
+    title: 'Premium Theme Collection',
+    description: 'Access to all premium themes and sounds',
+    type: 'theme',
+    cost: 500,
+    tier: 'gold',
+    unlocked: false,
+  },
+  // Platinum Tier Rewards
+  {
+    id: 'peer_mentor',
+    title: 'Peer Mentor Access',
+    description: 'Unlock ability to help others in peer forum',
+    type: 'feature',
+    cost: 1000,
+    tier: 'platinum',
+    unlocked: false,
+  },
+  {
+    id: 'personal_coach',
+    title: 'Personal Wellness Coach',
+    description: 'AI-powered personal wellness coaching',
+    type: 'feature',
+    cost: 1200,
+    tier: 'platinum',
+    unlocked: false,
+  },
 ];
