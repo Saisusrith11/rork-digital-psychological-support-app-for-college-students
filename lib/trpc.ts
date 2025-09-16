@@ -30,26 +30,34 @@ const normalizeToHttpOrigin = (uri: string): string => {
 };
 
 const getBaseUrl = () => {
+  // For production, use the environment variable
   if (process.env.EXPO_PUBLIC_RORK_API_BASE_URL) {
     return process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
   }
+  
+  // For web development
   if (Platform.OS === "web") {
     try {
       const origin = (globalThis as any)?.location?.origin as string | undefined;
       if (origin) return origin;
     } catch {}
-    return "";
+    return "http://localhost:3000";
   }
+  
+  // For mobile development
   const hostUri =
     (Constants as any)?.expoConfig?.hostUri ||
     (Constants as any)?.manifest2?.extra?.expoClient?.hostUri ||
     (Constants as any)?.manifest?.hostUri ||
     (Constants as any)?.linkingUri;
+  
   if (typeof hostUri === "string" && hostUri.length > 0) {
     const base = normalizeToHttpOrigin(hostUri);
     return base;
   }
-  return "";
+  
+  // Fallback for development
+  return "http://localhost:3000";
 };
 
 const base = getBaseUrl();

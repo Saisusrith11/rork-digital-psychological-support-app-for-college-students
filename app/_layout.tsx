@@ -1,8 +1,3 @@
-// Ensure proper app root for Expo Router
-if (typeof process !== 'undefined' && typeof process.env !== 'undefined') {
-  process.env.EXPO_ROUTER_APP_ROOT = process.env.EXPO_ROUTER_APP_ROOT || './app';
-}
-
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { trpc, trpcClient } from "@/lib/trpc";
 import { Stack, useRouter } from "expo-router";
