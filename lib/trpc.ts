@@ -4,11 +4,10 @@ import superjson from "superjson";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 
-// Define a minimal type interface to avoid importing server code
-// This prevents any server-side imports during client bundling
-type AppRouter = any;
+// Import client-safe type to avoid importing server code
+import type { AppRouter } from '@/types/trpc';
 
-// Use the minimal type to avoid importing server code during bundling
+// Use the client-safe type to avoid importing server code during bundling
 export const trpc = createTRPCReact<AppRouter>();
 
 const normalizeToHttpOrigin = (uri: string): string => {
