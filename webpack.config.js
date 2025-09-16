@@ -10,6 +10,16 @@ module.exports = async function (env, argv) {
     argv = {};
   }
   
+  // Set the app root environment variable before creating config
+  const appRoot = path.resolve(projectRoot, 'app');
+  process.env.EXPO_ROUTER_APP_ROOT = appRoot;
+  
+  // Ensure the app directory exists
+  const fs = require('fs');
+  if (!fs.existsSync(appRoot)) {
+    throw new Error(`App directory not found at: ${appRoot}`);
+  }
+  
   const config = await createExpoWebpackConfigAsync({
     ...env,
     babel: {
@@ -17,7 +27,7 @@ module.exports = async function (env, argv) {
     }
   }, argv);
   
-  // Ensure EXPO_ROUTER_APP_ROOT is set correctly
+  // Ensure EXPO_ROUTER_APP_ROOT is set correctly in DefinePlugin as well
   config.plugins = config.plugins || [];
   const DefinePlugin = require('webpack').DefinePlugin;
   config.plugins.push(
@@ -52,6 +62,18 @@ module.exports = async function (env, argv) {
     '@': path.resolve(projectRoot),
     'app': path.resolve(projectRoot, 'app')
   };
+  
+  // Ensure proper module resolution
+  config.resolve.modules = [
+    path.resolve(projectRoot, 'node_modules'),
+    'node_modules'
+  ];
+  
+  // Add extensions for proper resolution
+  config.resolve.extensions = [
+    '.web.tsx', '.web.ts', '.web.jsx', '.web.js',
+    '.tsx', '.ts', '.jsx', '.js', '.json'
+  ];
 
   // Ignore server-side modules and backend code
   config.module = config.module || {};
@@ -74,6 +96,19 @@ module.exports = async function (env, argv) {
     test: /hono/,
     use: 'null-loader'
   });
+  
+  // Fix for expo-router context resolution
+  // Override the context resolution to use the correct app directory
+  config.resolve.context = projectRoot;
+  
+  // Add a custom plugin to handle the context resolution
+  const ContextReplacementPlugin = require('webpack').ContextReplacementPlugin;
+  config.plugins.push(
+    new ContextReplacementPlugin(
+      /expo-router\/_ctx\.web\.js$/,
+      appRoot
+    )
+  );
 
   return config;
 };

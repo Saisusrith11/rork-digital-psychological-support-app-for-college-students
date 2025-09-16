@@ -1,11 +1,12 @@
 /// <reference types="expo/types" />
 
 // NOTE: EXPO_ROUTER_APP_ROOT is set in webpack.config.js for web builds
+// and should point to the absolute path of the app directory
 
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      EXPO_ROUTER_APP_ROOT?: string;
+      EXPO_ROUTER_APP_ROOT: string; // Made required since it's set in webpack config
       EXPO_PUBLIC_RORK_API_BASE_URL?: string;
       AWS_ACCESS_KEY_ID?: string;
       AWS_SECRET_ACCESS_KEY?: string;
