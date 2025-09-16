@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { protectedProcedure, publicProcedure } from '@/backend/trpc/create-context';
-import * as Crypto from 'expo-crypto';
 
 export interface Resource {
   id: string;
@@ -155,12 +154,18 @@ export const deleteResourceProcedure = protectedProcedure
     }
   });
 
-// Hash functions using expo-crypto for cross-platform compatibility
-async function sha256Hex(data: string): Promise<string> {
+// Simple hash function for backend use
+function simpleHash(data: string): string {
   if (!data || typeof data !== 'string') {
     throw new Error('Invalid data for hashing');
   }
-  return await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, data, { encoding: Crypto.CryptoEncoding.HEX });
+  let hash = 0;
+  for (let i = 0; i < data.length; i++) {
+    const char = data.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(16);
 }
 
 function generateSignature(key: string, data: string): string {
@@ -210,9 +215,9 @@ export const uploadResourceFileProcedure = protectedProcedure
         )}&X-Amz-Date=${amzDate}&X-Amz-Expires=300&X-Amz-SignedHeaders=host`;
         const canonicalHeaders = `host:${host}\n`;
         const signedHeaders = 'host';
-        const payloadHash = await sha256Hex('');
+        const payloadHash = simpleHash('');
         const canonicalRequest = `${method}\n${canonicalUri}\n${canonicalQuerystring}\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
-        const stringToSign = `AWS4-HMAC-SHA256\n${amzDate}\n${credentialScope}\n${await sha256Hex(canonicalRequest)}`;
+        const stringToSign = `AWS4-HMAC-SHA256\n${amzDate}\n${credentialScope}\n${simpleHash(canonicalRequest)}`;
         const signature = generateSignature(secretKey + dateStamp + region + service, stringToSign);
         const presignedUrl = `${endpoint}?${canonicalQuerystring}&X-Amz-Signature=${signature}`;
 
