@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, TextInput, ActivityIndicator, Platform } from 'react-native';
-import { Target, Moon, Wind, Brain, BookOpen, Zap, Shield, TrendingUp, Video, FileAudio, FileText, Sparkles, X, Search } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, TextInput, ActivityIndicator, Platform, Linking } from 'react-native';
+import { Video, FileAudio, FileText, Sparkles, X, Search, Youtube, ExternalLink } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
@@ -17,6 +17,7 @@ type TrpcResource = {
   type: 'video' | 'audio' | 'pdf' | 'meditation';
   category: string;
   fileUrl: string;
+  youtubeUrl?: string;
   duration?: string;
   mimeType: string;
 };
@@ -42,13 +43,20 @@ export default function ResourcesScreen() {
     } as Record<'video'|'audio'|'pdf'|'meditation', TrpcResource[]>;
   }, [data]);
 
-  const onOpen = useCallback(async (url: string) => {
-    console.log('ResourcesScreen onOpen', { url });
+  const onOpen = useCallback(async (resource: TrpcResource) => {
+    console.log('ResourcesScreen onOpen', { resource });
+    const url = resource.youtubeUrl || resource.fileUrl;
+    
     if (Platform.OS === 'web') {
       window.open(url, '_blank');
       return;
     }
-    await WebBrowser.openBrowserAsync(url);
+    
+    if (resource.youtubeUrl) {
+      await Linking.openURL(resource.youtubeUrl);
+    } else {
+      await WebBrowser.openBrowserAsync(resource.fileUrl);
+    }
   }, []);
 
   const getIcon = (k: string) => {
@@ -124,12 +132,27 @@ export default function ResourcesScreen() {
                 <Text style={styles.sectionTitle}>{t.toUpperCase()}</Text>
                 {grouped[t].length === 0 && <Text style={styles.empty}>No items</Text>}
                 {grouped[t].map((r) => (
-                  <TouchableOpacity key={r.id} style={styles.itemCard} onPress={() => onOpen(r.fileUrl)} testID={`open-${r.id}`}>
-                    <View style={styles.itemIcon}>{getIcon(r.type)}</View>
+                  <TouchableOpacity key={r.id} style={styles.itemCard} onPress={() => onOpen(r)} testID={`open-${r.id}`}>
+                    <View style={styles.itemIcon}>
+                      {r.youtubeUrl ? (
+                        <Youtube size={16} color={Colors.surface} />
+                      ) : (
+                        getIcon(r.type)
+                      )}
+                    </View>
                     <View style={styles.flex1}>
                       <Text style={styles.itemTitle}>{r.title}</Text>
                       <Text style={styles.itemDesc} numberOfLines={2}>{r.description}</Text>
-                      <Text style={styles.itemMeta}>{r.category}</Text>
+                      <View style={styles.itemMetaRow}>
+                        <Text style={styles.itemMeta}>{r.category}</Text>
+                        {r.youtubeUrl && (
+                          <View style={styles.youtubeBadge}>
+                            <Youtube size={10} color={Colors.surface} />
+                            <Text style={styles.youtubeBadgeText}>YouTube</Text>
+                          </View>
+                        )}
+                        <ExternalLink size={12} color={Colors.text.light} />
+                      </View>
                     </View>
                   </TouchableOpacity>
                 ))}
@@ -167,7 +190,10 @@ const styles = StyleSheet.create({
   itemIcon: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.primary },
   itemTitle: { fontSize: 15, fontWeight: '600', color: Colors.text.primary },
   itemDesc: { fontSize: 12, color: Colors.text.secondary, marginTop: 2 },
-  itemMeta: { fontSize: 11, color: Colors.primary, marginTop: 6, fontWeight: '700' },
+  itemMetaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 },
+  itemMeta: { fontSize: 11, color: Colors.primary, fontWeight: '700', flex: 1 },
+  youtubeBadge: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: '#FF0000', borderRadius: 8, paddingHorizontal: 4, paddingVertical: 1, marginRight: 6 },
+  youtubeBadgeText: { fontSize: 8, color: Colors.surface, fontWeight: '600' },
   flex1: { flex: 1 },
   errorText: { color: Colors.error, textAlign: 'center', marginTop: 16 },
   center: { alignItems: 'center', justifyContent: 'center', paddingVertical: 24 },

@@ -9,6 +9,7 @@ export interface Resource {
   type: 'video' | 'audio' | 'pdf' | 'meditation';
   category: string;
   fileUrl: string;
+  youtubeUrl?: string;
   thumbnailUrl?: string;
   duration?: string;
   fileSize?: number;
@@ -29,6 +30,7 @@ const ResourceSchema = z.object({
   type: z.enum(['video', 'audio', 'pdf', 'meditation']),
   category: z.string().min(1).max(100),
   fileUrl: z.string().url(),
+  youtubeUrl: z.string().url().optional(),
   thumbnailUrl: z.string().url().optional(),
   duration: z.string().optional(),
   fileSize: z.number().optional(),
