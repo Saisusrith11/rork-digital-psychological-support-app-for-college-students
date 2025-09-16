@@ -272,10 +272,9 @@ You don't have to go through this alone. There are people who want to help and s
 
     const body = parts.join('\n\n');
 
-    // Pick type
-    let responseType: 'normal' | 'urgent' | 'coping' | 'assessment' | 'resource' = 'normal';
-    if (urgency === 'urgent') responseType = 'urgent';
-    else if (urgency === 'high' || topics.includes('anxiety') || topics.includes('stress')) responseType = 'coping';
+    // Pick type (urgent already handled above)
+    let responseType: 'normal' | 'urgent' | 'coping' | 'assessment' | 'resource' =
+      urgency === 'high' || topics.includes('anxiety') || topics.includes('stress') ? 'coping' : 'normal';
 
     const suggestedActions = this.generateSuggestedActions(topics, urgency);
     const resources = this.generateResources(topics);
