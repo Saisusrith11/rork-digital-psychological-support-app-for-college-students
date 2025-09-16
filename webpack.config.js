@@ -18,7 +18,19 @@ module.exports = async function (env, argv) {
     use: 'null-loader',
   });
   
-  // Exclude server-only API routes from client bundle (but not .native.ts files)
+  // More specific exclusion for server-only API routes
+  config.module.rules.unshift({
+    test: /app[\\/\\]api[\\/\\]\[\[.*route\]\]\.ts$/,
+    use: {
+      loader: 'null-loader',
+      options: {
+        // Completely exclude from bundle
+        exclude: true
+      }
+    },
+  });
+  
+  // General API route exclusion (but not .native.ts files)
   config.module.rules.unshift({
     test: /app[\\/\\]api[\\/\\].*\.ts$/,
     exclude: /app[\\/\\]api[\\/\\].*\.native\.ts$/,
@@ -30,6 +42,8 @@ module.exports = async function (env, argv) {
     ...config.resolve.alias,
     // Prevent any backend imports
     [path.resolve(process.cwd(), 'backend')]: false,
+    // Replace server-only API routes with client stub
+    [path.resolve(process.cwd(), 'app/api/[[...route]].ts')]: path.resolve(process.cwd(), 'app/api/[[...route]].client.ts'),
     // Ensure app directory is properly resolved
     '@': path.resolve(process.cwd()),
     // Fix Expo Router context resolution
@@ -78,6 +92,21 @@ module.exports = async function (env, argv) {
     'hono': 'commonjs hono',
     '@hono/trpc-server': 'commonjs @hono/trpc-server',
   };
+  
+  // Add ignore plugin to completely exclude server files
+  const IgnorePlugin = webpack.IgnorePlugin;
+  config.plugins.push(
+    new IgnorePlugin({
+      resourceRegExp: /^\.\/\[\[.*route\]\]\.ts$/,
+      contextRegExp: /app\/api$/,
+    })
+  );
+  
+  config.plugins.push(
+    new IgnorePlugin({
+      resourceRegExp: /backend/,
+    })
+  );
   
   return config;
 };
