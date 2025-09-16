@@ -209,26 +209,34 @@ export default function CounselorApplicationsAdmin() {
     });
   }, [selectedApplication, rejectionReason, rejectMutation]);
 
-  const handleDownloadDocument = useCallback(async (document: any) => {
+  const handleDownloadDocument = useCallback(async (doc: any) => {
     try {
-      console.log('[CounselorApplications] Downloading document:', document.fileName);
+      console.log('[CounselorApplications] Downloading document:', doc.fileName);
       
       if (Platform.OS === 'web') {
-        // Web download
-        const link = document.createElement('a');
-        link.href = document.fileUrl;
-        link.download = document.fileName;
-        link.click();
+        // Web download using DOM API
+        if (typeof window !== 'undefined' && window.document) {
+          const link = window.document.createElement('a');
+          link.href = doc.fileUrl;
+          link.download = doc.fileName;
+          link.style.display = 'none';
+          window.document.body.appendChild(link);
+          link.click();
+          window.document.body.removeChild(link);
+        } else {
+          // Fallback for web without DOM
+          await Linking.openURL(doc.fileUrl);
+        }
       } else {
         // Mobile - open in browser or external app
-        await Linking.openURL(document.fileUrl);
+        await Linking.openURL(doc.fileUrl);
       }
     } catch (error) {
       console.error('[CounselorApplications] Download error:', error);
       setAlertModal({
         visible: true,
         title: 'Download Error',
-        message: 'Failed to download document',
+        message: 'Failed to download document. Please try again.',
         type: 'error',
         buttons: [{ text: 'OK', onPress: () => {} }],
       });
