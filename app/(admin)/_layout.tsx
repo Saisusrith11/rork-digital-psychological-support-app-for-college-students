@@ -2,8 +2,6 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { 
   BarChart3, 
-  Users, 
-  MessageSquare, 
   Settings,
   FileText,
   LibraryBig,
@@ -60,24 +58,7 @@ export default function AdminTabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="users"
-        options={{
-          title: 'Users',
-          tabBarIcon: ({ color, size }) => (
-            <Users size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="feedback"
-        options={{
-          title: 'Feedback',
-          tabBarIcon: ({ color, size }) => (
-            <MessageSquare size={size} color={color} />
-          ),
-        }}
-      />
+
       <Tabs.Screen
         name="counselor-applications"
         options={{
