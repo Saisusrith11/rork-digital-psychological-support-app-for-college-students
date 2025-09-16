@@ -206,7 +206,7 @@ export default function AdminActivitiesScreen() {
                 <Text style={styles.activitySubtitle}>{a.category} • {a.riskLevel} • {a.points} WP {a.duration ? `• ${a.duration} min` : ''}</Text>
               </View>
               <TouchableOpacity onPress={() => handleDelete(a.id)}>
-                <Trash2 size={20} color={Colors.danger} />
+                <Trash2 size={20} color={Colors.error} />
               </TouchableOpacity>
             </View>
             <Text style={styles.desc}>{a.description}</Text>
