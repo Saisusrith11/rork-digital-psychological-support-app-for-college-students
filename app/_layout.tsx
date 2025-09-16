@@ -79,6 +79,7 @@ function RootLayoutNav() {
       <Stack.Screen name="resource-detail" options={{ headerShown: true }} />
       <Stack.Screen name="counselor-application" options={{ headerShown: false }} />
       <Stack.Screen name="counselor-applications-admin" options={{ headerShown: false }} />
+      <Stack.Screen name="enter-counselor" options={{ headerShown: false }} />
     </Stack>
   );
 }
