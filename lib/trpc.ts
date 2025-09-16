@@ -1,11 +1,10 @@
 import { createTRPCReact } from "@trpc/react-query";
-import { httpBatchLink } from "@trpc/client";
-import type { AppRouter } from "@/backend/trpc/app-router";
+import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import superjson from "superjson";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 
-export const trpc = createTRPCReact<AppRouter>();
+export const trpc = createTRPCReact<any>();
 
 const normalizeToHttpOrigin = (uri: string): string => {
   if (!uri) return "";
@@ -60,7 +59,7 @@ const resolvedApiUrl = (() => {
   return candidate;
 })();
 
-export const trpcClient = trpc.createClient({
+export const trpcClient = createTRPCClient<any>({
   links: [
     httpBatchLink({
       url: resolvedApiUrl,
