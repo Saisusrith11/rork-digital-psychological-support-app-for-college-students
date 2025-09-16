@@ -1,16 +1,8 @@
 import { z } from 'zod';
 import { protectedProcedure, publicProcedure } from '@/backend/trpc/create-context';
 import type { CounselorApplication, CounselorDocument } from '@/types/user';
-import { Resend } from 'resend';
 
-// Initialize Resend with API key
-// To set up email sending:
-// 1. Sign up at https://resend.com
-// 2. Get your API key from the dashboard
-// 3. Set RESEND_API_KEY environment variable
-// 4. Set FROM_EMAIL environment variable (e.g., 'Mental Health Platform <noreply@yourdomain.com>')
-// 5. Verify your domain in Resend dashboard for production use
-const resend = new Resend(process.env.RESEND_API_KEY || 'your-resend-api-key-here');
+// Email sending is mocked in this environment
 
 // Email configuration
 const EMAIL_CONFIG = {
@@ -132,39 +124,14 @@ class EmailService {
   }
   
   private static async sendActualEmail(emailContent: any): Promise<void> {
-    try {
-      // Send email using Resend
-      const { data, error } = await resend.emails.send({
-        from: EMAIL_CONFIG.fromEmail,
-        replyTo: EMAIL_CONFIG.replyTo,
-        to: [emailContent.to],
-        subject: emailContent.subject,
-        html: emailContent.html,
-      });
-
-      if (error) {
-        console.error('[EmailService] Resend error:', error);
-        throw new Error(`Failed to send email: ${error.message}`);
-      }
-
-      console.log('[EmailService] Email sent successfully via Resend:', data?.id);
-      console.log('[EmailService] Recipient:', emailContent.to);
-      console.log('[EmailService] Subject:', emailContent.subject);
-      
-    } catch (error) {
-      console.error('[EmailService] Error sending email:', error);
-      
-      // Fallback to logging if email service fails
-      console.log('\n=== EMAIL NOTIFICATION (FALLBACK) ===');
-      console.log('To:', emailContent.to);
-      console.log('Subject:', emailContent.subject);
-      console.log('Timestamp:', new Date().toISOString());
-      console.log('Content Preview:', emailContent.html.substring(0, 200) + '...');
-      console.log('Error:', error);
-      console.log('=====================================\n');
-      
-      throw error;
-    }
+    console.log('\n=== EMAIL NOTIFICATION (MOCK) ===');
+    console.log('From:', EMAIL_CONFIG.fromEmail);
+    console.log('Reply-To:', EMAIL_CONFIG.replyTo);
+    console.log('To:', emailContent.to);
+    console.log('Subject:', emailContent.subject);
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('Content Preview:', typeof emailContent.html === 'string' ? emailContent.html.substring(0, 200) + '...' : '');
+    console.log('=====================================\n');
   }
 }
 
@@ -551,9 +518,9 @@ export const approveApplicationProcedure = protectedProcedure
         application.personalInfo.email,
         application.personalInfo.fullName
       );
-      
+
       if (!emailSent) {
-        console.warn('[CounselorApplication] Failed to send approval email, but application was approved');
+        console.warn('[CounselorApplication] Email service unavailable (mocked). Application approved.');
       }
       
       console.log('[CounselorApplication] Application approved:', application.personalInfo.email);
@@ -606,9 +573,9 @@ export const rejectApplicationProcedure = protectedProcedure
         application.personalInfo.fullName,
         input.rejectionReason
       );
-      
+
       if (!emailSent) {
-        console.warn('[CounselorApplication] Failed to send rejection email, but application was rejected');
+        console.warn('[CounselorApplication] Email service unavailable (mocked). Application rejected.');
       }
       
       // Schedule document deletion after 30 days

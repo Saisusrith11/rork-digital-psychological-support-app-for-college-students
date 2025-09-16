@@ -7,10 +7,22 @@ import { Platform } from "react-native";
 
 export const trpc = createTRPCReact<AppRouter>();
 
-const ensureHttpScheme = (url: string) => {
-  if (!url) return url;
-  if (url.startsWith("http://") || url.startsWith("https://")) return url;
-  return `http://${url}`;
+const normalizeToHttpOrigin = (uri: string): string => {
+  if (!uri) return "";
+  let candidate = uri.trim();
+  if (candidate.startsWith("exp://")) candidate = candidate.replace("exp://", "http://");
+  if (candidate.startsWith("https://") || candidate.startsWith("http://")) {
+    try {
+      const u = new URL(candidate);
+      return u.origin;
+    } catch {
+      return "";
+    }
+  }
+  if (candidate.includes("/")) {
+    candidate = candidate.split("/")[0];
+  }
+  return `http://${candidate}`;
 };
 
 const getBaseUrl = () => {
@@ -26,7 +38,7 @@ const getBaseUrl = () => {
   }
   const hostUri = (Constants as any)?.expoConfig?.hostUri || (Constants as any)?.manifest2?.extra?.expoClient?.hostUri || (Constants as any)?.manifest?.hostUri;
   if (typeof hostUri === "string" && hostUri.length > 0) {
-    const base = ensureHttpScheme(hostUri.split("/")[0]);
+    const base = normalizeToHttpOrigin(hostUri);
     return base;
   }
   return "";
@@ -34,6 +46,7 @@ const getBaseUrl = () => {
 
 const base = getBaseUrl();
 const apiUrl = base ? `${base}/api/trpc` : "/api/trpc";
+console.log("[tRPC] base:", base, "apiUrl:", apiUrl);
 
 export const trpcClient = trpc.createClient({
   links: [
