@@ -17,6 +17,11 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OfflineProvider } from "@/hooks/offline-store";
 import { WellnessProvider } from "@/hooks/wellness-store";
 
+// Ensure proper app root for Expo Router
+if (typeof process !== 'undefined' && !process.env.EXPO_ROUTER_APP_ROOT) {
+  process.env.EXPO_ROUTER_APP_ROOT = './app';
+}
+
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient({
