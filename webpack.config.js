@@ -42,6 +42,9 @@ module.exports = async function (env, argv) {
     [path.resolve(process.cwd(), 'app/api/[[...route]].ts')]: path.resolve(process.cwd(), 'app/api/[[...route]].client.ts'),
     // Ensure app directory is properly resolved
     '@': path.resolve(process.cwd()),
+    // Direct alias for expo-router context
+    'expo-router/_ctx.web': path.resolve(process.cwd(), 'expo-router-ctx.js'),
+    'expo-router/_ctx.web.js': path.resolve(process.cwd(), 'expo-router-ctx.js'),
   };
   
   // Ensure proper module resolution
@@ -59,10 +62,18 @@ module.exports = async function (env, argv) {
     )
   );
   
+  // Also handle the direct _ctx.web import
+  config.plugins.push(
+    new webpack.NormalModuleReplacementPlugin(
+      /_ctx\.web$/,
+      path.resolve(process.cwd(), 'expo-router-ctx.js')
+    )
+  );
+  
   // Define EXPO_ROUTER_APP_ROOT for the build
   config.plugins.push(
     new webpack.DefinePlugin({
-      'process.env.EXPO_ROUTER_APP_ROOT': JSON.stringify('./app'),
+      'process.env.EXPO_ROUTER_APP_ROOT': JSON.stringify(path.resolve(process.cwd(), 'app')),
     })
   );
   
