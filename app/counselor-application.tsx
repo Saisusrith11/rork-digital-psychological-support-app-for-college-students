@@ -357,7 +357,7 @@ export default function CounselorApplicationForm() {
       case 2:
         return !!(
           professionalInfo.specialization.length > 0 &&
-          professionalInfo.experience.trim() &&
+          professionalInfo.experience.trim().length >= 10 &&
           professionalInfo.languages.length > 0
         );
       case 3:
@@ -375,15 +375,21 @@ export default function CounselorApplicationForm() {
     if (validateStep(currentStep)) {
       setCurrentStep(prev => Math.min(prev + 1, 4));
     } else {
+      let message = 'Please fill in all required fields before proceeding.';
+      if (currentStep === 2) {
+        if (professionalInfo.experience.trim().length < 10) {
+          message = 'Experience must be at least 10 characters (e.g., "3 years in school counseling").';
+        }
+      }
       setAlertModal({
         visible: true,
         title: 'Incomplete',
-        message: 'Please fill in all required fields before proceeding.',
+        message,
         type: 'warning',
         buttons: [{ text: 'OK', onPress: () => {} }],
       });
     }
-  }, [currentStep, validateStep]);
+  }, [currentStep, validateStep, professionalInfo.experience]);
 
   const handlePrevious = useCallback(() => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
@@ -391,10 +397,14 @@ export default function CounselorApplicationForm() {
 
   const handleSubmit = useCallback(async () => {
     if (!validateStep(4)) {
+      let message = 'Please complete all steps and accept the terms.';
+      if (professionalInfo.experience.trim().length < 10) {
+        message = 'Experience must be at least 10 characters (e.g., "3 years in school counseling").';
+      }
       setAlertModal({
         visible: true,
         title: 'Incomplete',
-        message: 'Please complete all steps and accept the terms.',
+        message,
         type: 'warning',
         buttons: [{ text: 'OK', onPress: () => {} }],
       });
@@ -437,10 +447,15 @@ export default function CounselorApplicationForm() {
       }
     } catch (error) {
       console.error('[CounselorApplication] Submit error:', error);
+      const rawMessage = error instanceof Error ? error.message : 'Failed to submit application';
+      let friendly = rawMessage;
+      if (rawMessage.includes('experience') && (rawMessage.includes('Too small') || rawMessage.includes('minimum'))) {
+        friendly = 'Experience must be at least 10 characters (e.g., "3 years in school counseling").';
+      }
       setAlertModal({
         visible: true,
         title: 'Error',
-        message: error instanceof Error ? error.message : 'Failed to submit application',
+        message: friendly,
         type: 'error',
         buttons: [{ text: 'OK', onPress: () => {} }],
       });
