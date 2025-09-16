@@ -6,7 +6,7 @@ import {
   MessageSquare, 
   BarChart3,
   User,
-  Activity
+  Upload
 } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 
@@ -62,9 +62,9 @@ export default function CounselorTabLayout() {
       <Tabs.Screen
         name="activities"
         options={{
-          title: 'Activities',
+          title: 'Upload Activity',
           tabBarIcon: ({ color, size }) => (
-            <Activity size={size} color={color} />
+            <Upload size={size} color={color} />
           ),
         }}
       />

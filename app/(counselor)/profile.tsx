@@ -9,13 +9,7 @@ import {
   Alert
 } from 'react-native';
 import { 
-  Shield, 
-  Calendar,
-  MessageSquare,
-  Settings,
   LogOut,
-  Bell,
-  Globe,
   Users,
   CheckCircle,
   XCircle,
@@ -177,23 +171,7 @@ export default function CounselorProfile() {
       color: colors.primary,
       fontWeight: '500',
     },
-    settingsSection: {
-      paddingHorizontal: 16,
-      marginBottom: settings.isCompactUI ? 16 : 24,
-    },
-    settingItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: colors.surface,
-      borderRadius: 12,
-      padding: settings.isCompactUI ? 12 : 16,
-      marginBottom: 8,
-    },
-    settingText: {
-      fontSize: 16,
-      color: colors.text.primary,
-      marginLeft: 12,
-    },
+
     logoutButton: {
       backgroundColor: colors.warning,
       flexDirection: 'row',
@@ -383,64 +361,6 @@ export default function CounselorProfile() {
               </View>
             ))}
           </View>
-        </View>
-
-        <View style={styles.settingsSection}>
-          <Text style={styles.sectionTitle}>{t('profile.settings') || 'Settings'}</Text>
-          
-          <TouchableOpacity
-            testID="btn-availability-settings"
-            style={styles.settingItem}
-            onPress={() => go('/(counselor)/settings/availability')}
-          >
-            <Calendar size={20} color={colors.text.secondary} />
-            <Text style={styles.settingText}>Availability Settings</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            testID="btn-notification-settings"
-            style={styles.settingItem}
-            onPress={() => go('/(counselor)/settings/notifications')}
-          >
-            <Bell size={20} color={colors.text.secondary} />
-            <Text style={styles.settingText}>{t('settings.notifications') || 'Notification Preferences'}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            testID="btn-language-settings"
-            style={styles.settingItem}
-            onPress={() => go('/(counselor)/settings/language')}
-          >
-            <Globe size={20} color={colors.text.secondary} />
-            <Text style={styles.settingText}>{t('settings.language') || 'Language Preferences'}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            testID="btn-privacy-settings"
-            style={styles.settingItem}
-            onPress={() => go('/(counselor)/settings/privacy')}
-          >
-            <Shield size={20} color={colors.text.secondary} />
-            <Text style={styles.settingText}>{t('settings.privacy') || 'Privacy & Security'}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            testID="btn-communications-settings"
-            style={styles.settingItem}
-            onPress={() => go('/(counselor)/settings/communications')}
-          >
-            <MessageSquare size={20} color={colors.text.secondary} />
-            <Text style={styles.settingText}>{t('settings.communications') || 'Communication Settings'}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            testID="btn-general-settings"
-            style={styles.settingItem}
-            onPress={() => go('/(counselor)/settings/general')}
-          >
-            <Settings size={20} color={colors.text.secondary} />
-            <Text style={styles.settingText}>{t('settings.general') || 'General Settings'}</Text>
-          </TouchableOpacity>
         </View>
 
             <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} testID="btn-logout">

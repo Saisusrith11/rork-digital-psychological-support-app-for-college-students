@@ -2,9 +2,6 @@ const createExpoWebpackConfigAsync = require('@expo/webpack-config');
 const path = require('path');
 
 module.exports = async function (env, argv) {
-  // Set environment variable before creating config
-  process.env.EXPO_ROUTER_APP_ROOT = path.resolve(process.cwd(), 'app');
-  
   const config = await createExpoWebpackConfigAsync({
     ...env,
     babel: {
@@ -12,36 +9,29 @@ module.exports = async function (env, argv) {
     }
   }, argv);
   
-  // Fix Expo Router context resolution
-  const appPath = path.resolve(process.cwd(), 'app');
-  config.resolve.alias = {
-    ...config.resolve.alias,
-    '../../../../../app': appPath,
-    '../../../../app': appPath,
-    '../../../app': appPath,
-    '../../app': appPath,
-    '../app': appPath,
-    'app': appPath
-  };
+  // Fix Expo Router app directory resolution
+  const appDir = path.resolve(process.cwd(), 'app');
   
-  // Add module resolution for expo-router context
-  config.resolve.modules = [
-    ...(config.resolve.modules || []),
-    path.resolve(process.cwd()),
-    'node_modules'
-  ];
-  
-  // Set EXPO_ROUTER_APP_ROOT environment variable in webpack
+  // Override the context module factory to properly resolve app directory
   config.plugins = config.plugins || [];
   const webpack = require('webpack');
+  
+  // Define the app root for Expo Router
   config.plugins.push(
     new webpack.DefinePlugin({
-      'process.env.EXPO_ROUTER_APP_ROOT': JSON.stringify('./app')
+      'process.env.EXPO_ROUTER_APP_ROOT': JSON.stringify(appDir)
     })
   );
   
-  // Add fallback for Node.js modules
+  // Add proper alias for app directory resolution
   config.resolve = config.resolve || {};
+  config.resolve.alias = {
+    ...config.resolve.alias,
+    '@/app': appDir,
+    'app': appDir
+  };
+  
+  // Add fallback for Node.js modules
   config.resolve.fallback = {
     ...config.resolve.fallback,
     crypto: false,
