@@ -32,6 +32,8 @@ module.exports = async function (env, argv) {
     [path.resolve(process.cwd(), 'backend')]: false,
     // Ensure app directory is properly resolved
     '@': path.resolve(process.cwd()),
+    // Fix Expo Router context resolution
+    'expo-router/_ctx.web.js': path.resolve(process.cwd(), 'expo-router-ctx.js'),
   };
   
   // Ensure proper module resolution
@@ -46,18 +48,7 @@ module.exports = async function (env, argv) {
     config.plugins.push(
       new webpack.DefinePlugin({
         'process.env.EXPO_ROUTER_APP_ROOT': JSON.stringify(path.resolve(process.cwd(), 'app')),
-      }),
-      {
-        apply: (compiler) => {
-          compiler.hooks.normalModuleFactory.tap('ExpoRouterContextFix', (factory) => {
-            factory.hooks.beforeResolve.tap('ExpoRouterContextFix', (resolveData) => {
-              if (resolveData.request && resolveData.request.includes('../../../../app')) {
-                resolveData.request = resolveData.request.replace('../../../../app', './app');
-              }
-            });
-          });
-        }
-      }
+      })
     );
   }
   
