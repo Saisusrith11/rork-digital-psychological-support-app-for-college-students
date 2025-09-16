@@ -151,14 +151,30 @@ export const [WellnessProvider, useWellness] = createContextHook(() => {
     return newBadges;
   }, [getCurrentRiskLevel]);
 
-  const completeActivity = useCallback(async (activityId: string, notes?: string) => {
+  const completeActivity = useCallback(async (
+    activityId: string,
+    notes?: string,
+    fallback?: { title: string; points: number; category: WellnessActivity['category']; riskLevel: RiskLevel; duration?: number }
+  ) => {
     try {
       setIsLoading(true);
       const riskLevel = getCurrentRiskLevel();
       const activities = WELLNESS_ACTIVITIES[riskLevel] || WELLNESS_ACTIVITIES.minimal;
       const activity = activities.find(a => a.id === activityId);
       
-      if (!activity) {
+      const resolvedActivity: WellnessActivity | undefined = activity ?? (fallback
+        ? {
+            id: activityId,
+            title: fallback.title,
+            description: '',
+            points: fallback.points,
+            riskLevel: fallback.riskLevel,
+            category: fallback.category,
+            duration: fallback.duration,
+          }
+        : undefined);
+
+      if (!resolvedActivity) {
         throw new Error('Activity not found');
       }
 
@@ -177,7 +193,10 @@ export const [WellnessProvider, useWellness] = createContextHook(() => {
       const completion: ActivityCompletion = {
         activityId,
         completedAt: now,
-        points: activity.points,
+        points: resolvedActivity.points,
+        title: resolvedActivity.title,
+        category: resolvedActivity.category,
+        riskLevel: resolvedActivity.riskLevel,
         notes,
       };
 
@@ -219,7 +238,7 @@ export const [WellnessProvider, useWellness] = createContextHook(() => {
       }
 
       const newProgress: WellnessProgress = {
-        totalPoints: progress.totalPoints + activity.points,
+        totalPoints: progress.totalPoints + resolvedActivity.points,
         dailyPoints,
         weeklyPoints,
         monthlyPoints,
@@ -243,7 +262,7 @@ export const [WellnessProvider, useWellness] = createContextHook(() => {
 
       return { 
         success: true, 
-        points: activity.points, 
+        points: resolvedActivity.points, 
         newBadges: newBadges.length > 0 ? newBadges : undefined 
       };
     } catch (error) {

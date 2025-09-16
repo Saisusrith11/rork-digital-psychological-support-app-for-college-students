@@ -30,6 +30,9 @@ export interface ActivityCompletion {
   completedAt: Date;
   points: number;
   notes?: string;
+  title?: string;
+  category?: WellnessActivity['category'];
+  riskLevel?: RiskLevel;
 }
 
 export type WellnessTier = 'bronze' | 'silver' | 'gold' | 'platinum';

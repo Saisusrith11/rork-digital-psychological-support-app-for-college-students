@@ -47,6 +47,7 @@ import {
 import { syncAssessmentsProcedure } from "./routes/assessments/route";
 import helplinesRouter from "./routes/helplines/route";
 import reportsRouter from "./routes/reports/route";
+import activitiesRouter from "./routes/activities/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -107,6 +108,7 @@ export const appRouter = createTRPCRouter({
   }),
   helplines: helplinesRouter,
   reports: reportsRouter,
+  activities: activitiesRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -6,7 +6,8 @@ import {
   MessageSquare, 
   Settings,
   FileText,
-  LibraryBig
+  LibraryBig,
+  ListPlus
 } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 
@@ -38,6 +39,15 @@ export default function AdminTabLayout() {
           title: 'Resources',
           tabBarIcon: ({ color, size }) => (
             <LibraryBig size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="activities"
+        options={{
+          title: 'Activities',
+          tabBarIcon: ({ color, size }) => (
+            <ListPlus size={size} color={color} />
           ),
         }}
       />
