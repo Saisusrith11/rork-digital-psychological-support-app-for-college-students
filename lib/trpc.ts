@@ -9,16 +9,22 @@ const getBaseUrl = () => {
   if (process.env.EXPO_PUBLIC_RORK_API_BASE_URL) {
     return process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
   }
-
-  // Fallback to a default URL for development
-  // This will be replaced with the actual backend URL when deployed
-  return "https://api.example.com";
+  try {
+    // Prefer same-origin on web
+    const maybeOrigin = (globalThis as any)?.location?.origin as string | undefined;
+    if (maybeOrigin && typeof maybeOrigin === 'string') return maybeOrigin;
+  } catch {}
+  // Relative base (works with dev proxy and hosted)
+  return "";
 };
+
+const base = getBaseUrl();
+const apiUrl = base ? `${base}/api/trpc` : "/api/trpc";
 
 export const trpcClient = trpc.createClient({
   links: [
     httpLink({
-      url: `${getBaseUrl()}/api/trpc`,
+      url: apiUrl,
       transformer: superjson,
     }),
   ],

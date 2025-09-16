@@ -154,14 +154,14 @@ export default function CounselorApplicationsAdmin() {
 
   // Send immediate notification when new application is submitted
   useEffect(() => {
-    if (statsQuery.data?.pending && statsQuery.data.pending > 0) {
-      // This would be triggered by a real-time system in production
-      const hasNewApplications = statsQuery.data.pending > 0;
+    const pending = statsQuery.data?.pending ?? 0;
+    if (pending > 0) {
+      const hasNewApplications = pending > 0;
       if (hasNewApplications) {
         addNotification({
           userId: 'admin',
           title: 'New Counselor Application',
-          message: `${statsQuery.data.pending} pending counselor application(s) require review`,
+          message: `${pending} pending counselor application(s) require review`,
           type: 'system',
           isRead: false,
         });
@@ -214,17 +214,16 @@ export default function CounselorApplicationsAdmin() {
       console.log('[CounselorApplications] Downloading document:', doc.fileName);
       
       if (Platform.OS === 'web') {
-        // Web download using DOM API
-        if (typeof window !== 'undefined' && window.document) {
-          const link = window.document.createElement('a');
+        const hasDom = typeof document !== 'undefined' && typeof document.createElement === 'function';
+        if (hasDom) {
+          const link = document.createElement('a');
           link.href = doc.fileUrl;
           link.download = doc.fileName;
-          link.style.display = 'none';
-          window.document.body.appendChild(link);
+          (link.style as any).display = 'none';
+          document.body?.appendChild(link);
           link.click();
-          window.document.body.removeChild(link);
+          document.body?.removeChild(link);
         } else {
-          // Fallback for web without DOM
           await Linking.openURL(doc.fileUrl);
         }
       } else {

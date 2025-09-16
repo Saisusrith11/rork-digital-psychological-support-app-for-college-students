@@ -5,6 +5,7 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BackHandler, Platform, StyleSheet } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "@/hooks/auth-store";
 import { MoodProvider } from "@/hooks/mood-store";
 import { AssessmentProvider } from "@/hooks/assessment-store";
@@ -98,25 +99,27 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
           <GestureHandlerRootView style={styles.container}>
-            <ThemeProvider>
-              <LanguageProvider>
-                <AuthProvider>
-                  <NotificationProvider>
-                    <FeedbackProvider>
-                      <MoodProvider>
-                        <AssessmentProvider>
-                          <WellnessProvider>
-                            <OfflineProvider>
-                              <RootLayoutNav />
-                            </OfflineProvider>
-                          </WellnessProvider>
-                        </AssessmentProvider>
-                      </MoodProvider>
-                    </FeedbackProvider>
-                  </NotificationProvider>
-                </AuthProvider>
-              </LanguageProvider>
-            </ThemeProvider>
+            <SafeAreaProvider>
+              <ThemeProvider>
+                <LanguageProvider>
+                  <AuthProvider>
+                    <NotificationProvider>
+                      <FeedbackProvider>
+                        <MoodProvider>
+                          <AssessmentProvider>
+                            <WellnessProvider>
+                              <OfflineProvider>
+                                <RootLayoutNav />
+                              </OfflineProvider>
+                            </WellnessProvider>
+                          </AssessmentProvider>
+                        </MoodProvider>
+                      </FeedbackProvider>
+                    </NotificationProvider>
+                  </AuthProvider>
+                </LanguageProvider>
+              </ThemeProvider>
+            </SafeAreaProvider>
           </GestureHandlerRootView>
         </trpc.Provider>
       </QueryClientProvider>

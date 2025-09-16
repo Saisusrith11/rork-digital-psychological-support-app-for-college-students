@@ -618,7 +618,7 @@ export const rejectApplicationProcedure = protectedProcedure
       applications[applicationIndex] = {
         ...applications[applicationIndex],
         documentDeletionScheduled: deletionDate.toISOString(),
-      };
+      } as CounselorApplication;
       
       console.log('[CounselorApplication] Application rejected:', application.personalInfo.email);
       console.log('[CounselorApplication] Rejection reason:', input.rejectionReason);
