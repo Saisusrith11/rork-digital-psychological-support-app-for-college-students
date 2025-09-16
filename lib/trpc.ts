@@ -4,6 +4,7 @@ import superjson from "superjson";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 
+// Use any type to avoid importing server code during bundling
 export const trpc = createTRPCReact<any>();
 
 const normalizeToHttpOrigin = (uri: string): string => {

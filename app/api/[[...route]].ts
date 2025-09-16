@@ -1,16 +1,25 @@
-// API route handler for web environment only
-// This file should only be imported in server context
+// This file is excluded from client bundle by webpack config
+// It only runs on the server side
 
-// Use conditional require to prevent bundling issues
-let app: any = {};
+let app: any;
 
-if (typeof window === 'undefined') {
+if (typeof window !== 'undefined') {
+  // Client-side fallback (should never be reached due to webpack config)
+  app = {
+    fetch: () => new Response('API not available on client', { status: 404 })
+  };
+} else {
+  // Server-side: import the actual Hono app
+  // This import is safe because this file is excluded from client bundle
   try {
-    // Only import server code on the server
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    app = require('@/backend/hono').default;
+    const { default: honoApp } = require('../../backend/hono');
+    app = honoApp;
   } catch (error) {
-    console.error('Failed to load server:', error);
+    console.error('Failed to load Hono app:', error);
+    app = {
+      fetch: () => new Response('Server error', { status: 500 })
+    };
   }
 }
 

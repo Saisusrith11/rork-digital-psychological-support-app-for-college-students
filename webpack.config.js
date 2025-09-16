@@ -3,18 +3,29 @@ const createExpoWebpackConfigAsync = require('@expo/webpack-config');
 module.exports = async function (env, argv) {
   const config = await createExpoWebpackConfigAsync(env, argv);
   
-  // Exclude server files from client bundle
+  // Exclude all backend files from client bundle
   config.module.rules.push({
-    test: /backend\/(hono|server|trpc\/create-context)\.ts$/,
+    test: /backend[\/\\].*\.(ts|js)$/,
     use: 'null-loader',
   });
   
-  // Mark server dependencies as external
-  config.externals = {
-    ...config.externals,
-    '@trpc/server': 'commonjs @trpc/server',
-    '@hono/trpc-server': 'commonjs @hono/trpc-server',
-    'hono': 'commonjs hono',
+  // Exclude server-only API routes from client bundle
+  config.module.rules.push({
+    test: /app[\/\\]api[\/\\].*\.ts$/,
+    exclude: /app[\/\\]api[\/\\].*\.native\.ts$/,
+    use: 'null-loader',
+  });
+  
+  // Add fallbacks for Node.js modules
+  config.resolve.fallback = {
+    ...config.resolve.fallback,
+    "fs": false,
+    "path": false,
+    "crypto": false,
+    "stream": false,
+    "util": false,
+    "buffer": false,
+    "process": false,
   };
   
   return config;
