@@ -241,100 +241,51 @@ You don't have to go through this alone. There are people who want to help and s
       };
     }
 
-    try {
-      // Prepare conversation context
-      if (this.conversationHistory.length === 0) {
-        this.conversationHistory.push({
-          role: 'system',
-          content: this.getSystemPrompt()
-        });
-      }
-
-      // Add user message to history
-      this.conversationHistory.push({
-        role: 'user',
-        content: userInput
-      });
-
-      // Create enhanced prompt with context
-      const enhancedMessages: CoreMessage[] = [
-        ...this.conversationHistory,
-        {
-          role: 'system',
-          content: `🎯 **Current Assessment:**
-• Urgency Level: ${urgency.toUpperCase()}
-• Identified Topics: ${topics.join(', ') || 'general support'}
-• Conversation Context: ${this.conversationHistory.length > 2 ? 'Ongoing therapeutic dialogue' : 'Initial contact'}
-
-📋 **Response Guidelines:**
-• Provide warm, empathetic validation of their experience
-• Offer 2-3 specific, actionable coping strategies
-• Include psychoeducation when appropriate
-• Suggest relevant resources or next steps
-• Maintain therapeutic boundaries while being supportive
-• Keep response conversational yet professional (2-3 paragraphs)
-• Use encouraging, hope-instilling language
-• If crisis indicators present, prioritize safety and professional referral
-
-💡 **Therapeutic Approach:**
-• Use person-first, non-pathologizing language
-• Incorporate strength-based perspective
-• Provide concrete, evidence-based techniques
-• Normalize their experience while offering growth opportunities`
-        }
-      ];
-
-      // Call LLM API
-      const response = await fetch(this.apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: enhancedMessages
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to get AI response');
-      }
-
-      const data = await response.json();
-      const aiResponse = data.completion;
-
-      // Add assistant response to history
-      this.conversationHistory.push({
-        role: 'assistant',
-        content: aiResponse
-      });
-
-      // Save conversation history
-      await this.saveHistory();
-
-      // Determine response type based on content and urgency
-      let responseType: 'normal' | 'urgent' | 'coping' | 'assessment' | 'resource' = 'normal';
-      if (urgency === 'high' || topics.includes('anxiety') || topics.includes('stress')) {
-        responseType = 'coping';
-      }
-
-      // Generate suggested actions based on topics
-      const suggestedActions = this.generateSuggestedActions(topics, urgency);
-      const resources = this.generateResources(topics);
-
-      return {
-        response: aiResponse,
-        type: responseType,
-        urgency,
-        topics,
-        suggestedActions,
-        resources
-      };
-    } catch (error) {
-      console.error('Error processing message with AI:', error);
-      
-      // Fallback to enhanced rule-based response
-      return this.getFallbackResponse(userInput, urgency, topics);
+    // Rule-based engine (no external API). Build empathetic response using urgency/topics.
+    if (this.conversationHistory.length === 0) {
+      this.conversationHistory.push({ role: 'system', content: this.getSystemPrompt() });
     }
+    this.conversationHistory.push({ role: 'user', content: userInput });
+
+    const opening = `Thank you for sharing. I'm really glad you reached out${urgency !== 'low' ? '—what you’re feeling matters' : ''}.`;
+
+    const topicAdvice: Record<string, string> = {
+      academic: `It’s understandable to feel pressure around academics. Let’s reduce the load: 1) Pick the smallest next action. 2) Use a 25/5 focus cycle. 3) Plan two short breaks today.`,
+      sleep: `Sleep struggles add up quickly. Try a wind‑down routine: dim lights, no screens for 30 minutes, and a breathing pattern like 4‑7‑8 before bed.`,
+      anxiety: `Anxiety can feel intense. Two quick tools: Box breathing (4‑4‑4‑4) for two minutes and the 5‑4‑3‑2‑1 grounding scan.`,
+      depression: `Low mood can make everything heavy. Gentle steps help: get sunlight for 5–10 minutes, hydrate, and do one kind action for yourself.`,
+      social: `Feeling isolated is hard. Set a tiny goal like messaging one person or joining one low‑pressure group this week.`,
+      stress: `Stress thrives on ambiguity. List your top 3 tasks, define the first 5‑minute step for each, and schedule short recovery breaks.`,
+    };
+
+    const parts: string[] = [opening];
+    if (topics.length === 0) {
+      parts.push(`Could you share a bit more about what’s most challenging right now—studies, sleep, relationships, or something else?`);
+    } else {
+      const top = topics[0];
+      if (topicAdvice[top]) parts.push(topicAdvice[top]);
+    }
+
+    if (urgency === 'high') {
+      parts.push(`If your distress is spiking, it’s okay to pause and breathe. I can also help you book a counselor or share urgent supports.`);
+    }
+
+    const body = parts.join('\n\n');
+
+    // Pick type
+    let responseType: 'normal' | 'urgent' | 'coping' | 'assessment' | 'resource' = 'normal';
+    if (urgency === 'urgent') responseType = 'urgent';
+    else if (urgency === 'high' || topics.includes('anxiety') || topics.includes('stress')) responseType = 'coping';
+
+    const suggestedActions = this.generateSuggestedActions(topics, urgency);
+    const resources = this.generateResources(topics);
+
+    // Save assistant reply
+    this.conversationHistory.push({ role: 'assistant', content: body });
+    await this.saveHistory();
+
+    return { response: body, type: responseType, urgency, topics, suggestedActions, resources };
+
   }
 
   private generateSuggestedActions(topics: string[], urgency: string): Array<{ label: string; action: string }> {

@@ -68,9 +68,30 @@ export default function AdminResourcesScreen() {
       const uri: string = asset.uri as string;
       const name: string = (asset.name as string) ?? 'file';
       const mimeType: string = (asset.mimeType as string) ?? 'application/octet-stream';
-      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-      const info = await FileSystem.getInfoAsync(uri);
-      const fileSize = (info as FileSystem.FileInfo).exists && 'size' in (info as any) && typeof (info as any).size === 'number' ? (info as any).size as number : Math.floor(base64.length * 0.75);
+
+      let base64 = '';
+      let fileSize = 0;
+
+      if (Platform.OS === 'web') {
+        const resp = await fetch(uri);
+        const blob = await resp.blob();
+        fileSize = blob.size;
+        const reader = new FileReader();
+        const base64Data: string = await new Promise((resolve, reject) => {
+          reader.onerror = () => reject(new Error('File read error'));
+          reader.onload = () => {
+            const result = reader.result as string;
+            const comma = result.indexOf(',');
+            resolve(comma >= 0 ? result.slice(comma + 1) : result);
+          };
+          reader.readAsDataURL(blob);
+        });
+        base64 = base64Data;
+      } else {
+        base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+        const info = await FileSystem.getInfoAsync(uri);
+        fileSize = (info as FileSystem.FileInfo).exists && 'size' in (info as any) && typeof (info as any).size === 'number' ? (info as any).size as number : Math.floor(base64.length * 0.75);
+      }
 
       const MAX = 5 * 1024 * 1024;
       if (fileSize > MAX) {
@@ -91,7 +112,8 @@ export default function AdminResourcesScreen() {
 
       setUpload({ fileName: name, mimeType, base64, fileSize });
     } catch (e) {
-      Alert.alert('File Error', 'Failed to read selected file');
+      const message = e instanceof Error ? e.message : 'Failed to read selected file';
+      Alert.alert('File Error', message);
       console.log('AdminResources onPickFile error', e);
     }
   }, [type]);
@@ -163,7 +185,8 @@ export default function AdminResourcesScreen() {
       resetForm();
       Alert.alert('Success', editingId ? 'Resource updated' : 'Resource created');
     } catch (e) {
-      Alert.alert('Error', 'Failed to save resource');
+      const message = e instanceof Error ? e.message : 'Failed to save resource';
+      Alert.alert('Error', message);
       console.log('AdminResources onSubmit error', e);
     }
   }, [title, description, category, type, upload, editingId, mode, youtubeUrl, uploadMutation, createMutation, updateMutation, utils.resources.getAll, resetForm]);
