@@ -36,7 +36,11 @@ const getBaseUrl = () => {
     } catch {}
     return "";
   }
-  const hostUri = (Constants as any)?.expoConfig?.hostUri || (Constants as any)?.manifest2?.extra?.expoClient?.hostUri || (Constants as any)?.manifest?.hostUri;
+  const hostUri =
+    (Constants as any)?.expoConfig?.hostUri ||
+    (Constants as any)?.manifest2?.extra?.expoClient?.hostUri ||
+    (Constants as any)?.manifest?.hostUri ||
+    (Constants as any)?.linkingUri;
   if (typeof hostUri === "string" && hostUri.length > 0) {
     const base = normalizeToHttpOrigin(hostUri);
     return base;
@@ -48,10 +52,18 @@ const base = getBaseUrl();
 const apiUrl = base ? `${base}/api/trpc` : "/api/trpc";
 console.log("[tRPC] base:", base, "apiUrl:", apiUrl);
 
+const resolvedApiUrl = (() => {
+  const candidate = apiUrl;
+  if (!candidate || typeof candidate !== "string" || candidate.length === 0) {
+    return "/api/trpc";
+  }
+  return candidate;
+})();
+
 export const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: apiUrl,
+      url: resolvedApiUrl,
       transformer: superjson,
     }),
   ],
