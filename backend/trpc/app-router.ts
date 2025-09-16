@@ -32,6 +32,8 @@ import {
   getCollegeSuggestionsProcedure,
   submitCollegeForReviewProcedure,
   getCollegeStatsProcedure,
+  getRiskByCollegesProcedure,
+  getStudentsByCollegesAndRiskBucketProcedure,
 } from "./routes/students/route";
 import {
   startConversationProcedure,

@@ -71,11 +71,16 @@ const resolvedApiUrl = (() => {
   return candidate;
 })();
 
+// Create HTTP link for queries and mutations
+const httpLinkConfig = httpBatchLink({
+  url: resolvedApiUrl,
+  transformer: superjson,
+});
+
+// For now, use HTTP polling for subscriptions since WebSocket is not available
+// In production, you would set up a proper WebSocket server
+const link = httpLinkConfig;
+
 export const trpcClient = createTRPCClient<AppRouter>({
-  links: [
-    httpBatchLink({
-      url: resolvedApiUrl,
-      transformer: superjson,
-    }),
-  ],
+  links: [link],
 });
