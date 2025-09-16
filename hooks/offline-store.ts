@@ -175,25 +175,76 @@ export const [OfflineProvider, useOffline] = createContextHook(() => {
 
   useEffect(() => {
     let timer: any;
+    let mounted = true;
+    
     const tick = async () => {
+      if (!mounted) return;
+      
       try {
         setSyncing(true);
-        const { trpcClient } = await import('@/lib/trpc');
-        const server = await trpcClient.helplines.getAll.query();
-        await upsertHelplinesFromServer(server);
-        const dirty = getDirtyHelplines();
-        if (dirty.length > 0) {
-          await trpcClient.helplines.upsertMany.mutate({ helplines: dirty });
+        
+        // Skip sync on web if API is not available
+        if (Platform.OS === 'web') {
+          // Check if we have a valid API endpoint
+          const testUrl = window.location.origin + '/api/trpc';
+          try {
+            const response = await fetch(testUrl, { method: 'HEAD' });
+            if (!response.ok) {
+              console.log('[offline-store] API not available on web, skipping sync');
+              return;
+            }
+          } catch {
+            console.log('[offline-store] API not reachable on web, skipping sync');
+            return;
+          }
         }
-      } catch (e) {
-        console.log('[offline-store] sync tick failed', e);
+        
+        const { trpcClient } = await import('@/lib/trpc');
+        
+        try {
+          const server = await trpcClient.helplines.getAll.query();
+          if (mounted && server) {
+            await upsertHelplinesFromServer(server);
+          }
+        } catch (error: any) {
+          // Handle specific tRPC errors
+          if (error?.message?.includes('JSON Parse error')) {
+            console.log('[offline-store] Server returned invalid JSON, skipping sync');
+          } else if (error?.message?.includes('fetch failed')) {
+            console.log('[offline-store] Network error, will retry later');
+          } else {
+            console.log('[offline-store] Failed to fetch helplines:', error?.message || error);
+          }
+        }
+        
+        const dirty = getDirtyHelplines();
+        if (mounted && dirty.length > 0) {
+          try {
+            await trpcClient.helplines.upsertMany.mutate({ helplines: dirty });
+          } catch (error: any) {
+            console.log('[offline-store] Failed to sync dirty helplines:', error?.message || error);
+          }
+        }
+      } catch (e: any) {
+        console.log('[offline-store] sync tick failed:', e?.message || e);
       } finally {
-        setSyncing(false);
-        timer = setTimeout(tick, 60_000);
+        if (mounted) {
+          setSyncing(false);
+          // Retry after 60 seconds
+          timer = setTimeout(() => {
+            if (mounted) tick();
+          }, 60_000);
+        }
       }
     };
-    tick();
-    return () => { if (timer) clearTimeout(timer); };
+    
+    // Start sync after a short delay to allow app initialization
+    timer = setTimeout(tick, 2000);
+    
+    return () => {
+      mounted = false;
+      if (timer) clearTimeout(timer);
+    };
   }, [upsertHelplinesFromServer, getDirtyHelplines]);
 
   return {

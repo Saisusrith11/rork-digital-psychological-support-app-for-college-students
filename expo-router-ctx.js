@@ -6,19 +6,36 @@
 let ctx;
 
 try {
+  // Use the app directory relative to the project root
   ctx = require.context(
-    './app',
+    '../app',
     true,
-    /^(?:\.\/)(?!(?:(?:(?:.*\+api)|(?:\+(html|native-intent))))\.[tj]sx?$).*(?:\.android|\.ios|\.native)?\.[tj]sx?$/
+    /^(?:\.\/)(?!(?:(?:(?:.*\+api)|(?:\+(html|native-intent))))\.[tj]sx?$).*\.[tj]sx?$/
   );
 } catch (error) {
-  console.warn('Failed to create context for expo-router:', error);
+  console.warn('Failed to create primary context for expo-router, trying alternative path:', error);
   
-  // Fallback empty context
-  ctx = () => {};
-  ctx.keys = () => [];
-  ctx.resolve = (id) => id;
-  ctx.id = 'expo-router-fallback';
+  try {
+    // Alternative path resolution
+    ctx = require.context(
+      './app',
+      true,
+      /^(?:\.\/)(?!(?:(?:(?:.*\+api)|(?:\+(html|native-intent))))\.[tj]sx?$).*\.[tj]sx?$/
+    );
+  } catch (secondError) {
+    console.warn('Failed to create alternative context for expo-router:', secondError);
+    
+    // Fallback empty context that properly implements the webpack context interface
+    const fallbackContext = (id) => {
+      console.warn(`Fallback context called with id: ${id}`);
+      return null;
+    };
+    fallbackContext.keys = () => [];
+    fallbackContext.resolve = (id) => id;
+    fallbackContext.id = 'expo-router-fallback';
+    
+    ctx = fallbackContext;
+  }
 }
 
 // Export the context in the format Expo Router expects

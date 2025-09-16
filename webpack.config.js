@@ -6,6 +6,9 @@ module.exports = async function (env, argv) {
   const config = await createExpoWebpackConfigAsync({
     ...env,
     projectRoot: process.cwd(),
+    babel: {
+      dangerouslyAddModulePathsToTranspile: ['expo-router']
+    }
   }, argv);
   
   // Exclude all backend files from client bundle
@@ -42,9 +45,9 @@ module.exports = async function (env, argv) {
     [path.resolve(process.cwd(), 'app/api/[[...route]].ts')]: path.resolve(process.cwd(), 'app/api/[[...route]].client.ts'),
     // Ensure app directory is properly resolved
     '@': path.resolve(process.cwd()),
-    // Direct alias for expo-router context
-    'expo-router/_ctx.web': path.resolve(process.cwd(), 'expo-router-ctx.js'),
-    'expo-router/_ctx.web.js': path.resolve(process.cwd(), 'expo-router-ctx.js'),
+    // Direct alias for expo-router context - point to node_modules location
+    'expo-router/_ctx.web': path.resolve(process.cwd(), 'node_modules/expo-router/_ctx.web.js'),
+    'expo-router/_ctx.web.js': path.resolve(process.cwd(), 'node_modules/expo-router/_ctx.web.js'),
   };
   
   // Ensure proper module resolution
@@ -57,23 +60,18 @@ module.exports = async function (env, argv) {
   // Add a custom plugin to handle context resolution
   config.plugins.push(
     new webpack.NormalModuleReplacementPlugin(
-      /expo-router[/\\]_ctx\.web(\.js)?$/,
-      path.resolve(process.cwd(), 'expo-router-ctx.js')
-    )
-  );
-  
-  // Also handle the direct _ctx.web import
-  config.plugins.push(
-    new webpack.NormalModuleReplacementPlugin(
-      /_ctx\.web$/,
-      path.resolve(process.cwd(), 'expo-router-ctx.js')
+      /expo-router[\/\\]_ctx\.web(\.js)?$/,
+      (resource) => {
+        // Create a virtual module that properly resolves the app context
+        resource.request = path.resolve(process.cwd(), 'node_modules/expo-router/_ctx.web.js');
+      }
     )
   );
   
   // Define EXPO_ROUTER_APP_ROOT for the build
   config.plugins.push(
     new webpack.DefinePlugin({
-      'process.env.EXPO_ROUTER_APP_ROOT': JSON.stringify(path.resolve(process.cwd(), 'app')),
+      'process.env.EXPO_ROUTER_APP_ROOT': JSON.stringify('../../../../../app'),
     })
   );
   
