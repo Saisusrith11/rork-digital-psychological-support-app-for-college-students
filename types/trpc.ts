@@ -1,6 +1,8 @@
 // Client-safe type definitions for tRPC
-// This file should only contain type definitions, no actual imports from server code
+// This file uses type-only imports to avoid bundling server code
 
-export type AppRouter = any; // This will be inferred at runtime
+import type { AppRouter as ServerAppRouter } from '@/backend/trpc/app-router';
+
+export type AppRouter = ServerAppRouter;
 
 // You can add more client-safe types here as needed

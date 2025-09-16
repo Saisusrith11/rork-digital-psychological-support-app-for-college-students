@@ -1,7 +1,6 @@
 /// <reference types="expo/types" />
 
-// Set the app root for Expo Router
-process.env.EXPO_ROUTER_APP_ROOT = process.env.EXPO_ROUTER_APP_ROOT || './app';
+// NOTE: EXPO_ROUTER_APP_ROOT is set in webpack.config.js for web builds
 
 declare global {
   namespace NodeJS {
