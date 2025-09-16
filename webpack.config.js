@@ -14,7 +14,9 @@ module.exports = async function (env, argv) {
   // Define EXPO_ROUTER_APP_ROOT for the context
   config.plugins.push(
     new webpack.DefinePlugin({
-      'process.env.EXPO_ROUTER_APP_ROOT': JSON.stringify('./app'),
+      'process.env.EXPO_ROUTER_APP_ROOT': JSON.stringify(
+        path.resolve(process.cwd(), 'app')
+      ),
     }),
   );
 
@@ -52,6 +54,7 @@ module.exports = async function (env, argv) {
     ),
     '@': path.resolve(process.cwd()),
     'expo-router/_ctx.web': path.resolve(process.cwd(), 'expo-router-ctx.js'),
+    '../../../../../app': path.resolve(process.cwd(), 'app'),
   };
 
   // Ensure proper module resolution

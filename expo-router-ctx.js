@@ -7,14 +7,26 @@ let ctx;
 
 if (typeof require.context === 'function') {
   try {
+    
     // Standard webpack context for the app directory
     ctx = require.context(
       './app',
       true,
       /^(?:\.\/)(?!(?:(?:(?:.*\+api)|(?:\+(html|native-intent))))\.[tj]sx?$).*(?:\.android|\.ios|\.native)?\.[tj]sx?$/
     );
+    
+    // Ensure ctx has all required properties
+    if (!ctx.keys) {
+      ctx.keys = () => [];
+    }
+    if (!ctx.resolve) {
+      ctx.resolve = (id) => id;
+    }
+    if (!ctx.id) {
+      ctx.id = './app';
+    }
   } catch (error) {
-    console.warn('Failed to create context for expo-router:', error);
+    console.warn('Failed to create context for expo-router, using fallback:', error);
     
     // Fallback context that properly implements the webpack context interface
     const fallbackContext = function(id) {
@@ -23,7 +35,7 @@ if (typeof require.context === 'function') {
     };
     fallbackContext.keys = function() { return []; };
     fallbackContext.resolve = function(id) { return id; };
-    fallbackContext.id = 'expo-router-fallback';
+    fallbackContext.id = './app';
     
     ctx = fallbackContext;
   }
@@ -34,11 +46,11 @@ if (typeof require.context === 'function') {
   };
   fallbackContext.keys = function() { return []; };
   fallbackContext.resolve = function(id) { return id; };
-  fallbackContext.id = 'expo-router-fallback';
+  fallbackContext.id = './app';
   
   ctx = fallbackContext;
 }
 
 // Export the context in the format Expo Router expects
-module.exports = ctx;
-module.exports.ctx = ctx;
+exports.ctx = ctx;
+module.exports = { ctx };
