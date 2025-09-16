@@ -86,6 +86,7 @@ function RootLayoutNav() {
         <Stack.Screen name="counselor-application" options={{ headerShown: false }} />
         <Stack.Screen name="counselor-applications-admin" options={{ headerShown: false }} />
         <Stack.Screen name="enter-counselor" options={{ headerShown: false }} />
+        <Stack.Screen name="test" options={{ headerShown: true, title: "Test Screen" }} />
       </Stack>
       {/* <NotificationBell onOpenCenter={openCenter} />
       <NotificationCenter visible={centerOpen} onClose={closeCenter} /> */}

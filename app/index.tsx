@@ -12,6 +12,14 @@ export default function IndexScreen() {
   useEffect(() => {
     console.log('[IndexScreen] Auth state:', { user: user?.role, isAuthenticated, isLoading });
     
+    // Temporary: redirect to test screen to verify routing works
+    if (!isLoading) {
+      console.log('[IndexScreen] Redirecting to test screen');
+      router.replace('/test');
+    }
+    
+    // Original auth logic (commented out for testing)
+    /*
     if (!isLoading) {
       if (isAuthenticated && user) {
         console.log('[IndexScreen] Redirecting authenticated user:', user.role);
@@ -34,6 +42,7 @@ export default function IndexScreen() {
         router.replace('/auth');
       }
     }
+    */
   }, [user, isAuthenticated, isLoading]);
 
   return (
