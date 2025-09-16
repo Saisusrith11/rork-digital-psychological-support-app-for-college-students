@@ -2,42 +2,43 @@
 // This file provides a working context for Expo Router on web
 
 // Create a context that matches Expo Router's expectations
-// The regex excludes API routes and special files
+// The regex pattern matches Expo Router's requirements
 let ctx;
 
-try {
-  // Use the app directory relative to the project root
-  ctx = require.context(
-    '../app',
-    true,
-    /^(?:\.\/)(?!(?:(?:(?:.*\+api)|(?:\+(html|native-intent))))\.[tj]sx?$).*\.[tj]sx?$/
-  );
-} catch (error) {
-  console.warn('Failed to create primary context for expo-router, trying alternative path:', error);
-  
+if (typeof require.context === 'function') {
   try {
-    // Alternative path resolution
+    // Standard webpack context for the app directory
     ctx = require.context(
-      './app',
+      '../app',
       true,
-      /^(?:\.\/)(?!(?:(?:(?:.*\+api)|(?:\+(html|native-intent))))\.[tj]sx?$).*\.[tj]sx?$/
+      /^(?:\.\/)(?!(?:(?:(?:.*\+api)|(?:\+(html|native-intent))))\.[tj]sx?$).*(?:\.android|\.ios|\.native)?\.[tj]sx?$/
     );
-  } catch (secondError) {
-    console.warn('Failed to create alternative context for expo-router:', secondError);
+  } catch (error) {
+    console.warn('Failed to create context for expo-router:', error);
     
-    // Fallback empty context that properly implements the webpack context interface
-    const fallbackContext = (id) => {
-      console.warn(`Fallback context called with id: ${id}`);
-      return null;
+    // Fallback context that properly implements the webpack context interface
+    const fallbackContext = function(id) {
+      // Return empty module for any requested file
+      return { default: null };
     };
-    fallbackContext.keys = () => [];
-    fallbackContext.resolve = (id) => id;
+    fallbackContext.keys = function() { return []; };
+    fallbackContext.resolve = function(id) { return id; };
     fallbackContext.id = 'expo-router-fallback';
     
     ctx = fallbackContext;
   }
+} else {
+  // For environments without require.context
+  const fallbackContext = function(id) {
+    return { default: null };
+  };
+  fallbackContext.keys = function() { return []; };
+  fallbackContext.resolve = function(id) { return id; };
+  fallbackContext.id = 'expo-router-fallback';
+  
+  ctx = fallbackContext;
 }
 
 // Export the context in the format Expo Router expects
-export { ctx };
-export default ctx;
+module.exports = ctx;
+module.exports.ctx = ctx;

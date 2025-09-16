@@ -3,9 +3,9 @@ import React from 'react';
 import { 
   BarChart3, 
   Settings,
-  FileText,
   LibraryBig,
-  ListPlus
+  ListPlus,
+  Users
 } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 
@@ -50,21 +50,11 @@ export default function AdminTabLayout() {
         }}
       />
       <Tabs.Screen
-        name="analytics"
-        options={{
-          title: 'Analytics',
-          tabBarIcon: ({ color, size }) => (
-            <FileText size={size} color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
         name="counselor-applications"
         options={{
           title: 'Applications',
           tabBarIcon: ({ color, size }) => (
-            <FileText size={size} color={color} />
+            <Users size={size} color={color} />
           ),
         }}
       />
@@ -75,6 +65,24 @@ export default function AdminTabLayout() {
           tabBarIcon: ({ color, size }) => (
             <Settings size={size} color={color} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="students"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="feedback"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="review-queue"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

@@ -11,6 +11,13 @@ module.exports = async function (env, argv) {
     argv,
   );
 
+  // Define EXPO_ROUTER_APP_ROOT for the context
+  config.plugins.push(
+    new webpack.DefinePlugin({
+      'process.env.EXPO_ROUTER_APP_ROOT': JSON.stringify(path.resolve(process.cwd(), 'app')),
+    }),
+  );
+
   // Exclude all backend files from client bundle
   config.module.rules.unshift({
     test: /backend[\\/].*\.(ts|js)$/,
@@ -44,6 +51,8 @@ module.exports = async function (env, argv) {
       'app/api/[[...route]].client.ts',
     ),
     '@': path.resolve(process.cwd()),
+    '../../../../../app': path.resolve(process.cwd(), 'app'),
+    'expo-router/_ctx.web': path.resolve(process.cwd(), 'expo-router-ctx.js'),
   };
 
   // Ensure proper module resolution
