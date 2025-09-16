@@ -451,6 +451,19 @@ export default function WellnessScreen() {
           </View>
         </View>
       )}
+
+      {/* New Badge Notification */}
+      {newBadgeNotification && (
+        <View style={styles.newBadgeNotification}>
+          <View style={styles.newBadgeContent}>
+            <Award size={24} color={Colors.primary} />
+            <View style={styles.newBadgeText}>
+              <Text style={styles.newBadgeTitle}>New Badge Earned!</Text>
+              <Text style={styles.newBadgeDescription}>{newBadgeNotification.title}</Text>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -910,5 +923,39 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
     marginTop: 20,
+  },
+  // New Badge Notification Styles
+  newBadgeNotification: {
+    position: 'absolute',
+    top: 100,
+    left: 20,
+    right: 20,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 1000,
+  },
+  newBadgeContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  newBadgeText: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  newBadgeTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginBottom: 4,
+  },
+  newBadgeDescription: {
+    fontSize: 14,
+    color: Colors.text.secondary,
   },
 });
