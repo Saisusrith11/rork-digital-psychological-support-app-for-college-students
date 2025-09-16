@@ -483,17 +483,19 @@ export default function CounselorApplicationForm() {
     } catch (error) {
       console.error('[CounselorApplication] Submit error:', error);
       const rawMessage = error instanceof Error ? error.message : 'Failed to submit application';
-      let friendly = rawMessage;
+      let friendly = 'Failed to submit application';
       try {
-        if (rawMessage.trim().startsWith('[')) {
-          const parsed = JSON.parse(rawMessage) as Array<{ path?: unknown[]; message?: string }>;
-          const expErr = parsed.find(item => Array.isArray(item.path) && item.path.join('.') === 'professionalInfo.experience');
-          if (expErr?.message) {
-            friendly = 'Experience must be at least 10 characters (e.g., "3 years in school counseling").';
-          }
+        const jsonMatch = rawMessage.match(/\[.*\]/s);
+        const toParse = jsonMatch ? jsonMatch[0] : rawMessage;
+        const parsed = JSON.parse(toParse) as Array<{ path?: unknown[]; message?: string; code?: string; minimum?: number }>;
+        const expErr = parsed.find(item => Array.isArray(item.path) && item.path.join('.') === 'professionalInfo.experience');
+        if (expErr?.message || (expErr?.code === 'too_small' && (expErr as any).minimum === 10)) {
+          friendly = 'Experience must be at least 10 characters (e.g., "3 years in school counseling").';
+        } else if (parsed[0]?.message) {
+          friendly = parsed[0].message ?? friendly;
         }
       } catch (_) {}
-      if (rawMessage.includes('experience') && (rawMessage.includes('Too small') || rawMessage.includes('minimum'))) {
+      if (rawMessage.toLowerCase().includes('experience') && (rawMessage.includes('Too small') || rawMessage.includes('minimum') || rawMessage.includes('too_small'))) {
         friendly = 'Experience must be at least 10 characters (e.g., "3 years in school counseling").';
       }
       setAlertModal({
