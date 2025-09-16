@@ -3,12 +3,13 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { safeJsonParse } from '@/utils/safe-json-parse';
 
-export type SupportedLanguage = 'en' | 'ta' | 'te' | 'hi';
+export type SupportedLanguage = 'en' | 'ta' | 'te' | 'hi' | 'ur' | 'ks';
 
 export interface LanguageContextType {
   currentLanguage: SupportedLanguage;
   setLanguage: (language: SupportedLanguage) => Promise<void>;
   t: (key: string) => string;
+  isRTL: boolean;
 }
 
 // Basic offline translations for key UI elements
@@ -363,7 +364,62 @@ const translations: Record<SupportedLanguage, Record<string, string>> = {
     'chat.actions.callHelpline': 'आपातकालीन हेल्पलाइन कॉल',
     'chat.actions.bookCounselor': 'काउंसलर बुक करें',
   },
+  ur: {
+    'nav.home': 'ہوم',
+    'nav.resources': 'وسائل',
+    'nav.community': 'کمیونٹی',
+    'nav.chat': 'چیٹ',
+    'nav.profile': 'پروفائل',
+
+    'common.loading': 'لوڈ ہو رہا ہے...',
+    'common.error': 'خرابی',
+    'common.success': 'کامیابی',
+    'common.cancel': 'منسوخ',
+    'common.ok': 'ٹھیک ہے',
+    'common.save': 'محفوظ کریں',
+    'common.close': 'بند کریں',
+    'common.viewAll': 'سب دیکھیں',
+
+    'chat.title': 'اے آئی ذہنی صحت مدد',
+    'chat.subtitle': '• 24/7 دستیاب • خفیہ',
+    'chat.startConversation': 'بات چیت شروع کریں',
+    'chat.typing': 'اے آئی لکھ رہی ہے...',
+    'chat.input.placeholder': 'اپنا پیغام لکھیں...',
+    'chat.urgent.label': 'فوری مدد درکار',
+    'chat.coping.label': 'مقابلہ کرنے کی حکمت عملی',
+    'chat.actions.callHelpline': 'ایمرجنسی ہیلپ لائن کال',
+    'chat.actions.bookCounselor': 'کاؤنسلر بُک کریں',
+  },
+  ks: {
+    // Kashmiri (Perso-Arabic script)
+    'nav.home': 'گھر',
+    'nav.resources': 'وسائل',
+    'nav.community': 'برادری',
+    'nav.chat': 'چیٹ',
+    'nav.profile': 'پروفائل',
+
+    'common.loading': 'لوڈ گژھان...',
+    'common.error': 'غلطی',
+    'common.success': 'کامیابی',
+    'common.cancel': 'منسوخ',
+    'common.ok': 'ٹھیک',
+    'common.save': 'محفوظ کرو',
+    'common.close': 'بند کرو',
+    'common.viewAll': 'سب دیکھیو',
+
+    'chat.title': 'اے آئی ذہنی صحت مدد',
+    'chat.subtitle': '• 24/7 دستیاب • رازدارانہ',
+    'chat.startConversation': 'گفتگو شروع کرو',
+    'chat.typing': 'اے آئی لِکھان چھ...',
+    'chat.input.placeholder': 'اپنئ پیغام لِکھیو...',
+    'chat.urgent.label': 'فوری مدد درکار',
+    'chat.coping.label': 'مقابلہ حکمت عملی',
+    'chat.actions.callHelpline': 'ایمرجنسی ہیلپ لائن کال',
+    'chat.actions.bookCounselor': 'کاؤنسلر بُک کرو',
+  },
 };
+
+const RTL_LANGS: SupportedLanguage[] = ['ur', 'ks'];
 
 export const [LanguageProvider, useLanguage] = createContextHook(() => {
   const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguage>('en');
@@ -373,7 +429,7 @@ export const [LanguageProvider, useLanguage] = createContextHook(() => {
       const savedLanguage = await AsyncStorage.getItem('app_language');
       // Language is stored as a plain string, not JSON
       const lang = typeof savedLanguage === 'string' ? savedLanguage : safeJsonParse<string>(savedLanguage);
-      if (lang && ['en', 'ta', 'te', 'hi'].includes(lang)) {
+      if (lang && ['en', 'ta', 'te', 'hi', 'ur', 'ks'].includes(lang)) {
         setCurrentLanguage(lang as SupportedLanguage);
       }
     } catch (error) {
@@ -387,7 +443,7 @@ export const [LanguageProvider, useLanguage] = createContextHook(() => {
 
   const setLanguage = useCallback(async (language: SupportedLanguage) => {
     if (!language || typeof language !== 'string') return;
-    if (!['en', 'ta', 'te', 'hi'].includes(language)) return;
+    if (!['en', 'ta', 'te', 'hi', 'ur', 'ks'].includes(language)) return;
     
     try {
       await AsyncStorage.setItem('app_language', language);
@@ -403,9 +459,12 @@ export const [LanguageProvider, useLanguage] = createContextHook(() => {
     return translation || translations.en[key] || key;
   }, [currentLanguage]);
 
+  const isRTL = RTL_LANGS.includes(currentLanguage);
+
   return useMemo(() => ({
     currentLanguage,
     setLanguage,
     t,
-  }), [currentLanguage, setLanguage, t]);
+    isRTL,
+  }), [currentLanguage, setLanguage, t, isRTL]);
 });
