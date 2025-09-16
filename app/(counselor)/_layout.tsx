@@ -5,7 +5,8 @@ import {
   Calendar, 
   MessageSquare, 
   BarChart3,
-  User
+  User,
+  Activity
 } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 
@@ -55,6 +56,15 @@ export default function CounselorTabLayout() {
           title: 'Messages',
           tabBarIcon: ({ color, size }) => (
             <MessageSquare size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="activities"
+        options={{
+          title: 'Activities',
+          tabBarIcon: ({ color, size }) => (
+            <Activity size={size} color={color} />
           ),
         }}
       />

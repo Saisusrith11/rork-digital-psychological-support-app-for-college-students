@@ -46,10 +46,11 @@ import {
   markMessagesAsReadProcedure,
   cleanupInactiveConversationsProcedure,
 } from "./routes/chat/route";
-import { syncAssessmentsProcedure } from "./routes/assessments/route";
+import { syncAssessmentsProcedure, getStudentAssessmentsProcedure } from "./routes/assessments/route";
 import helplinesRouter from "./routes/helplines/route";
 import reportsRouter from "./routes/reports/route";
 import activitiesRouter from "./routes/activities/route";
+import { getAllVolunteers, updateVolunteerStatus } from "./routes/volunteers/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -109,10 +110,15 @@ export const appRouter = createTRPCRouter({
   }),
   assessments: createTRPCRouter({
     sync: syncAssessmentsProcedure,
+    getStudentAssessments: getStudentAssessmentsProcedure,
   }),
   helplines: helplinesRouter,
   reports: reportsRouter,
   activities: activitiesRouter,
+  volunteers: createTRPCRouter({
+    getAll: getAllVolunteers,
+    updateStatus: updateVolunteerStatus,
+  }),
 });
 
 export type AppRouter = typeof appRouter;

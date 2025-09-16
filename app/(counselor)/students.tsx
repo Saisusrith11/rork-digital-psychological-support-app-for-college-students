@@ -22,6 +22,7 @@ import {
 import { Colors } from '@/constants/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { trpc } from '@/lib/trpc';
 
 interface StudentItem {
   id: string;
@@ -43,51 +44,58 @@ export default function CounselorStudents() {
   const [selected, setSelected] = useState<StudentItem | null>(null);
   const [note, setNote] = useState<string>('');
   const [saving, setSaving] = useState<boolean>(false);
+  
+  // Fetch assessment data from backend
+  const { data: assessmentData } = trpc.assessments.getStudentAssessments.useQuery({ limit: 100 });
 
-  const students: StudentItem[] = useMemo(() => ([
-    {
-      id: '1',
-      name: 'Anonymous Student',
-      lastSession: '2025-09-01',
-      totalSessions: 3,
-      status: 'active',
-      riskLevel: 'low',
-      language: 'English',
-      lastAssessmentScore: 8,
-      notes: undefined,
-      consent: false,
-      anonymousCode: 'AN-3842',
-      progress: 'improving',
-    },
-    {
-      id: '2',
-      name: 'Student #2847',
-      lastSession: '2025-09-10',
-      totalSessions: 5,
-      status: 'active',
-      riskLevel: 'moderate',
-      language: 'Tamil',
-      lastAssessmentScore: 15,
-      notes: undefined,
-      consent: true,
-      anonymousCode: 'ST-2847',
-      progress: 'stable',
-    },
-    {
-      id: '3',
-      name: 'Anonymous Student',
-      lastSession: '2025-09-12',
-      totalSessions: 1,
-      status: 'urgent',
-      riskLevel: 'high',
-      language: 'Hindi',
-      lastAssessmentScore: 28,
-      notes: undefined,
-      consent: false,
-      anonymousCode: 'AN-9321',
-      progress: 'worsening',
-    },
-  ]), []);
+  const students: StudentItem[] = useMemo(() => {
+    const assessments = assessmentData?.assessments || [];
+    
+    return [
+      {
+        id: '1',
+        name: 'Anonymous Student',
+        lastSession: '2025-09-01',
+        totalSessions: 3,
+        status: 'active',
+        riskLevel: assessments.find(a => a.studentId === '1')?.score > 25 ? 'high' : assessments.find(a => a.studentId === '1')?.score > 15 ? 'moderate' : 'low',
+        language: 'English',
+        lastAssessmentScore: assessments.find(a => a.studentId === '1')?.score || 8,
+        notes: undefined,
+        consent: false,
+        anonymousCode: 'AN-3842',
+        progress: 'improving',
+      },
+      {
+        id: '2',
+        name: 'Student #2847',
+        lastSession: '2025-09-10',
+        totalSessions: 5,
+        status: 'active',
+        riskLevel: assessments.find(a => a.studentId === '2')?.score > 25 ? 'high' : assessments.find(a => a.studentId === '2')?.score > 15 ? 'moderate' : 'low',
+        language: 'Tamil',
+        lastAssessmentScore: assessments.find(a => a.studentId === '2')?.score || 15,
+        notes: undefined,
+        consent: true,
+        anonymousCode: 'ST-2847',
+        progress: 'stable',
+      },
+      {
+        id: '3',
+        name: 'Anonymous Student',
+        lastSession: '2025-09-12',
+        totalSessions: 1,
+        status: 'urgent',
+        riskLevel: assessments.find(a => a.studentId === '3')?.score > 25 ? 'high' : assessments.find(a => a.studentId === '3')?.score > 15 ? 'moderate' : 'low',
+        language: 'Hindi',
+        lastAssessmentScore: assessments.find(a => a.studentId === '3')?.score || 28,
+        notes: undefined,
+        consent: false,
+        anonymousCode: 'AN-9321',
+        progress: 'worsening',
+      },
+    ];
+  }, [assessmentData]);
 
   const [caseNotes, setCaseNotes] = useState<Record<string, string>>({});
 
