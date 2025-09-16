@@ -364,8 +364,24 @@ export default function CounselorApplicationForm() {
         const requiredDocs = documents.filter(doc => doc.required);
         const uploadedRequiredDocs = requiredDocs.filter(doc => doc.uploaded);
         return uploadedRequiredDocs.length >= requiredDocs.length;
-      case 4:
-        return termsAccepted && privacyAccepted;
+      case 4: {
+        const step1Ok = !!(
+          personalInfo.fullName.trim() &&
+          personalInfo.email.trim() &&
+          personalInfo.phone.trim() &&
+          personalInfo.address.trim() &&
+          personalInfo.dateOfBirth.trim()
+        );
+        const step2Ok = !!(
+          professionalInfo.specialization.length > 0 &&
+          professionalInfo.experience.trim().length >= 10 &&
+          professionalInfo.languages.length > 0
+        );
+        const requiredDocs = documents.filter(doc => doc.required);
+        const uploadedRequiredDocs = requiredDocs.filter(doc => doc.uploaded);
+        const step3Ok = uploadedRequiredDocs.length >= requiredDocs.length;
+        return step1Ok && step2Ok && step3Ok && termsAccepted && privacyAccepted;
+      }
       default:
         return false;
     }
@@ -425,9 +441,28 @@ export default function CounselorApplicationForm() {
           mimeType: doc.uploaded!.mimeType,
         }));
 
+      const sanitizedPersonal = {
+        fullName: personalInfo.fullName.trim(),
+        email: personalInfo.email.trim(),
+        phone: personalInfo.phone.trim(),
+        address: personalInfo.address.trim(),
+        dateOfBirth: personalInfo.dateOfBirth.trim(),
+      } as const;
+
+      const sanitizedProfessional = {
+        specialization: professionalInfo.specialization.map(s => s.trim()).filter(Boolean),
+        experience: professionalInfo.experience.trim(),
+        languages: professionalInfo.languages.map(l => l.trim()).filter(Boolean),
+        currentEmployment: professionalInfo.currentEmployment.trim(),
+      } as const;
+
+      if (sanitizedProfessional.experience.length < 10) {
+        throw new Error('Experience must be at least 10 characters (e.g., "3 years in school counseling").');
+      }
+
       const result = await submitApplicationMutation.mutateAsync({
-        personalInfo,
-        professionalInfo,
+        personalInfo: sanitizedPersonal,
+        professionalInfo: sanitizedProfessional,
         documents: uploadedDocuments,
         termsAccepted,
         privacyAccepted,
@@ -449,6 +484,15 @@ export default function CounselorApplicationForm() {
       console.error('[CounselorApplication] Submit error:', error);
       const rawMessage = error instanceof Error ? error.message : 'Failed to submit application';
       let friendly = rawMessage;
+      try {
+        if (rawMessage.trim().startsWith('[')) {
+          const parsed = JSON.parse(rawMessage) as Array<{ path?: unknown[]; message?: string }>;
+          const expErr = parsed.find(item => Array.isArray(item.path) && item.path.join('.') === 'professionalInfo.experience');
+          if (expErr?.message) {
+            friendly = 'Experience must be at least 10 characters (e.g., "3 years in school counseling").';
+          }
+        }
+      } catch (_) {}
       if (rawMessage.includes('experience') && (rawMessage.includes('Too small') || rawMessage.includes('minimum'))) {
         friendly = 'Experience must be at least 10 characters (e.g., "3 years in school counseling").';
       }
@@ -572,86 +616,94 @@ export default function CounselorApplicationForm() {
     </View>
   );
 
-  const renderProfessionalInfoStep = () => (
-    <View style={styles.stepContent}>
-      <View style={styles.stepHeader}>
-        <Briefcase size={24} color={Colors.primary} />
-        <Text style={styles.stepTitle}>Professional Information</Text>
-      </View>
+  const renderProfessionalInfoStep = () => {
+    const expLen = professionalInfo.experience.trim().length;
+    const expTooShort = expLen > 0 && expLen < 10;
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Specializations * (Select at least one)</Text>
-        <View style={styles.chipContainer}>
-          {SPECIALIZATIONS.map((spec) => (
-            <TouchableOpacity
-              key={spec}
-              style={[
-                styles.chip,
-                professionalInfo.specialization.includes(spec) && styles.chipSelected,
-              ]}
-              onPress={() => handleSpecializationToggle(spec)}
-              testID={`chip-specialization-${spec}`}
-            >
-              <Text style={[
-                styles.chipText,
-                professionalInfo.specialization.includes(spec) && styles.chipTextSelected,
-              ]}>
-                {spec}
-              </Text>
-            </TouchableOpacity>
-          ))}
+    return (
+      <View style={styles.stepContent}>
+        <View style={styles.stepHeader}>
+          <Briefcase size={24} color={Colors.primary} />
+          <Text style={styles.stepTitle}>Professional Information</Text>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Specializations * (Select at least one)</Text>
+          <View style={styles.chipContainer}>
+            {SPECIALIZATIONS.map((spec) => (
+              <TouchableOpacity
+                key={spec}
+                style={[
+                  styles.chip,
+                  professionalInfo.specialization.includes(spec) && styles.chipSelected,
+                ]}
+                onPress={() => handleSpecializationToggle(spec)}
+                testID={`chip-specialization-${spec}`}
+              >
+                <Text style={[
+                  styles.chipText,
+                  professionalInfo.specialization.includes(spec) && styles.chipTextSelected,
+                ]}>
+                  {spec}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Experience *</Text>
+          <TextInput
+            style={[styles.textInput, styles.textArea]}
+            value={professionalInfo.experience}
+            onChangeText={(text) => setProfessionalInfo(prev => ({ ...prev, experience: text }))}
+            placeholder="Describe your professional experience in counseling/psychology"
+            multiline
+            numberOfLines={4}
+            testID="input-experience"
+          />
+          {expTooShort && (
+            <Text style={styles.errorText}>Minimum 10 characters required</Text>
+          )}
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Languages * (Select at least one)</Text>
+          <View style={styles.chipContainer}>
+            {LANGUAGES.map((lang) => (
+              <TouchableOpacity
+                key={lang}
+                style={[
+                  styles.chip,
+                  professionalInfo.languages.includes(lang) && styles.chipSelected,
+                ]}
+                onPress={() => handleLanguageToggle(lang)}
+                testID={`chip-language-${lang}`}
+              >
+                <Text style={[
+                  styles.chipText,
+                  professionalInfo.languages.includes(lang) && styles.chipTextSelected,
+                ]}>
+                  {lang}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Current Employment (Optional)</Text>
+          <TextInput
+            style={styles.textInput}
+            value={professionalInfo.currentEmployment}
+            onChangeText={(text) => setProfessionalInfo(prev => ({ ...prev, currentEmployment: text }))}
+            placeholder="Current workplace or position"
+            testID="input-employment"
+          />
         </View>
       </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Experience *</Text>
-        <TextInput
-          style={[styles.textInput, styles.textArea]}
-          value={professionalInfo.experience}
-          onChangeText={(text) => setProfessionalInfo(prev => ({ ...prev, experience: text }))}
-          placeholder="Describe your professional experience in counseling/psychology"
-          multiline
-          numberOfLines={4}
-          testID="input-experience"
-        />
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Languages * (Select at least one)</Text>
-        <View style={styles.chipContainer}>
-          {LANGUAGES.map((lang) => (
-            <TouchableOpacity
-              key={lang}
-              style={[
-                styles.chip,
-                professionalInfo.languages.includes(lang) && styles.chipSelected,
-              ]}
-              onPress={() => handleLanguageToggle(lang)}
-              testID={`chip-language-${lang}`}
-            >
-              <Text style={[
-                styles.chipText,
-                professionalInfo.languages.includes(lang) && styles.chipTextSelected,
-              ]}>
-                {lang}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.inputGroup}>
-        <Text style={styles.inputLabel}>Current Employment (Optional)</Text>
-        <TextInput
-          style={styles.textInput}
-          value={professionalInfo.currentEmployment}
-          onChangeText={(text) => setProfessionalInfo(prev => ({ ...prev, currentEmployment: text }))}
-          placeholder="Current workplace or position"
-          testID="input-employment"
-        />
-      </View>
-    </View>
-  );
+    );
+  };
 
   const renderDocumentsStep = () => (
     <View style={styles.stepContent}>
@@ -1159,5 +1211,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: Colors.text.secondary,
+  },
+  errorText: {
+    marginTop: 6,
+    fontSize: 12,
+    color: Colors.error,
   },
 });
