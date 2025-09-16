@@ -9,7 +9,7 @@ if (typeof require.context === 'function') {
   try {
     // Standard webpack context for the app directory
     ctx = require.context(
-      '../app',
+      './app',
       true,
       /^(?:\.\/)(?!(?:(?:(?:.*\+api)|(?:\+(html|native-intent))))\.[tj]sx?$).*(?:\.android|\.ios|\.native)?\.[tj]sx?$/
     );
