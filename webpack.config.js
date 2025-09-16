@@ -54,8 +54,19 @@ module.exports = async function (env, argv) {
     ),
     '@': path.resolve(process.cwd()),
     'expo-router/_ctx.web': path.resolve(process.cwd(), 'expo-router-ctx.js'),
-    '../../../../../app': path.resolve(process.cwd(), 'app'),
   };
+
+  // Add specific alias for the problematic path resolution
+  const nodeModulesPath = path.resolve(process.cwd(), 'node_modules');
+  const expoRouterPath = path.join(nodeModulesPath, 'expo-router');
+  
+  // Override the expo-router context resolution
+  config.resolve.alias[path.join(expoRouterPath, '_ctx.web.js')] = path.resolve(process.cwd(), 'expo-router-ctx.js');
+  config.resolve.alias['../../../../../app'] = path.resolve(process.cwd(), 'app');
+  config.resolve.alias['../../../../app'] = path.resolve(process.cwd(), 'app');
+  config.resolve.alias['../../../app'] = path.resolve(process.cwd(), 'app');
+  config.resolve.alias['../../app'] = path.resolve(process.cwd(), 'app');
+  config.resolve.alias['../app'] = path.resolve(process.cwd(), 'app');
 
   // Ensure proper module resolution
   config.resolve.modules = [
@@ -104,6 +115,22 @@ module.exports = async function (env, argv) {
     new IgnorePlugin({
       resourceRegExp: /backend/,
     }),
+  );
+
+  // Add a custom plugin to handle expo-router context resolution
+  config.plugins.push(
+    new webpack.NormalModuleReplacementPlugin(
+      /expo-router\/_ctx\.web/,
+      path.resolve(process.cwd(), 'expo-router-ctx.js')
+    )
+  );
+
+  // Replace any relative path resolution to app directory
+  config.plugins.push(
+    new webpack.NormalModuleReplacementPlugin(
+      /^\.\.\/\.\.\/\.\.\/\.\.\/\.\.\/app$/,
+      path.resolve(process.cwd(), 'app')
+    )
   );
 
   return config;
