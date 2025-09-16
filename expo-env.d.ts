@@ -1,6 +1,8 @@
 /// <reference types="expo/types" />
 
 // Set the app root for Expo Router
+process.env.EXPO_ROUTER_APP_ROOT = process.env.EXPO_ROUTER_APP_ROOT || './app';
+
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
