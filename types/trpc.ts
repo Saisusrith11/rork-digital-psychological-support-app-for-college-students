@@ -45,15 +45,20 @@ export interface AppRouter {
     };
   };
   students: {
-    getAll: {
-      query: () => any[];
+    getAllColleges: {
+      query: (input: { search?: string; onlyVerified?: boolean; limit?: number; offset?: number }) => { colleges: any[]; total: number; hasMore: boolean };
     };
-    getById: {
-      query: (input: { id: string }) => any;
+    addCollege: { mutation: (input: { name: string; location?: string; isVerified?: boolean }) => any };
+    verifyCollege: { mutation: (input: { collegeId: string }) => any };
+    getByCollege: {
+      query: (input: { collegeId?: string; collegeName?: string; riskLevel?: 'low'|'medium'|'high'|'all'; search?: string; sortBy?: 'name'|'riskScore'|'lastActive'|'joinedAt'; sortOrder?: 'asc'|'desc'; limit?: number; offset?: number }) => { students: any[]; stats: any; total: number; hasMore: boolean };
     };
-    update: {
-      mutation: (input: any) => any;
-    };
+    updateRiskLevel: { mutation: (input: { studentId: string; riskScore: number }) => any };
+    getCollegeSuggestions: { query: (input: { query: string }) => { suggestions: Array<{ id: string; name: string; location?: string }> } };
+    submitCollegeForReview: { mutation: (input: { name: string; location?: string; submittedBy: string }) => any };
+    getCollegeStats: { query: () => { collegeStats: any[]; overallStats: any } };
+    getRiskByColleges: { query: (input: { collegeIds?: string[]; collegeNames?: string[]; cacheKey?: string }) => { counts: Record<'minimal'|'mild'|'moderate'|'severe', number>; total: number; includedColleges: string[]; includedCollegeNames: string[] } };
+    getStudentsByCollegesAndRiskBucket: { query: (input: { collegeIds?: string[]; collegeNames?: string[]; bucket: 'minimal'|'mild'|'moderate'|'severe'; limit?: number; offset?: number }) => { students: any[]; total: number; hasMore: boolean } };
   };
   chat: {
     getMessages: {

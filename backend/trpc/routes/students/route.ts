@@ -110,11 +110,28 @@ const students: StudentProfile[] = [
   },
 ];
 
-// Calculate risk level from score
+// Calculate simple 3-bucket risk level from score (legacy)
 function calculateRiskLevel(score: number): 'low' | 'medium' | 'high' {
   if (score <= 33) return 'low';
   if (score <= 66) return 'medium';
   return 'high';
+}
+
+// 4-bucket risk buckets for admin analytics
+const riskBuckets = {
+  minimal: { min: 0, max: 24 },
+  mild: { min: 25, max: 49 },
+  moderate: { min: 50, max: 74 },
+  severe: { min: 75, max: 100 },
+} as const;
+
+type RiskBucket = keyof typeof riskBuckets;
+
+function getRiskBucket(score: number): RiskBucket {
+  if (score <= riskBuckets.minimal.max) return 'minimal';
+  if (score <= riskBuckets.mild.max) return 'mild';
+  if (score <= riskBuckets.moderate.max) return 'moderate';
+  return 'severe';
 }
 
 // Get all colleges (Admin only)
@@ -399,6 +416,79 @@ export const getCollegeSuggestionsProcedure = publicProcedure
     }
   });
 
+// Aggregate risk distribution for selected colleges (Admin only)
+export const getRiskByCollegesProcedure = protectedProcedure
+  .input(z.object({
+    collegeIds: z.array(z.string()).optional(),
+    collegeNames: z.array(z.string()).optional(),
+    cacheKey: z.string().optional(),
+  }))
+  .query(async ({ input }) => {
+    try {
+      console.log('[Students] Aggregating risk by colleges', input);
+
+      const selected = students.filter(s => s.isActive).filter(s => {
+        const byId = input.collegeIds && input.collegeIds.length > 0 ? input.collegeIds.includes(s.collegeId ?? '') : true;
+        const byName = input.collegeNames && input.collegeNames.length > 0 ? input.collegeNames.some(n => s.college.toLowerCase().includes(n.toLowerCase())) : true;
+        return byId && byName;
+      });
+
+      const counts: Record<RiskBucket, number> = { minimal: 0, mild: 0, moderate: 0, severe: 0 };
+      selected.forEach(s => {
+        const b = getRiskBucket(s.riskScore);
+        counts[b] += 1;
+      });
+
+      const includedColleges = Array.from(new Set(selected.map(s => s.collegeId))).filter(Boolean) as string[];
+      const includedCollegeNames = Array.from(new Set(selected.map(s => s.college)));
+
+      return {
+        counts,
+        total: selected.length,
+        includedColleges,
+        includedCollegeNames,
+      };
+    } catch (error) {
+      console.error('[Students] Error aggregating risk:', error);
+      throw new Error('Failed to aggregate risk data');
+    }
+  });
+
+// List students by selected colleges and risk bucket (Admin only)
+export const getStudentsByCollegesAndRiskBucketProcedure = protectedProcedure
+  .input(z.object({
+    collegeIds: z.array(z.string()).optional(),
+    collegeNames: z.array(z.string()).optional(),
+    bucket: z.enum(['minimal','mild','moderate','severe']),
+    limit: z.number().min(1).max(100).default(50),
+    offset: z.number().min(0).default(0),
+  }))
+  .query(async ({ input }) => {
+    try {
+      console.log('[Students] Listing students by bucket', input.bucket, input.collegeIds?.length ?? 0);
+      let filtered = students.filter(s => s.isActive);
+
+      if (input.collegeIds && input.collegeIds.length > 0) {
+        filtered = filtered.filter(s => input.collegeIds?.includes(s.collegeId ?? ''));
+      }
+      if (input.collegeNames && input.collegeNames.length > 0) {
+        const lowers = input.collegeNames.map(n => n.toLowerCase());
+        filtered = filtered.filter(s => lowers.some(n => s.college.toLowerCase().includes(n)));
+      }
+
+      const bucketRange = riskBuckets[input.bucket];
+      filtered = filtered.filter(s => s.riskScore >= bucketRange.min && s.riskScore <= bucketRange.max);
+
+      const total = filtered.length;
+      const page = filtered.slice(input.offset, input.offset + input.limit);
+
+      return { students: page, total, hasMore: input.offset + input.limit < total };
+    } catch (error) {
+      console.error('[Students] Error listing students by bucket:', error);
+      throw new Error('Failed to fetch students for bucket');
+    }
+  });
+
 // Submit new college for review (Public)
 export const submitCollegeForReviewProcedure = publicProcedure
   .input(z.object({
@@ -493,3 +583,10 @@ export const getCollegeStatsProcedure = protectedProcedure
       throw new Error('Failed to fetch statistics');
     }
   });
+
+export type RiskBucketsResponse = {
+  counts: Record<'minimal'|'mild'|'moderate'|'severe', number>;
+  total: number;
+  includedColleges: string[];
+  includedCollegeNames: string[];
+};

@@ -91,6 +91,8 @@ export const appRouter = createTRPCRouter({
     getCollegeSuggestions: getCollegeSuggestionsProcedure,
     submitCollegeForReview: submitCollegeForReviewProcedure,
     getCollegeStats: getCollegeStatsProcedure,
+    getRiskByColleges: getRiskByCollegesProcedure,
+    getStudentsByCollegesAndRiskBucket: getStudentsByCollegesAndRiskBucketProcedure,
   }),
   chat: createTRPCRouter({
     startConversation: startConversationProcedure,

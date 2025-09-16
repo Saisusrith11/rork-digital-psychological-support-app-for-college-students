@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Text, StyleSheet, TouchableOpacity, Platform, ScrollView } from 'react-native';
 import { Link, router } from 'expo-router';
-import { Phone, LogOut, Users, MessageSquare, ClipboardList } from 'lucide-react-native';
+import { Phone, LogOut, Users, MessageSquare, ClipboardList, BarChart3 } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -59,6 +59,13 @@ export default function AdminSettingsHome() {
         <TouchableOpacity style={styles.card} testID="feedback-button">
           <MessageSquare size={20} color={Colors.primary} />
           <Text style={styles.cardText}>User Feedback</Text>
+        </TouchableOpacity>
+      </Link>
+
+      <Link href={'/(admin)/settings/student-review'} asChild>
+        <TouchableOpacity style={styles.card} testID="student-review-button">
+          <BarChart3 size={20} color={Colors.primary} />
+          <Text style={styles.cardText}>Student Review</Text>
         </TouchableOpacity>
       </Link>
       
