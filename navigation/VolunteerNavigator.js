@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/auth-store';
 import { useNavigation } from '@react-navigation/native';
 import { LogOut, MessageSquareMore } from 'lucide-react-native';
 import { Colors } from '../constants/colors';
-import { NotificationBell } from '../components/NotificationBell';
+import NotificationBell from '../components/NotificationBell';
 
 // Import screens
 import VolunteerDashboardScreen from '../app/(volunteer)/dashboard';

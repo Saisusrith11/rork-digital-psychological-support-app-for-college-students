@@ -20,7 +20,6 @@ import CounselorActivitiesScreen from '../app/(counselor)/activities';
 import CounselorProfileScreen from '../app/(counselor)/profile';
 
 // Import settings screens
-import CounselorSettingsLayout from '../app/(counselor)/settings/_layout';
 import CounselorAvailabilityScreen from '../app/(counselor)/settings/availability';
 import CounselorNotificationsScreen from '../app/(counselor)/settings/notifications';
 import CounselorLanguageScreen from '../app/(counselor)/settings/language';
@@ -114,11 +113,6 @@ export default function CounselorNavigator() {
       <Stack.Screen name="CounselorTabs" component={CounselorTabs} />
       
       {/* Settings screens */}
-      <Stack.Screen 
-        name="CounselorSettings" 
-        component={CounselorSettingsLayout}
-        options={{ headerShown: true, title: 'Settings' }}
-      />
       <Stack.Screen 
         name="CounselorAvailability" 
         component={CounselorAvailabilityScreen}

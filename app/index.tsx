@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
-import { router } from 'expo-router';
+import { useRouter } from '@/utils/navigation';
 import { useAuth } from '@/hooks/auth-store';
 import { Colors } from '@/constants/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,42 +8,34 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 export default function IndexScreen() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   useEffect(() => {
     console.log('[IndexScreen] Auth state:', { user: user?.role, isAuthenticated, isLoading });
     
-    // Temporary: redirect to test screen to verify routing works
-    if (!isLoading) {
-      console.log('[IndexScreen] Redirecting to test screen');
-      router.replace('/test');
-    }
-    
-    // Original auth logic (commented out for testing)
-    /*
     if (!isLoading) {
       if (isAuthenticated && user) {
         console.log('[IndexScreen] Redirecting authenticated user:', user.role);
         switch (user.role) {
           case 'counselor':
-            router.replace('/(counselor)/dashboard');
+            router.replace('Counselor');
             break;
           case 'admin':
-            router.replace('/(admin)/dashboard');
+            router.replace('Admin');
             break;
           case 'volunteer':
-            router.replace('/(volunteer)/dashboard');
+            router.replace('Volunteer');
             break;
           default:
-            router.replace('/(tabs)/home');
+            router.replace('Student');
             break;
         }
       } else {
         console.log('[IndexScreen] Redirecting to auth');
-        router.replace('/auth');
+        router.replace('AuthScreen');
       }
     }
-    */
-  }, [user, isAuthenticated, isLoading]);
+  }, [user, isAuthenticated, isLoading, router]);
 
   return (
     <View testID="index-screen" style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>

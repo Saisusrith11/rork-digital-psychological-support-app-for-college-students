@@ -12,7 +12,7 @@ import {
 import { Heart, Shield, UserCog, GraduationCap, Handshake } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
-import { router } from 'expo-router';
+import { useRouter } from '@/utils/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { UserRole } from '@/types/user';
 import { trpc, trpcClient } from '@/lib/trpc';
@@ -97,6 +97,7 @@ function CollegeTypeahead({ value, onChange, email }: { value: string; onChange:
 
 export default function AuthScreen() {
   const { login, register, loginAnonymous } = useAuth();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const [isLogin, setIsLogin] = useState<boolean>(true);
   const [showErrorModal, setShowErrorModal] = useState<boolean>(false);
@@ -123,13 +124,13 @@ export default function AuthScreen() {
 
   const navigateAfterAuth = (role?: UserRole) => {
     if (role === 'counselor') {
-      router.replace('/(counselor)/dashboard');
+      router.replace('Counselor');
     } else if (role === 'admin') {
-      router.replace('/(admin)/dashboard');
+      router.replace('Admin');
     } else if (role === 'volunteer') {
-      router.replace('/(volunteer)/dashboard');
+      router.replace('Volunteer');
     } else {
-      router.replace('/(tabs)/home');
+      router.replace('Student');
     }
   };
 
@@ -172,7 +173,7 @@ export default function AuthScreen() {
       }
       if (formData.role === 'counselor') {
         console.log('[Auth] Redirecting to counselor application');
-        router.replace('/counselor-application');
+        router.replace('CounselorApplication');
         return;
       }
       try {
@@ -355,7 +356,7 @@ export default function AuthScreen() {
               {formData.role === 'counselor' && (
                 <TouchableOpacity 
                   style={styles.counselorApplyButton}
-                  onPress={() => router.replace('/counselor-application')}
+                  onPress={() => router.replace('CounselorApplication')}
                   testID="applyCounselorCTA"
                 >
                   <Text style={styles.counselorApplyText}>Apply as Counselor (document submission required)</Text>
