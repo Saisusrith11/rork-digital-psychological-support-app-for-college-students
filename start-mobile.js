@@ -14,11 +14,14 @@ const path = require('path');
 
 console.log('🚀 Starting Mental Health Platform...\n');
 
-// Ensure metro config exists
-const configPath = path.join(process.cwd(), 'metro.config.mobile.js');
+// Check if we're in the right directory
+const packagePath = path.join(process.cwd(), 'package.json');
 
-if (fs.existsSync(configPath)) {
-  console.log('✅ Using Metro configuration');
+if (fs.existsSync(packagePath)) {
+  console.log('✅ Found package.json');
+} else {
+  console.error('❌ package.json not found');
+  process.exit(1);
 }
 
 // Set environment variables
@@ -26,7 +29,7 @@ process.env.EXPO_NO_INTERACTIVE = '1';
 
 // Start with expo
 const command = 'npx';
-const args = ['expo', 'start', '--config', 'metro.config.mobile.js'];
+const args = ['expo', 'start'];
 
 // Add platform flags if specified
 if (process.argv.includes('--android')) args.push('--android');
