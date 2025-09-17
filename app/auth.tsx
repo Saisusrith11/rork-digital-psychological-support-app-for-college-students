@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -12,7 +12,9 @@ import {
 import { Heart, Shield, UserCog, GraduationCap, Handshake } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
-import { useRouter } from '@/utils/navigation';
+import { useNavigation } from '@react-navigation/native';
+import type { NavigationProp } from '@react-navigation/native';
+import type { RootStackParamList } from '@/utils/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { UserRole } from '@/types/user';
 import { trpc, trpcClient } from '@/lib/trpc';
@@ -97,7 +99,7 @@ function CollegeTypeahead({ value, onChange, email }: { value: string; onChange:
 
 export default function AuthScreen() {
   const { login, register, loginAnonymous } = useAuth();
-  const router = useRouter();
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const insets = useSafeAreaInsets();
   const [isLogin, setIsLogin] = useState<boolean>(true);
   const [showErrorModal, setShowErrorModal] = useState<boolean>(false);
@@ -124,13 +126,25 @@ export default function AuthScreen() {
 
   const navigateAfterAuth = (role?: UserRole) => {
     if (role === 'counselor') {
-      router.replace('Counselor');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Counselor' }],
+      });
     } else if (role === 'admin') {
-      router.replace('Admin');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Admin' }],
+      });
     } else if (role === 'volunteer') {
-      router.replace('Volunteer');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Volunteer' }],
+      });
     } else {
-      router.replace('Student');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Student' }],
+      });
     }
   };
 
@@ -173,7 +187,7 @@ export default function AuthScreen() {
       }
       if (formData.role === 'counselor') {
         console.log('[Auth] Redirecting to counselor application');
-        router.replace('CounselorApplication');
+        navigation.navigate('CounselorApplication');
         return;
       }
       try {
@@ -356,7 +370,7 @@ export default function AuthScreen() {
               {formData.role === 'counselor' && (
                 <TouchableOpacity 
                   style={styles.counselorApplyButton}
-                  onPress={() => router.replace('CounselorApplication')}
+                  onPress={() => navigation.navigate('CounselorApplication')}
                   testID="applyCounselorCTA"
                 >
                   <Text style={styles.counselorApplyText}>Apply as Counselor (document submission required)</Text>

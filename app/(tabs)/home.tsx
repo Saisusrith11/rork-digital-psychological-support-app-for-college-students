@@ -5,7 +5,9 @@ import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
 import { useMood } from '@/hooks/mood-store';
 import { useLanguage } from '@/hooks/language-store';
-import { useRouter } from '../../utils/navigation';
+import { useNavigation } from '@react-navigation/native';
+import type { NavigationProp } from '@react-navigation/native';
+import type { RootStackParamList } from '@/utils/navigation';
 import { TouchableOpacity } from 'react-native';
 import MoodSelector from '@/components/MoodSelector';
 import CrisisSupport from '@/components/CrisisSupport';
@@ -19,7 +21,7 @@ export default function HomeScreen() {
   const { todaysMood, addMoodEntry, setUserId } = useMood();
   const { t } = useLanguage();
   const [dailyQuote, setDailyQuote] = useState<Quote | null>(null);
-  const router = useRouter();
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   useEffect(() => {
     setDailyQuote(getRandomQuote());
