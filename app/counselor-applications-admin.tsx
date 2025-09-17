@@ -8,7 +8,6 @@ import {
   TextInput,
   Linking,
   Modal,
-  Alert,
 } from 'react-native';
 import {
   FileText,
@@ -17,13 +16,7 @@ import {
   Eye,
   Download,
   User,
-  Calendar,
-  Mail,
-  Phone,
-  MapPin,
   Briefcase,
-  Languages,
-  Award,
   Clock,
   Search,
   Filter,
@@ -31,7 +24,7 @@ import {
 import { Colors } from '@/constants/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AlertModal } from '@/components/AlertModal';
-import { trpc } from '@/lib/trpc';
+import { api } from '@/lib/api';
 
 interface CounselorApplication {
   id: string;
@@ -86,59 +79,16 @@ export default function CounselorApplicationsAdmin() {
     }[];
   }>({ visible: false, title: '', message: '', type: 'info', buttons: [] });
 
-  // tRPC queries and mutations
-  const applicationsQuery = trpc.counselor.application.getAll.useQuery({
+  // API queries and mutations
+  const applicationsQuery = api.counselor.application.getAll.useQuery({
     status: filterStatus === 'all' ? undefined : filterStatus,
-    search: searchQuery.trim() || undefined,
+    limit: 50,
+    offset: 0,
   });
 
-  const approveApplicationMutation = trpc.counselor.application.approve.useMutation({
-    onSuccess: () => {
-      applicationsQuery.refetch();
-      setShowDetailModal(false);
-      setAlertModal({
-        visible: true,
-        title: 'Success',
-        message: 'Application approved successfully. The counselor has been notified and granted access.',
-        type: 'success',
-        buttons: [{ text: 'OK', onPress: () => {} }],
-      });
-    },
-    onError: (error) => {
-      setAlertModal({
-        visible: true,
-        title: 'Error',
-        message: error.message || 'Failed to approve application',
-        type: 'error',
-        buttons: [{ text: 'OK', onPress: () => {} }],
-      });
-    },
-  });
+  const approveApplicationMutation = api.counselor.application.approve.useMutation();
 
-  const rejectApplicationMutation = trpc.counselor.application.reject.useMutation({
-    onSuccess: () => {
-      applicationsQuery.refetch();
-      setShowDetailModal(false);
-      setShowRejectionModal(false);
-      setRejectionReason('');
-      setAlertModal({
-        visible: true,
-        title: 'Success',
-        message: 'Application rejected. The counselor has been notified with the rejection reason.',
-        type: 'success',
-        buttons: [{ text: 'OK', onPress: () => {} }],
-      });
-    },
-    onError: (error) => {
-      setAlertModal({
-        visible: true,
-        title: 'Error',
-        message: error.message || 'Failed to reject application',
-        type: 'error',
-        buttons: [{ text: 'OK', onPress: () => {} }],
-      });
-    },
-  });
+  const rejectApplicationMutation = api.counselor.application.reject.useMutation();
 
   const handleViewApplication = useCallback((application: CounselorApplication) => {
     setSelectedApplication(application);
@@ -165,7 +115,28 @@ export default function CounselorApplicationsAdmin() {
           onPress: () => {
             approveApplicationMutation.mutate({
               applicationId: selectedApplication.id,
-              adminNotes: adminNotes.trim(),
+              feedback: adminNotes.trim(),
+            }, {
+              onSuccess: () => {
+                applicationsQuery.refetch();
+                setShowDetailModal(false);
+                setAlertModal({
+                  visible: true,
+                  title: 'Success',
+                  message: 'Application approved successfully. The counselor has been notified and granted access.',
+                  type: 'success',
+                  buttons: [{ text: 'OK', onPress: () => {} }],
+                });
+              },
+              onError: (error: any) => {
+                setAlertModal({
+                  visible: true,
+                  title: 'Error',
+                  message: error.message || 'Failed to approve application',
+                  type: 'error',
+                  buttons: [{ text: 'OK', onPress: () => {} }],
+                });
+              },
             });
           },
           style: 'default',
@@ -193,8 +164,30 @@ export default function CounselorApplicationsAdmin() {
 
     rejectApplicationMutation.mutate({
       applicationId: selectedApplication.id,
-      rejectionReason: rejectionReason.trim(),
-      adminNotes: adminNotes.trim(),
+      feedback: rejectionReason.trim(),
+    }, {
+      onSuccess: () => {
+        applicationsQuery.refetch();
+        setShowDetailModal(false);
+        setShowRejectionModal(false);
+        setRejectionReason('');
+        setAlertModal({
+          visible: true,
+          title: 'Success',
+          message: 'Application rejected. The counselor has been notified with the rejection reason.',
+          type: 'success',
+          buttons: [{ text: 'OK', onPress: () => {} }],
+        });
+      },
+      onError: (error: any) => {
+        setAlertModal({
+          visible: true,
+          title: 'Error',
+          message: error.message || 'Failed to reject application',
+          type: 'error',
+          buttons: [{ text: 'OK', onPress: () => {} }],
+        });
+      },
     });
   }, [selectedApplication, rejectionReason, adminNotes, rejectApplicationMutation]);
 

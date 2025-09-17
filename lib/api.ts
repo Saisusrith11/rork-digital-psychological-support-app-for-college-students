@@ -10,28 +10,117 @@ const mockColleges = [
   { id: '5', name: 'Community College of Denver', location: 'Denver, CO', studentCount: 8500, isVerified: false },
 ];
 
-const mockApplications = [
+const mockApplications: Array<{
+  id: string;
+  status: 'pending' | 'approved' | 'rejected';
+  submittedAt: string;
+  personalInfo: {
+    fullName: string;
+    email: string;
+    phone: string;
+    address: string;
+    dateOfBirth: string;
+  };
+  professionalInfo: {
+    specialization: string[];
+    experience: string;
+    languages: string[];
+    currentEmployment?: string;
+  };
+  documents: {
+    type: string;
+    fileName: string;
+    fileUrl: string;
+    fileSize: number;
+    mimeType: string;
+  }[];
+  adminNotes?: string;
+  rejectionReason?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+}> = [
   {
     id: '1',
-    name: 'Dr. Sarah Johnson',
-    email: 'sarah.johnson@email.com',
-    phone: '+1-555-0123',
-    specialization: 'Clinical Psychology',
-    experience: '8 years',
     status: 'pending',
     submittedAt: new Date('2024-01-15').toISOString(),
-    documents: ['license.pdf', 'cv.pdf']
+    personalInfo: {
+      fullName: 'Dr. Sarah Johnson',
+      email: 'sarah.johnson@email.com',
+      phone: '+1-555-0123',
+      address: '123 Main St, San Francisco, CA 94102',
+      dateOfBirth: '1985-03-15'
+    },
+    professionalInfo: {
+      specialization: ['Clinical Psychology', 'Anxiety Disorders'],
+      experience: '8 years of clinical practice with focus on anxiety and depression treatment',
+      languages: ['English', 'Spanish'],
+      currentEmployment: 'Private Practice'
+    },
+    documents: [
+      {
+        type: 'license',
+        fileName: 'psychology_license.pdf',
+        fileUrl: 'https://example.com/license.pdf',
+        fileSize: 1024000,
+        mimeType: 'application/pdf'
+      },
+      {
+        type: 'cv',
+        fileName: 'curriculum_vitae.pdf',
+        fileUrl: 'https://example.com/cv.pdf',
+        fileSize: 2048000,
+        mimeType: 'application/pdf'
+      }
+    ],
+    adminNotes: '',
+    rejectionReason: undefined,
+    reviewedBy: undefined,
+    reviewedAt: undefined
   },
   {
     id: '2',
-    name: 'Dr. Michael Chen',
-    email: 'michael.chen@email.com',
-    phone: '+1-555-0124',
-    specialization: 'Cognitive Behavioral Therapy',
-    experience: '12 years',
     status: 'approved',
     submittedAt: new Date('2024-01-10').toISOString(),
-    documents: ['license.pdf', 'cv.pdf', 'references.pdf']
+    personalInfo: {
+      fullName: 'Dr. Michael Chen',
+      email: 'michael.chen@email.com',
+      phone: '+1-555-0124',
+      address: '456 Oak Ave, Los Angeles, CA 90210',
+      dateOfBirth: '1980-07-22'
+    },
+    professionalInfo: {
+      specialization: ['Cognitive Behavioral Therapy', 'PTSD Treatment'],
+      experience: '12 years specializing in trauma therapy and cognitive behavioral interventions',
+      languages: ['English', 'Mandarin'],
+      currentEmployment: 'UCLA Medical Center'
+    },
+    documents: [
+      {
+        type: 'license',
+        fileName: 'clinical_license.pdf',
+        fileUrl: 'https://example.com/license2.pdf',
+        fileSize: 1536000,
+        mimeType: 'application/pdf'
+      },
+      {
+        type: 'cv',
+        fileName: 'resume.pdf',
+        fileUrl: 'https://example.com/cv2.pdf',
+        fileSize: 1792000,
+        mimeType: 'application/pdf'
+      },
+      {
+        type: 'references',
+        fileName: 'professional_references.pdf',
+        fileUrl: 'https://example.com/refs.pdf',
+        fileSize: 512000,
+        mimeType: 'application/pdf'
+      }
+    ],
+    adminNotes: 'Excellent credentials and experience',
+    rejectionReason: undefined,
+    reviewedBy: 'admin@example.com',
+    reviewedAt: new Date('2024-01-12').toISOString()
   }
 ];
 
@@ -309,7 +398,7 @@ export const api = {
         }
       },
       approve: {
-        useMutation: (options?: any) => {
+        useMutation: () => {
           const queryClient = useQueryClient();
           return useMutation({
             mutationFn: async (data: { applicationId: string; feedback?: string }) => {
@@ -317,18 +406,20 @@ export const api = {
               const application = mockApplications.find(a => a.id === data.applicationId);
               if (application) {
                 application.status = 'approved';
+                application.adminNotes = data.feedback || '';
+                application.reviewedBy = 'admin@example.com';
+                application.reviewedAt = new Date().toISOString();
               }
               return application;
             },
             onSuccess: () => {
               queryClient.invalidateQueries({ queryKey: ['counselor-applications'] });
-            },
-            ...options
+            }
           });
         }
       },
       reject: {
-        useMutation: (options?: any) => {
+        useMutation: () => {
           const queryClient = useQueryClient();
           return useMutation({
             mutationFn: async (data: { applicationId: string; feedback?: string }) => {
@@ -336,13 +427,15 @@ export const api = {
               const application = mockApplications.find(a => a.id === data.applicationId);
               if (application) {
                 application.status = 'rejected';
+                application.rejectionReason = data.feedback || '';
+                application.reviewedBy = 'admin@example.com';
+                application.reviewedAt = new Date().toISOString();
               }
               return application;
             },
             onSuccess: () => {
               queryClient.invalidateQueries({ queryKey: ['counselor-applications'] });
-            },
-            ...options
+            }
           });
         }
       },
