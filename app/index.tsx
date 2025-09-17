@@ -8,13 +8,14 @@ import { useAuth } from '@/hooks/auth-store';
 export default function IndexScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  
+  // Always call useAuth hook, but handle undefined return gracefully
   const authContext = useAuth();
   
-  const { user, isAuthenticated, isLoading } = authContext || {
-    user: null,
-    isAuthenticated: false,
-    isLoading: true
-  };
+  // Handle case where context might be undefined
+  const user = authContext?.user || null;
+  const isAuthenticated = authContext?.isAuthenticated || false;
+  const isLoading = authContext?.isLoading ?? true;
 
   useEffect(() => {
     if (!authContext) {
