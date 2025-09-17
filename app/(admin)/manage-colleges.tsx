@@ -1,9 +1,9 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { Colors } from '@/constants/colors';
-import { trpc } from '@/lib/trpc';
+import { api } from '@/lib/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Plus, Check, X, MapPin } from 'lucide-react-native';
+import { Plus, Check, MapPin } from 'lucide-react-native';
 
 export default function ManageColleges() {
   const insets = useSafeAreaInsets();
@@ -11,9 +11,9 @@ export default function ManageColleges() {
   const [newCollege, setNewCollege] = useState<string>('');
   const [location, setLocation] = useState<string>('');
 
-  const collegesQuery = trpc.students.getAllColleges.useQuery({ search: search || undefined, onlyVerified: false, limit: 100, offset: 0 });
-  const addCollege = trpc.students.addCollege.useMutation();
-  const verifyCollege = trpc.students.verifyCollege.useMutation();
+  const collegesQuery = api.students.getAllColleges.useQuery({ search: search || undefined, onlyVerified: false, limit: 100, offset: 0 });
+  const addCollege = api.students.addCollege.useMutation();
+  const verifyCollege = api.students.verifyCollege.useMutation();
 
   const handleAdd = useCallback(async () => {
     const name = (newCollege || '').trim();
@@ -26,7 +26,7 @@ export default function ManageColleges() {
     } catch (e) {
       console.log('[ManageColleges] add error', e);
     }
-  }, [newCollege, location]);
+  }, [newCollege, location, addCollege, collegesQuery]);
 
   const handleVerify = useCallback(async (collegeId: string) => {
     try {
@@ -35,7 +35,7 @@ export default function ManageColleges() {
     } catch (e) {
       console.log('[ManageColleges] verify error', e);
     }
-  }, []);
+  }, [verifyCollege, collegesQuery]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]} testID="admin-manage-colleges">
@@ -84,7 +84,7 @@ export default function ManageColleges() {
           keyExtractor={(c) => c.id}
           renderItem={({ item }) => (
             <View style={styles.itemRow}>
-              <View style={{ flex: 1 }}>
+              <View style={styles.itemContent}>
                 <Text style={styles.itemName}>{item.name}</Text>
                 {!!item.location && (
                   <View style={styles.locationRow}>
@@ -119,6 +119,7 @@ const styles = StyleSheet.create({
   addButton: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.primary, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10 },
   addButtonText: { color: Colors.text.white, fontSize: 14, fontWeight: '600' },
   itemRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12 },
+  itemContent: { flex: 1 },
   itemName: { fontSize: 15, fontWeight: '600', color: Colors.text.primary },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
   itemLocation: { fontSize: 12, color: Colors.text.secondary },

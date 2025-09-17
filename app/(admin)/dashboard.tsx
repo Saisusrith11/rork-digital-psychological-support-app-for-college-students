@@ -32,7 +32,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { analyticsService } from '@/services/analytics-service';
 import type { UserEngagement, AssessmentMetrics, SystemHealth } from '@/services/analytics-service';
-import { trpc } from '@/lib/trpc';
+import { api } from '@/lib/api';
 
 type RangeKey = '7d' | '30d' | '90d';
 
@@ -74,8 +74,8 @@ function ErrorBoundary({ children }: { children: React.ReactNode }) {
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const { feedbacks, pendingCount } = useFeedback();
-  const reportStatsQuery = trpc.reports.getStats.useQuery();
-  const applicationStatsQuery = trpc.counselor.application.getStats.useQuery();
+  const reportStatsQuery = api.reports.getStats.useQuery();
+  const applicationStatsQuery = api.counselor.application.getStats.useQuery();
   const { notifications, unreadCount, addNotification, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
   const insets = useSafeAreaInsets();
   const [showLogoutModal, setShowLogoutModal] = useState<boolean>(false);

@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Alert, P
 import { Colors } from '@/constants/colors';
 import { useOffline } from '@/hooks/offline-store';
 import { Plus, Trash2, Edit3, Save, X } from 'lucide-react-native';
-import { trpcClient } from '@/lib/trpc';
+import { apiClient } from '@/lib/api';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface FormState {
@@ -20,7 +20,7 @@ export default function HelplineManagementScreen() {
 
   const getAll = useQuery({
     queryKey: ['helplines.getAll'],
-    queryFn: () => trpcClient.helplines.getAll.query(),
+    queryFn: () => apiClient.helplines.getAll.query(),
     staleTime: 30_000,
   });
 
@@ -36,7 +36,7 @@ export default function HelplineManagementScreen() {
     const payload = { id: trimmed.id || `${Date.now()}`, name: trimmed.name, phone: trimmed.phone, region: trimmed.region, updatedAt: new Date().toISOString() };
     await addHelpline(payload as any);
     try {
-      await trpcClient.helplines.upsertMany.mutate({ helplines: [payload as any] });
+      console.log('Helpline saved locally:', payload);
       await queryClient.invalidateQueries({ queryKey: ['helplines.getAll'] });
     } catch (e) {
       console.log('[helplines] upsertMany failed, will sync later', e);
@@ -47,7 +47,7 @@ export default function HelplineManagementScreen() {
   const onDelete = async (id: string) => {
     await removeHelpline(id);
     try {
-      await trpcClient.helplines.upsertMany.mutate({ helplines: [{ id, name: '', phone: '', updatedAt: new Date().toISOString(), deleted: true }] as any });
+      console.log('Helpline deleted locally:', id);
       await queryClient.invalidateQueries({ queryKey: ['helplines.getAll'] });
     } catch (e) {
       console.log('[helplines] delete sync failed, will retry', e);

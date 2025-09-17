@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Platform, Alert } from 'react-native';
 import { Stack } from 'expo-router';
-import { trpc } from '@/lib/trpc';
+import { api } from '@/lib/api';
 import { Colors } from '@/constants/colors';
 import { Image as ExpoImage } from 'expo-image';
 import { Upload, Image as ImageIcon, PlayCircle, Save, Trash2 } from 'lucide-react-native';
@@ -33,20 +33,18 @@ export default function AdminActivitiesScreen() {
     mediaType: undefined,
   });
 
-  const utils = trpc.useUtils?.();
-
-  const { data, isLoading, refetch } = trpc.activities.getAll.useQuery({ riskLevel: 'all', limit: 100 });
-  const createMutation = trpc.activities.create.useMutation({
+  const { data, isLoading, refetch } = api.activities.getAll.useQuery({ riskLevel: 'all', limit: 100 });
+  const createMutation = api.activities.create.useMutation({
     onSuccess: async () => {
       await refetch();
     },
   });
-  const updateMutation = trpc.activities.update.useMutation({
+  const updateMutation = api.activities.update.useMutation({
     onSuccess: async () => {
       await refetch();
     },
   });
-  const deleteMutation = trpc.activities.delete.useMutation({
+  const deleteMutation = api.activities.delete.useMutation({
     onSuccess: async () => {
       await refetch();
     },

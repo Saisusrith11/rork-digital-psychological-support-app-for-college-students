@@ -35,7 +35,7 @@ import {
 } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { trpc } from '@/lib/trpc';
+import { api } from '@/lib/api';
 import { useNotifications } from '@/hooks/notification-store';
 import type { CounselorApplication } from '@/types/user';
 import { AlertModal } from '@/components/AlertModal';
@@ -65,16 +65,16 @@ export default function CounselorApplicationsAdmin() {
   }>({ visible: false, title: '', message: '', type: 'info', buttons: [] });
 
   // Queries
-  const applicationsQuery = trpc.counselor.application.getAll.useQuery({
+  const applicationsQuery = api.counselor.application.getAll.useQuery({
     status: filterStatus === 'all' ? undefined : filterStatus,
     search: searchQuery || undefined,
     limit: 50,
   });
   
-  const statsQuery = trpc.counselor.application.getStats.useQuery();
+  const statsQuery = api.counselor.application.getStats.useQuery();
 
   // Mutations
-  const approveMutation = trpc.counselor.application.approve.useMutation({
+  const approveMutation = api.counselor.application.approve.useMutation({
     onSuccess: (data) => {
       console.log('[CounselorApplications] Application approved:', data.counselorEmail);
       
@@ -90,7 +90,7 @@ export default function CounselorApplicationsAdmin() {
       setAlertModal({
         visible: true,
         title: 'Application Approved',
-        message: data.message,
+        message: 'Application has been approved successfully.',
         type: 'success',
         buttons: [{ text: 'OK', onPress: () => {} }],
       });
@@ -100,7 +100,7 @@ export default function CounselorApplicationsAdmin() {
       applicationsQuery.refetch();
       statsQuery.refetch();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('[CounselorApplications] Approval error:', error);
       setAlertModal({
         visible: true,
@@ -112,15 +112,15 @@ export default function CounselorApplicationsAdmin() {
     },
   });
 
-  const rejectMutation = trpc.counselor.application.reject.useMutation({
-    onSuccess: (data) => {
-      console.log('[CounselorApplications] Application rejected:', data.counselorEmail);
+  const rejectMutation = api.counselor.application.reject.useMutation({
+    onSuccess: (data: any) => {
+      console.log('[CounselorApplications] Application rejected:', data?.email);
       
       // Add notification for rejection
       addNotification({
         userId: 'admin',
         title: 'Application Rejected',
-        message: `Counselor application rejected. Reason: ${data.rejectionReason}`,
+        message: `Counselor application rejected. Reason: ${rejectionReason}`,
         type: 'system',
         isRead: false,
       });
