@@ -6,27 +6,41 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
 
 export default function IndexScreen() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const authContext = useAuth();
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
+  // Safely destructure auth context
+  const user = authContext?.user || null;
+  const isAuthenticated = authContext?.isAuthenticated || false;
+  const isLoading = authContext?.isLoading ?? true;
+
   useEffect(() => {
-    if (isLoading) return;
+    console.log('[IndexScreen] Auth state:', { user: !!user, isAuthenticated, isLoading });
+    
+    if (isLoading) {
+      console.log('[IndexScreen] Still loading...');
+      return;
+    }
 
     if (!isAuthenticated) {
+      console.log('[IndexScreen] Not authenticated, redirecting to auth');
       router.replace('/auth');
       return;
     }
 
     // Route based on user role
     if (user?.role === 'counselor') {
+      console.log('[IndexScreen] Redirecting to counselor dashboard');
       router.replace('/(counselor)/dashboard');
     } else if (user?.role === 'admin') {
+      console.log('[IndexScreen] Redirecting to admin dashboard');
       router.replace('/(admin)/dashboard');
     } else if (user?.role === 'volunteer') {
+      console.log('[IndexScreen] Redirecting to volunteer dashboard');
       router.replace('/(volunteer)/dashboard');
     } else {
-      // Default to student tabs
+      console.log('[IndexScreen] Redirecting to student home');
       router.replace('/(tabs)/home');
     }
   }, [isAuthenticated, isLoading, user, router]);

@@ -1,12 +1,12 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { ScrollView, View, Text, StyleSheet } from 'react-native';
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bell } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
 import { useMood } from '@/hooks/mood-store';
 import { useLanguage } from '@/hooks/language-store';
 import { useRouter } from 'expo-router';
-import { TouchableOpacity } from 'react-native';
 import MoodSelector from '@/components/MoodSelector';
 import CrisisSupport from '@/components/CrisisSupport';
 import QuickActions from '@/components/QuickActions';
@@ -20,6 +20,7 @@ export default function HomeScreen() {
   const { t } = useLanguage();
   const [dailyQuote, setDailyQuote] = useState<Quote | null>(null);
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     setDailyQuote(getRandomQuote());
@@ -48,7 +49,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View>
@@ -90,7 +91,7 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{t('home.articles.title')}</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Student')}>
+            <TouchableOpacity onPress={() => router.push('/resources')}>
               <Text style={styles.viewAll}>{t('common.viewAll')}</Text>
             </TouchableOpacity>
           </View>
@@ -99,14 +100,14 @@ export default function HomeScreen() {
             title="Stress Management Techniques"
             description="Learn practical ways to manage academic stress"
             duration="5 min read"
-            onPress={() => navigation.navigate('ResourceDetail', { resourceId: '1' })}
+            onPress={() => router.push('/resource-detail?id=1')}
           />
           
           <ResourceCard
             title="Better Sleep for Students"
             description="Improve your sleep quality with evidence-based tips"
             duration="7 min read"
-            onPress={() => navigation.navigate('ResourceDetail', { resourceId: '2' })}
+            onPress={() => router.push('/resource-detail?id=2')}
           />
         </View>
       </ScrollView>

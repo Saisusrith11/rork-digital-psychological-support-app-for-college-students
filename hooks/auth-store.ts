@@ -7,6 +7,7 @@ import { safeJsonParse, safeJsonStringify } from '@/utils/safe-json-parse';
 export const [AuthProvider, useAuth] = createContextHook(() => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const loadUser = useCallback(async () => {
     try {
