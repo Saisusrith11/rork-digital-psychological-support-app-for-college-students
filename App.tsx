@@ -3,7 +3,6 @@ import React from 'react';
 import { Platform, View, Text, StyleSheet } from 'react-native';
 import { registerRootComponent } from 'expo';
 import RootLayout from './app/_layout';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 // Force mobile-only mode
 if (Platform.OS === 'web') {
@@ -15,16 +14,8 @@ if (Platform.OS === 'web') {
   );
   registerRootComponent(WebError);
 } else {
-  // Mobile app entry point
-  function App() {
-    return (
-      <ErrorBoundary>
-        <RootLayout />
-      </ErrorBoundary>
-    );
-  }
-  
-  registerRootComponent(App);
+  // Mobile app entry point - RootLayout already has ErrorBoundary
+  registerRootComponent(RootLayout);
 }
 
 const styles = StyleSheet.create({
@@ -45,4 +36,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+export default RootLayout;

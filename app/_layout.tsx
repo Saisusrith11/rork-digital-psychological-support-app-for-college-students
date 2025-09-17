@@ -1,64 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createTRPCClient, httpBatchLink } from '@trpc/client';
-import superjson from 'superjson';
 import * as SplashScreen from 'expo-splash-screen';
-import { StyleSheet, View, Text, Platform } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
-import { trpc } from '@/lib/trpc';
+import { trpc, trpcClient } from '@/lib/trpc';
 import { AuthProvider } from '@/hooks/auth-store';
 import { ThemeProvider } from '@/hooks/theme-store';
-
-// Simple type for now to avoid backend imports
-type AppRouter = any;
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync().catch(() => {
   console.log('Failed to prevent splash screen auto-hide');
 });
-
-// Error boundary component
-class RorkErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean; error?: Error }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('App Error Boundary caught an error:', error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <SafeAreaProvider>
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorTitle}>Something went wrong</Text>
-            <Text style={styles.errorMessage}>
-              The app encountered an unexpected error. Please restart the app.
-            </Text>
-            {__DEV__ && this.state.error && (
-              <Text style={styles.errorDetails}>
-                {this.state.error.message}
-              </Text>
-            )}
-          </View>
-        </SafeAreaProvider>
-      );
-    }
-
-    return this.props.children;
-  }
-}
 
 // Main navigation stack
 function RootLayoutNav() {
@@ -91,40 +46,10 @@ const queryClient = new QueryClient({
   },
 });
 
-// Get API URL based on platform
-function getApiUrl() {
-  if (Platform.OS === 'web') {
-    return '/api/trpc';
-  }
-  
-  const baseUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
-  if (baseUrl) {
-    return `${baseUrl}/api/trpc`;
-  }
-  
-  // Fallback for development
-  return 'http://localhost:3000/api/trpc';
-}
+
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
-
-  // Create tRPC client
-  const [trpcClient] = useState(() =>
-    createTRPCClient<AppRouter>({
-      links: [
-        httpBatchLink({
-          url: getApiUrl(),
-          transformer: superjson,
-          headers: () => {
-            return {
-              'Content-Type': 'application/json',
-            };
-          },
-        }),
-      ],
-    })
-  );
 
   useEffect(() => {
     async function prepare() {
@@ -152,7 +77,7 @@ export default function RootLayout() {
   }
 
   return (
-    <RorkErrorBoundary>
+    <ErrorBoundary>
       <SafeAreaProvider>
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
           <QueryClientProvider client={queryClient}>
@@ -166,7 +91,7 @@ export default function RootLayout() {
           </QueryClientProvider>
         </trpc.Provider>
       </SafeAreaProvider>
-    </RorkErrorBoundary>
+    </ErrorBoundary>
   );
 }
 
@@ -174,35 +99,5 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-  },
-  errorContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-    backgroundColor: Colors.background,
-  },
-  errorTitle: {
-    fontSize: 20,
-    fontWeight: '700' as const,
-    color: Colors.text.primary,
-    marginBottom: 12,
-    textAlign: 'center' as const,
-  },
-  errorMessage: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    textAlign: 'center' as const,
-    lineHeight: 24,
-    marginBottom: 20,
-  },
-  errorDetails: {
-    fontSize: 12,
-    color: Colors.error,
-    textAlign: 'center' as const,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    backgroundColor: Colors.surfaceLight,
-    padding: 10,
-    borderRadius: 8,
   },
 });
