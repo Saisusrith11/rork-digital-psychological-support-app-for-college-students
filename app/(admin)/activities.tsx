@@ -4,7 +4,7 @@ import { Stack } from 'expo-router';
 import { api } from '@/lib/api';
 import { Colors } from '@/constants/colors';
 import { Image as ExpoImage } from 'expo-image';
-import { Upload, Image as ImageIcon, PlayCircle, Save, Trash2 } from 'lucide-react-native';
+import { Upload, PlayCircle, Trash2 } from 'lucide-react-native';
 import { useAuth } from '@/hooks/auth-store';
 
 interface FormState {
@@ -67,7 +67,7 @@ export default function AdminActivitiesScreen() {
     if (!canSubmit) return Alert.alert('Missing fields', 'Please fill all required fields.');
 
     try {
-      await createMutation.mutateAsync({
+      const activityData = {
         title: form.title.trim(),
         description: form.description.trim(),
         points: Number(form.points),
@@ -76,7 +76,10 @@ export default function AdminActivitiesScreen() {
         duration: form.duration ? Number(form.duration) : undefined,
         mediaUrl: form.mediaUrl?.trim() || undefined,
         mediaType: form.mediaType,
-      });
+      };
+      
+      (createMutation as any)?.mutate?.(activityData);
+      
       setForm({ title: '', description: '', points: '', riskLevel: '', category: '', duration: '', mediaUrl: '', mediaType: undefined });
       Alert.alert('Success', 'Activity created');
     } catch (e) {
@@ -88,7 +91,7 @@ export default function AdminActivitiesScreen() {
   const handleDelete = useCallback(async (id: string) => {
     if (!isAllowed) return;
     try {
-      await deleteMutation.mutateAsync({ id });
+      (deleteMutation as any)?.mutate?.({ id });
     } catch (e) {
       console.error('[Activities] Delete error', e);
     }

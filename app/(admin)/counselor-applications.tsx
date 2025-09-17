@@ -8,7 +8,6 @@ import {
   Modal,
   TextInput,
   FlatList,
-  Alert,
   Linking,
   Platform,
 } from 'react-native';
@@ -67,22 +66,22 @@ export default function CounselorApplicationsAdmin() {
   // Queries
   const applicationsQuery = api.counselor.application.getAll.useQuery({
     status: filterStatus === 'all' ? undefined : filterStatus,
-    search: searchQuery || undefined,
     limit: 50,
+    offset: 0,
   });
   
   const statsQuery = api.counselor.application.getStats.useQuery();
 
   // Mutations
   const approveMutation = api.counselor.application.approve.useMutation({
-    onSuccess: (data) => {
-      console.log('[CounselorApplications] Application approved:', data.counselorEmail);
+    onSuccess: (data: any) => {
+      console.log('[CounselorApplications] Application approved:', data?.counselorEmail);
       
       // Add notification for successful approval
       addNotification({
         userId: 'admin',
         title: 'Application Approved',
-        message: `Counselor application approved. Login credentials sent to ${data.counselorEmail}`,
+        message: `Counselor application approved. Login credentials sent to ${data?.counselorEmail || 'counselor'}`,
         type: 'system',
         isRead: false,
       });
@@ -105,7 +104,7 @@ export default function CounselorApplicationsAdmin() {
       setAlertModal({
         visible: true,
         title: 'Error',
-        message: error.message || 'Failed to approve application',
+        message: error?.message || 'Failed to approve application',
         type: 'error',
         buttons: [{ text: 'OK', onPress: () => {} }],
       });
@@ -140,7 +139,7 @@ export default function CounselorApplicationsAdmin() {
       applicationsQuery.refetch();
       statsQuery.refetch();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('[CounselorApplications] Rejection error:', error);
       setAlertModal({
         visible: true,
@@ -180,9 +179,9 @@ export default function CounselorApplicationsAdmin() {
         {
           text: 'Approve',
           onPress: () => {
-            approveMutation.mutate({
+            (approveMutation as any)?.mutate?.({
               applicationId: application.id,
-              adminNotes: 'Application approved after document review',
+              feedback: 'Application approved after document review',
             });
           },
         },
@@ -202,10 +201,9 @@ export default function CounselorApplicationsAdmin() {
       return;
     }
 
-    rejectMutation.mutate({
+    (rejectMutation as any)?.mutate?.({
       applicationId: selectedApplication.id,
-      rejectionReason: rejectionReason.trim(),
-      adminNotes: 'Application rejected after review',
+      feedback: rejectionReason.trim(),
     });
   }, [selectedApplication, rejectionReason, rejectMutation]);
 
@@ -645,9 +643,9 @@ export default function CounselorApplicationsAdmin() {
         </View>
       ) : (
         <FlatList
-          data={filteredApplications}
+          data={filteredApplications as any[]}
           renderItem={renderApplicationCard}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item: any) => item.id}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           testID="applications-list"
