@@ -4,7 +4,8 @@ import { Video, FileAudio, FileText, Sparkles, X, Search, Youtube, ExternalLink 
 import { Colors } from '@/constants/colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
-import { trpc } from '@/lib/trpc';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '@/lib/api';
 
 const TYPES = ['all','video','audio','pdf','meditation'] as const;
 
@@ -28,11 +29,27 @@ export default function ResourcesScreen() {
   const [type, setType] = useState<FilterType>('all');
   const [category, setCategory] = useState<string>('');
 
-  const categoriesQuery = trpc.resources.getCategories.useQuery();
-  const listQuery = trpc.resources.getAll.useQuery({ type, category: category || undefined, search: search || undefined, limit: 100, offset: 0 });
+  const categoriesQuery = useQuery({
+    queryKey: ['resources', 'categories'],
+    queryFn: () => apiClient.get('/resources/categories'),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+  
+  const listQuery = useQuery({
+    queryKey: ['resources', 'list', { type, category, search }],
+    queryFn: () => apiClient.getResources(),
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
 
-  const categories: string[] = useMemo(() => categoriesQuery.data?.categories ?? [], [categoriesQuery.data?.categories]);
-  const data: TrpcResource[] = useMemo(() => listQuery.data?.resources ?? [], [listQuery.data?.resources]);
+  const categories: string[] = useMemo(() => {
+    const result = categoriesQuery.data as any;
+    return result?.categories ?? [];
+  }, [categoriesQuery.data]);
+  
+  const data: TrpcResource[] = useMemo(() => {
+    const result = listQuery.data as any;
+    return result?.resources ?? [];
+  }, [listQuery.data]);
 
   const grouped = useMemo(() => {
     return {

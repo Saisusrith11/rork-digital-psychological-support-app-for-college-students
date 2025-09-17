@@ -5,7 +5,6 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
-// import { trpc, trpcClient } from '@/lib/trpc';
 import { AuthProvider } from '@/hooks/auth-store';
 import { ThemeProvider } from '@/hooks/theme-store';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
