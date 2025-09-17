@@ -6,7 +6,7 @@ import { safeJsonParse, safeJsonStringify } from '@/utils/safe-json-parse';
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   
   console.log('[AuthStore] Initializing auth store...', { user: user?.id, isLoading });
 
@@ -166,7 +166,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
   }, [user?.isAnonymous]);
 
-  return useMemo(() => ({
+  const contextValue = useMemo(() => ({
     user,
     isLoading,
     login,
@@ -175,4 +175,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     logout,
     isAuthenticated: !!user,
   }), [user, isLoading, login, register, loginAnonymous, logout]);
+  
+  return contextValue;
 });

@@ -8,9 +8,19 @@ import { useAuth } from '@/hooks/auth-store';
 export default function IndexScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const authContext = useAuth();
+  
+  const { user, isAuthenticated, isLoading } = authContext || {
+    user: null,
+    isAuthenticated: false,
+    isLoading: true
+  };
 
   useEffect(() => {
+    if (!authContext) {
+      console.error('[IndexScreen] Auth context is undefined');
+      return;
+    }
     console.log('[IndexScreen] App starting...', { isLoading, isAuthenticated, userRole: user?.role });
     
     if (isLoading) {
@@ -38,7 +48,7 @@ export default function IndexScreen() {
       
       return () => clearTimeout(timer);
     }
-  }, [router, isLoading, isAuthenticated, user]);
+  }, [router, isLoading, isAuthenticated, user, authContext]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
