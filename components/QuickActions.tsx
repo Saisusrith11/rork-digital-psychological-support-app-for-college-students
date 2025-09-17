@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MessageCircle, Calendar, Bot } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
-import { useRouter } from '@/utils/navigation';
+import { useRouter } from 'expo-router';
 
 export default function QuickActions() {
   const router = useRouter();

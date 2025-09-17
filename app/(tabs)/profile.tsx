@@ -25,7 +25,7 @@ import { useLanguage, type SupportedLanguage } from '@/hooks/language-store';
 import { useMood } from '@/hooks/mood-store';
 import MoodSelector from '@/components/MoodSelector';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from '@/utils/navigation';
+import { useRouter } from 'expo-router';
 
 
 export default function ProfileScreen() {

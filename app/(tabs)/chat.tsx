@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, Platform, ActivityIndicator, KeyboardAvoidingView, Modal } from 'react-native';
 import { ArrowLeft, Mic, Send, Bot, AlertTriangle, Phone, Heart, BookOpen, Users, Brain, Sparkles } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
-import { useRouter, useLocalSearchParams } from '@/utils/navigation';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AIChatService, Message, CopingStrategy } from '@/services/ai-chat-service';
 import { useLanguage } from '@/hooks/language-store';
