@@ -26,8 +26,7 @@ if (process.argv.includes('--web')) {
 }
 
 // Ensure metro config is set for mobile only
-const metroConfigPath = path.join(__dirname, 'metro.config.js');
-const mobileConfigPath = path.join(__dirname, 'metro.config.mobile.js');
+const mobileConfigPath = path.join(process.cwd(), 'metro.config.mobile.js');
 
 if (fs.existsSync(mobileConfigPath)) {
   console.log('✅ Using mobile-only Metro configuration');
@@ -45,7 +44,7 @@ const webCachePaths = [
 ];
 
 webCachePaths.forEach(cachePath => {
-  const fullPath = path.join(__dirname, cachePath);
+  const fullPath = path.join(process.cwd(), cachePath);
   if (fs.existsSync(fullPath)) {
     console.log(`🗑️  Removing web cache: ${cachePath}`);
     fs.rmSync(fullPath, { recursive: true, force: true });
@@ -72,7 +71,7 @@ let args = [];
 if (useRork) {
   // Prefer Rork if available
   command = 'bunx';
-  args = ['rork', 'start', '-p', '5x33ga8jdiyfyd44xmhzq', '--tunnel', '--no-interactive', '--config', 'metro.config.simple.cjs'];
+  args = ['rork', 'start', '-p', '5x33ga8jdiyfyd44xmhzq', '--tunnel', '--no-interactive', '--config', 'metro.config.mobile.js'];
   if (process.argv.includes('--android')) args.push('--android');
   if (process.argv.includes('--ios')) args.push('--ios');
   console.log('\n📱 Starting with Rork (bunx)...');
@@ -80,7 +79,7 @@ if (useRork) {
 } else {
   // Fallback to Expo CLI via npx
   command = 'npx';
-  args = ['--yes', 'expo', 'start', '--tunnel', '--no-interactive', '--config', 'metro.config.simple.cjs'];
+  args = ['--yes', 'expo', 'start', '--tunnel', '--no-interactive', '--config', 'metro.config.mobile.js'];
   if (process.argv.includes('--android')) args.push('--android');
   if (process.argv.includes('--ios')) args.push('--ios');
   console.log('\n📱 Starting with Expo CLI (npx)...');
