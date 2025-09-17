@@ -9,6 +9,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StyleSheet, View, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from '@/hooks/auth-store';
+import { Colors } from '@/constants/colors';
 
 // Simple error boundary wrapper
 class RorkErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
@@ -130,14 +131,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: Colors.background,
   },
   errorTitle: {
     fontSize: 18,
     marginBottom: 10,
+    color: Colors.text.primary,
+    fontWeight: '600' as const,
   },
   errorMessage: {
     fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
+    color: Colors.text.secondary,
+    textAlign: 'center' as const,
   },
 });

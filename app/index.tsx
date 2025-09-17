@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
-
-
 
 export default function IndexScreen() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
+  const insets = useSafeAreaInsets();
   
   useEffect(() => {
     if (!isLoading) {
@@ -35,7 +35,7 @@ export default function IndexScreen() {
   }, [router, user, isLoading]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.content}>
         <Text style={styles.title}>Digital Psychological Support</Text>
         <Text style={styles.subtitle}>For College Students</Text>

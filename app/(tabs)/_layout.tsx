@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Colors } from '@/constants/colors';
-import { Home, MessageCircle, Users, BookOpen, Heart } from 'lucide-react-native';
+import { Home, MessageCircle, Users, BookOpen, Heart, User } from 'lucide-react-native';
 
 export default function TabsLayout() {
   return (
@@ -9,11 +9,11 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.gray,
+        tabBarInactiveTintColor: Colors.text.light,
         tabBarStyle: {
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.surface,
           borderTopWidth: 1,
-          borderTopColor: Colors.lightGray,
+          borderTopColor: Colors.surfaceLight,
         },
         tabBarLabelStyle: {
           fontSize: 12,
@@ -60,7 +60,7 @@ export default function TabsLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />
     </Tabs>
