@@ -23,6 +23,16 @@ function RootLayoutNav() {
       <Stack.Screen name="terms" />
       <Stack.Screen name="auth" />
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(admin)" />
+      <Stack.Screen name="(counselor)" />
+      <Stack.Screen name="(volunteer)" />
+      <Stack.Screen name="assessment" />
+      <Stack.Screen name="assessment-result" />
+      <Stack.Screen name="ai-chat" />
+      <Stack.Screen name="booking" />
+      <Stack.Screen name="counselor-application" />
+      <Stack.Screen name="resource-detail" />
+      <Stack.Screen name="weekly-report" />
       <Stack.Screen name="+not-found" />
     </Stack>
   );
