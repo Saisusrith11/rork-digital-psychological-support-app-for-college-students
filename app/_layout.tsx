@@ -8,16 +8,11 @@ import { StyleSheet, View, Text, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
 import { trpc } from '@/lib/trpc';
-import type { AppRouter } from '@/backend/trpc/app-router';
 import { AuthProvider } from '@/hooks/auth-store';
-import { NotificationProvider } from '@/hooks/notification-store';
-import { LanguageProvider } from '@/hooks/language-store';
 import { ThemeProvider } from '@/hooks/theme-store';
-import { MoodProvider } from '@/hooks/mood-store';
-import { WellnessProvider } from '@/hooks/wellness-store';
-import { AssessmentProvider } from '@/hooks/assessment-store';
-import { FeedbackProvider } from '@/hooks/feedback-store';
-import { OfflineProvider } from '@/hooks/offline-store';
+
+// Simple type for now to avoid backend imports
+type AppRouter = any;
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -25,7 +20,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {
 });
 
 // Error boundary component
-class AppErrorBoundary extends React.Component<
+class RorkErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean; error?: Error }
 > {
@@ -73,74 +68,7 @@ function RootLayoutNav() {
       <Stack.Screen name="terms" />
       <Stack.Screen name="auth" />
       <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="(counselor)" />
-      <Stack.Screen name="(admin)" />
-      <Stack.Screen name="(volunteer)" />
-      <Stack.Screen 
-        name="booking" 
-        options={{ 
-          headerShown: true, 
-          title: 'Book Appointment',
-          presentation: 'modal'
-        }} 
-      />
-      <Stack.Screen 
-        name="assessment" 
-        options={{ 
-          headerShown: true, 
-          title: 'Mental Health Assessment'
-        }} 
-      />
-      <Stack.Screen 
-        name="assessment-result" 
-        options={{ 
-          headerShown: true, 
-          title: 'Assessment Results'
-        }} 
-      />
-      <Stack.Screen 
-        name="weekly-report" 
-        options={{ 
-          headerShown: true, 
-          title: 'Weekly Report'
-        }} 
-      />
-      <Stack.Screen 
-        name="resource-detail" 
-        options={{ 
-          headerShown: true, 
-          title: 'Resource Details'
-        }} 
-      />
-      <Stack.Screen 
-        name="counselor-application" 
-        options={{ 
-          headerShown: true,
-          title: 'Counselor Application'
-        }} 
-      />
-      <Stack.Screen 
-        name="counselor-applications-admin" 
-        options={{ 
-          headerShown: true,
-          title: 'Counselor Applications'
-        }} 
-      />
-      <Stack.Screen name="enter-counselor" />
-      <Stack.Screen 
-        name="ai-chat" 
-        options={{ 
-          headerShown: true, 
-          title: 'AI Mental Health Support'
-        }} 
-      />
-      <Stack.Screen 
-        name="test" 
-        options={{ 
-          headerShown: true, 
-          title: 'Test Screen'
-        }} 
-      />
+      <Stack.Screen name="+not-found" />
     </Stack>
   );
 }
@@ -224,35 +152,21 @@ export default function RootLayout() {
   }
 
   return (
-    <AppErrorBoundary>
+    <RorkErrorBoundary>
       <SafeAreaProvider>
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
-              <LanguageProvider>
-                <ThemeProvider>
-                  <OfflineProvider>
-                    <AssessmentProvider>
-                      <MoodProvider>
-                        <WellnessProvider>
-                          <FeedbackProvider>
-                            <NotificationProvider>
-                              <View style={styles.container}>
-                                <RootLayoutNav />
-                              </View>
-                            </NotificationProvider>
-                          </FeedbackProvider>
-                        </WellnessProvider>
-                      </MoodProvider>
-                    </AssessmentProvider>
-                  </OfflineProvider>
-                </ThemeProvider>
-              </LanguageProvider>
+              <ThemeProvider>
+                <View style={styles.container}>
+                  <RootLayoutNav />
+                </View>
+              </ThemeProvider>
             </AuthProvider>
           </QueryClientProvider>
         </trpc.Provider>
       </SafeAreaProvider>
-    </AppErrorBoundary>
+    </RorkErrorBoundary>
   );
 }
 

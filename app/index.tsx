@@ -15,22 +15,8 @@ export default function IndexScreen() {
       const timer = setTimeout(() => {
         try {
           if (user) {
-            console.log('[IndexScreen] User authenticated, redirecting based on role:', user.role);
-            
-            switch (user.role) {
-              case 'counselor':
-                router.replace('/(counselor)/dashboard');
-                break;
-              case 'admin':
-                router.replace('/(admin)/dashboard');
-                break;
-              case 'volunteer':
-                router.replace('/(volunteer)/dashboard');
-                break;
-              default:
-                router.replace('/(tabs)/home');
-                break;
-            }
+            console.log('[IndexScreen] User authenticated, redirecting to home');
+            router.replace('/(tabs)/home');
           } else {
             console.log('[IndexScreen] No user found, redirecting to terms');
             router.replace('/terms');

@@ -4,8 +4,8 @@ import superjson from "superjson";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 
-// Import the AppRouter type - this will be tree-shaken in production
-import type { AppRouter } from '@/backend/trpc/app-router';
+// Simple type for now to avoid backend imports
+type AppRouter = any;
 
 // Use the client-safe type to avoid importing server code during bundling
 export const trpc = createTRPCReact<AppRouter>();
