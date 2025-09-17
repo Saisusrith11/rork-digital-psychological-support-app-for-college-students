@@ -8,6 +8,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
+  
+  console.log('[AuthStore] Initializing auth store...');
 
   const loadUser = useCallback(async () => {
     try {

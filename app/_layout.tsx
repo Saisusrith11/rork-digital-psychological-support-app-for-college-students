@@ -7,15 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from '@/hooks/auth-store';
-import { MoodProvider } from '@/hooks/mood-store';
-import { AssessmentProvider } from '@/hooks/assessment-store';
-import { LanguageProvider } from '@/hooks/language-store';
-import { NotificationProvider } from '@/hooks/notification-store';
-import { FeedbackProvider } from '@/hooks/feedback-store';
-import { ThemeProvider } from '@/hooks/theme-store';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { OfflineProvider } from '@/hooks/offline-store';
-import { WellnessProvider } from '@/hooks/wellness-store';
 
 function RootLayoutNav() {
   return (
@@ -66,25 +58,9 @@ export default function RootLayout() {
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
           <GestureHandlerRootView style={styles.container}>
             <SafeAreaProvider>
-              <ThemeProvider>
-                <LanguageProvider>
-                  <AuthProvider>
-                    <NotificationProvider>
-                      <FeedbackProvider>
-                        <MoodProvider>
-                          <AssessmentProvider>
-                            <WellnessProvider>
-                              <OfflineProvider>
-                                <RootLayoutNav />
-                              </OfflineProvider>
-                            </WellnessProvider>
-                          </AssessmentProvider>
-                        </MoodProvider>
-                      </FeedbackProvider>
-                    </NotificationProvider>
-                  </AuthProvider>
-                </LanguageProvider>
-              </ThemeProvider>
+              <AuthProvider>
+                <RootLayoutNav />
+              </AuthProvider>
             </SafeAreaProvider>
           </GestureHandlerRootView>
         </trpc.Provider>
