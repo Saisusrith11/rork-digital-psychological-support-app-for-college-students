@@ -52,11 +52,11 @@ export default function TestScreen() {
           <Text style={styles.status}>
             Status: {exampleQuery.isLoading ? 'Loading...' : exampleQuery.error ? 'Error' : 'Success'}
           </Text>
-          {exampleQuery.data && (
+          {exampleQuery.data ? (
             <Text style={styles.data}>
-              {`Data: ${JSON.stringify(exampleQuery.data as any, null, 2)}`}
+              Data: {JSON.stringify(exampleQuery.data, null, 2) || 'No data'}
             </Text>
-          )}
+          ) : null}
           {exampleQuery.error && (
             <Text style={styles.error}>
               Error: {String(exampleQuery.error)}
@@ -69,11 +69,11 @@ export default function TestScreen() {
           <Text style={styles.status}>
             Status: {resourcesQuery.isLoading ? 'Loading...' : resourcesQuery.error ? 'Error' : 'Success'}
           </Text>
-          {resourcesQuery.data && (
+          {resourcesQuery.data ? (
             <Text style={styles.data}>
-              {`Data: ${JSON.stringify(resourcesQuery.data as any, null, 2)}`}
+              Data: {JSON.stringify(resourcesQuery.data, null, 2) || 'No data'}
             </Text>
-          )}
+          ) : null}
           {resourcesQuery.error && (
             <Text style={styles.error}>
               Error: {String(resourcesQuery.error)}
@@ -96,11 +96,11 @@ export default function TestScreen() {
             </Text>
           )}
           
-          {createResourceMutation.data && (
+          {createResourceMutation.data ? (
             <Text style={styles.success}>
-              {`Created: ${JSON.stringify(createResourceMutation.data as any, null, 2)}`}
+              Created: {JSON.stringify(createResourceMutation.data, null, 2) || 'No data'}
             </Text>
-          )}
+          ) : null}
         </View>
 
         <View style={styles.section}>
@@ -108,11 +108,11 @@ export default function TestScreen() {
           <Text style={styles.status}>
             Status: {studentsQuery.isLoading ? 'Loading...' : studentsQuery.error ? 'Error' : 'Success'}
           </Text>
-          {studentsQuery.data && (
+          {studentsQuery.data ? (
             <Text style={styles.data}>
-              {`Data: ${JSON.stringify(studentsQuery.data as any, null, 2)}`}
+              Data: {JSON.stringify(studentsQuery.data, null, 2) || 'No data'}
             </Text>
-          )}
+          ) : null}
           {studentsQuery.error && (
             <Text style={styles.error}>
               Error: {String(studentsQuery.error)}
