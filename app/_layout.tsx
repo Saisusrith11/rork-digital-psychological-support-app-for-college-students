@@ -12,8 +12,8 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="auth" />
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="auth" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="(counselor)" options={{ headerShown: false }} />
       <Stack.Screen name="(admin)" options={{ headerShown: false }} />
@@ -32,13 +32,17 @@ function RootLayoutNav() {
   );
 }
 
-SplashScreen.preventAutoHideAsync();
+// Prevent splash screen from auto-hiding
+SplashScreen.preventAutoHideAsync().catch(() => {
+  // Handle error silently
+});
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5, // 5 minutes
     },
     mutations: {
       retry: 1,
@@ -48,8 +52,15 @@ const queryClient = new QueryClient({
 
 export default function RootLayout() {
   useEffect(() => {
-    console.log('[App] Initializing app...');
-    SplashScreen.hideAsync();
+    console.log('[RootLayout] App initialized');
+    // Hide splash screen after a short delay
+    const timer = setTimeout(() => {
+      SplashScreen.hideAsync().catch(() => {
+        // Handle error silently
+      });
+    }, 500);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   return (

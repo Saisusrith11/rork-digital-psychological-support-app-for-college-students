@@ -1,62 +1,65 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
 
 export default function IndexScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  
-  // Always call useAuth hook, but handle undefined return gracefully
   const authContext = useAuth();
   
-  // Handle case where context might be undefined
   const user = authContext?.user || null;
   const isAuthenticated = authContext?.isAuthenticated || false;
   const isLoading = authContext?.isLoading ?? true;
 
   useEffect(() => {
     if (!authContext) {
-      console.error('[IndexScreen] Auth context is undefined');
+      console.log('[IndexScreen] Auth context not ready');
       return;
     }
-    console.log('[IndexScreen] App starting...', { isLoading, isAuthenticated, userRole: user?.role });
     
     if (isLoading) {
-      console.log('[IndexScreen] Still loading auth state...');
+      console.log('[IndexScreen] Loading auth state...');
       return;
     }
 
-    if (isAuthenticated && user) {
-      console.log('[IndexScreen] User authenticated, redirecting based on role:', user.role);
-      // Navigate based on user role
-      if (user.role === 'counselor') {
-        router.replace('/(counselor)/dashboard');
-      } else if (user.role === 'admin') {
-        router.replace('/(admin)/dashboard');
-      } else if (user.role === 'volunteer') {
-        router.replace('/(volunteer)/dashboard');
+    const timer = setTimeout(() => {
+      if (isAuthenticated && user) {
+        console.log('[IndexScreen] User authenticated, role:', user.role);
+        switch (user.role) {
+          case 'counselor':
+            router.replace('/(counselor)/dashboard');
+            break;
+          case 'admin':
+            router.replace('/(admin)/dashboard');
+            break;
+          case 'volunteer':
+            router.replace('/(volunteer)/dashboard');
+            break;
+          default:
+            router.replace('/(tabs)/home');
+        }
       } else {
-        router.replace('/(tabs)/home');
-      }
-    } else {
-      console.log('[IndexScreen] User not authenticated, redirecting to auth');
-      const timer = setTimeout(() => {
+        console.log('[IndexScreen] Redirecting to auth');
         router.replace('/auth');
-      }, 500);
-      
-      return () => clearTimeout(timer);
-    }
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [router, isLoading, isAuthenticated, user, authContext]);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.text}>Digital Psychological Support</Text>
-        <Text style={styles.subtitle}>
-          {isLoading ? 'Loading...' : 'Redirecting...'}
+        <Text style={styles.title}>Digital Psychological Support</Text>
+        <Text style={styles.subtitle}>For College Students</Text>
+        <ActivityIndicator 
+          size="large" 
+          color={Colors.white} 
+          style={styles.loader}
+        />
+        <Text style={styles.loadingText}>
+          {isLoading ? 'Initializing...' : 'Redirecting...'}
         </Text>
       </View>
     </View>
@@ -74,17 +77,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
   },
-  text: {
+  title: {
     color: Colors.white,
-    fontSize: 24,
-    fontWeight: '600' as const,
+    fontSize: 28,
+    fontWeight: '700' as const,
     textAlign: 'center' as const,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   subtitle: {
     color: Colors.white,
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '400' as const,
-    opacity: 0.8,
+    opacity: 0.9,
+    marginBottom: 40,
+  },
+  loader: {
+    marginVertical: 20,
+  },
+  loadingText: {
+    color: Colors.white,
+    fontSize: 14,
+    fontWeight: '400' as const,
+    opacity: 0.7,
   },
 });
