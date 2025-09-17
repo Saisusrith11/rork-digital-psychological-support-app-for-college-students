@@ -1,114 +1,75 @@
-import Constants from "expo-constants";
-import { Platform } from "react-native";
+// Mock API client for development
+const MOCK_DELAY = 500;
 
-const normalizeToHttpOrigin = (uri: string): string => {
-  if (!uri) return "";
-  let candidate = uri.trim();
-  if (candidate.startsWith("exp://")) candidate = candidate.replace("exp://", "http://");
-  if (candidate.startsWith("https://") || candidate.startsWith("http://")) {
-    try {
-      const u = new URL(candidate);
-      return u.origin;
-    } catch {
-      return "";
-    }
-  }
-  if (candidate.includes("/")) {
-    candidate = candidate.split("/")[0];
-  }
-  return `http://${candidate}`;
+const mockDelay = () => new Promise(resolve => setTimeout(resolve, MOCK_DELAY));
+
+const mockData = {
+  example: { message: "Hello from mock API!", timestamp: new Date().toISOString() },
+  resources: { resources: [] },
+  students: { students: [] },
+  counselorApplications: { applications: [] },
+  helplines: { helplines: [] },
+  reports: { reports: [] },
+  activities: { activities: [] },
+  volunteers: { volunteers: [] },
 };
 
-const getBaseUrl = () => {
-  // For production, use the environment variable
-  if (process.env.EXPO_PUBLIC_RORK_API_BASE_URL) {
-    return process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
-  }
-  
-  // For web development
-  if (Platform.OS === "web") {
-    try {
-      const origin = (globalThis as any)?.location?.origin as string | undefined;
-      if (origin) return origin;
-    } catch {}
-    return "http://localhost:3000";
-  }
-  
-  // For mobile development
-  const hostUri =
-    (Constants as any)?.expoConfig?.hostUri ||
-    (Constants as any)?.manifest2?.extra?.expoClient?.hostUri ||
-    (Constants as any)?.manifest?.hostUri ||
-    (Constants as any)?.linkingUri;
-  
-  if (typeof hostUri === "string" && hostUri.length > 0) {
-    const base = normalizeToHttpOrigin(hostUri);
-    return base;
-  }
-  
-  // Fallback for development
-  return "http://localhost:3000";
-};
+console.log("[API] Using mock API client");
 
-const baseUrl = getBaseUrl();
-const apiUrl = `${baseUrl}/api`;
-
-console.log("[API] baseUrl:", baseUrl, "apiUrl:", apiUrl);
-
-class ApiClient {
-  private baseUrl: string;
-
-  constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
-  }
-
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const url = `${this.baseUrl}${endpoint}`;
+class MockApiClient {
+  private async mockRequest<T>(endpoint: string, method: string = 'GET', data?: any): Promise<T> {
+    console.log(`[MockAPI] ${method} ${endpoint}`, data ? { data } : '');
     
-    const config: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      ...options,
-    };
-
-    try {
-      console.log(`[API] ${config.method || 'GET'} ${url}`);
-      const response = await fetch(url, config);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error(`[API] Error calling ${endpoint}:`, error);
-      throw error;
+    // Simulate network delay
+    await mockDelay();
+    
+    // Return mock data based on endpoint
+    if (endpoint.includes('/example')) {
+      return mockData.example as T;
     }
+    if (endpoint.includes('/resources')) {
+      if (method === 'POST') {
+        return { success: true, id: Date.now(), ...data } as T;
+      }
+      return mockData.resources as T;
+    }
+    if (endpoint.includes('/students')) {
+      return mockData.students as T;
+    }
+    if (endpoint.includes('/counselor/applications')) {
+      return mockData.counselorApplications as T;
+    }
+    if (endpoint.includes('/helplines')) {
+      return mockData.helplines as T;
+    }
+    if (endpoint.includes('/reports')) {
+      return mockData.reports as T;
+    }
+    if (endpoint.includes('/activities')) {
+      return mockData.activities as T;
+    }
+    if (endpoint.includes('/volunteers')) {
+      return mockData.volunteers as T;
+    }
+    
+    // Default response
+    return { success: true, message: 'Mock response' } as T;
   }
 
   async get<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'GET' });
+    return this.mockRequest<T>(endpoint, 'GET');
   }
 
   async post<T>(endpoint: string, data?: any): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
-    });
+    return this.mockRequest<T>(endpoint, 'POST', data);
   }
 
   async put<T>(endpoint: string, data?: any): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
-    });
+    return this.mockRequest<T>(endpoint, 'PUT', data);
   }
 
   async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'DELETE' });
+    return this.mockRequest<T>(endpoint, 'DELETE');
   }
 
   // Specific API methods
@@ -213,5 +174,5 @@ class ApiClient {
   }
 }
 
-export const apiClient = new ApiClient(apiUrl);
+export const apiClient = new MockApiClient();
 export default apiClient;
