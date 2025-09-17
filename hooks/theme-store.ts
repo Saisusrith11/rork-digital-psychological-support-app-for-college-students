@@ -51,6 +51,11 @@ const defaultThemeContext: ThemeContextType = {
 export const [ThemeProvider, useTheme] = createContextHook(() => {
   const [settings, setSettings] = useState<ThemeSettings>(defaultSettings);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  
+  // Move any logging to useEffect to avoid render-time side effects
+  useEffect(() => {
+    console.log('[ThemeStore] Theme settings loaded:', { settings, isLoaded });
+  }, [settings, isLoaded]);
 
   const loadSettings = useCallback(async () => {
     try {

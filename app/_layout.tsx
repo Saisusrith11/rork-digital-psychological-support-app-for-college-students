@@ -5,7 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
-import { trpc, trpcClient } from '@/lib/trpc';
+// import { trpc, trpcClient } from '@/lib/trpc';
 import { AuthProvider } from '@/hooks/auth-store';
 import { ThemeProvider } from '@/hooks/theme-store';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -67,15 +67,30 @@ export default function RootLayout() {
         console.log('[RootLayout] Initializing app...');
         
         // Add any initialization logic here
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => {
+          if (typeof resolve === 'function') {
+            setTimeout(resolve, 500);
+          }
+        });
         
         console.log('[RootLayout] App initialized successfully');
       } catch (error) {
         console.error('[RootLayout] Error during initialization:', error);
       } finally {
+        // Set ready state first
         setIsReady(true);
-        // Hide splash screen
-        await SplashScreen.hideAsync();
+        
+        // Hide splash screen after a small delay to ensure state is updated
+        const timeoutId = setTimeout(async () => {
+          try {
+            await SplashScreen.hideAsync();
+          } catch (error) {
+            console.log('Splash screen already hidden or error hiding:', error);
+          }
+        }, 100);
+        
+        // Cleanup timeout if component unmounts
+        return () => clearTimeout(timeoutId);
       }
     }
 
@@ -89,17 +104,15 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
-        <trpc.Provider client={trpcClient} queryClient={queryClient}>
-          <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-              <ThemeProvider>
-                <View style={styles.container}>
-                  <RootLayoutNav />
-                </View>
-              </ThemeProvider>
-            </AuthProvider>
-          </QueryClientProvider>
-        </trpc.Provider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <ThemeProvider>
+              <View style={styles.container}>
+                <RootLayoutNav />
+              </View>
+            </ThemeProvider>
+          </AuthProvider>
+        </QueryClientProvider>
       </SafeAreaProvider>
     </ErrorBoundary>
   );

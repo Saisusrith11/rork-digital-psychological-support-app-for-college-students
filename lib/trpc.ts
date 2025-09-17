@@ -3,7 +3,9 @@ import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import superjson from "superjson";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
-import type { AppRouter } from "../backend/trpc/app-router";
+
+// Use any to avoid importing server code on client
+type AppRouter = any;
 
 // Use the client-safe type to avoid importing server code during bundling
 export const trpc = createTRPCReact<AppRouter>();
@@ -82,3 +84,6 @@ const link = httpLinkConfig;
 export const trpcClient = createTRPCClient<AppRouter>({
   links: [link],
 });
+
+// Export the type for use in other files
+export type { AppRouter };

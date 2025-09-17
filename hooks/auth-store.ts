@@ -8,7 +8,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   
-  console.log('[AuthStore] Initializing auth store...', { user: user?.id, isLoading });
+  // Move console.log to useEffect to avoid logging during render
+  useEffect(() => {
+    console.log('[AuthStore] Auth state changed:', { user: user?.id, isLoading });
+  }, [user?.id, isLoading]);
 
   const loadUser = useCallback(async () => {
     try {
