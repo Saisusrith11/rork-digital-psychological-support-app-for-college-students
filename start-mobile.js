@@ -72,7 +72,7 @@ let args = [];
 if (useRork) {
   // Prefer Rork if available
   command = 'bunx';
-  args = ['rork', 'start', '-p', '5x33ga8jdiyfyd44xmhzq', '--tunnel', '--no-interactive'];
+  args = ['rork', 'start', '-p', '5x33ga8jdiyfyd44xmhzq', '--tunnel', '--no-interactive', '--config', 'metro.config.simple.cjs'];
   if (process.argv.includes('--android')) args.push('--android');
   if (process.argv.includes('--ios')) args.push('--ios');
   console.log('\n📱 Starting with Rork (bunx)...');
@@ -80,7 +80,7 @@ if (useRork) {
 } else {
   // Fallback to Expo CLI via npx
   command = 'npx';
-  args = ['--yes', 'expo', 'start', '--tunnel', '--no-interactive'];
+  args = ['--yes', 'expo', 'start', '--tunnel', '--no-interactive', '--config', 'metro.config.simple.cjs'];
   if (process.argv.includes('--android')) args.push('--android');
   if (process.argv.includes('--ios')) args.push('--ios');
   console.log('\n📱 Starting with Expo CLI (npx)...');
