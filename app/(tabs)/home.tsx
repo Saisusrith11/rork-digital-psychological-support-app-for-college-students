@@ -92,7 +92,7 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{t('home.articles.title')}</Text>
-            <TouchableOpacity onPress={() => router.navigate('Student')}>
+            <TouchableOpacity onPress={() => navigation.navigate('Student')}>
               <Text style={styles.viewAll}>{t('common.viewAll')}</Text>
             </TouchableOpacity>
           </View>
@@ -101,14 +101,14 @@ export default function HomeScreen() {
             title="Stress Management Techniques"
             description="Learn practical ways to manage academic stress"
             duration="5 min read"
-            onPress={() => router.navigate('ResourceDetail', { resourceId: '1' })}
+            onPress={() => navigation.navigate('ResourceDetail', { resourceId: '1' })}
           />
           
           <ResourceCard
             title="Better Sleep for Students"
             description="Improve your sleep quality with evidence-based tips"
             duration="7 min read"
-            onPress={() => router.navigate('ResourceDetail', { resourceId: '2' })}
+            onPress={() => navigation.navigate('ResourceDetail', { resourceId: '2' })}
           />
         </View>
       </ScrollView>

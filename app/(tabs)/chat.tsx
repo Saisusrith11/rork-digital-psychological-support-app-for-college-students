@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, Platform, ActivityIndicator, KeyboardAvoidingView, Modal } from 'react-native';
 import { ArrowLeft, Mic, Send, Bot, AlertTriangle, Phone, Heart, BookOpen, Users, Brain, Sparkles } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams } from '@/utils/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AIChatService, Message, CopingStrategy } from '@/services/ai-chat-service';
 import { useLanguage } from '@/hooks/language-store';
@@ -24,6 +24,7 @@ const quickPrompts: QuickPrompt[] = [
 export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
+  const router = useRouter();
   const { to } = useLocalSearchParams<{ to?: string }>();
   const scrollViewRef = useRef<ScrollView>(null);
   const aiService = useRef(AIChatService.getInstance());
@@ -90,10 +91,10 @@ export default function ChatScreen() {
         }
         break;
       case 'booking':
-        router.push(value === 'emergency' ? '/booking?emergency=true' : '/booking');
+        router.navigate('Booking');
         break;
       case 'resources':
-        router.push(`/resources?category=${value}`);
+        router.navigate('Student');
         break;
       case 'coping':
         const strategies = aiService.current.getCopingStrategies(value);
@@ -102,7 +103,7 @@ export default function ChatScreen() {
         }
         break;
       case 'community':
-        router.push('/(tabs)/community');
+        router.navigate('Student');
         break;
       default:
         console.log('Unknown action:', action);
@@ -190,7 +191,7 @@ export default function ChatScreen() {
         actions: [
           { label: 'Try Again', action: () => sendMessage(messageText) },
           { label: 'Call Crisis Line', action: () => console.log('Calling 988') },
-          { label: 'Campus Resources', action: () => router.push('/resources') }
+          { label: 'Campus Resources', action: () => router.navigate('Student') }
         ]
       };
       setMessages(prev => [...prev, errorMessage]);
