@@ -1,13 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
-// import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-// import { trpc, trpcClient } from '@/lib/trpc';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { trpc } from '@/lib/trpc';
 import * as SplashScreen from 'expo-splash-screen';
-// import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, View, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-// import { AuthProvider } from '@/hooks/auth-store';
-// import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { AuthProvider } from '@/hooks/auth-store';
 
 // Simple error boundary wrapper
 class RorkErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
@@ -68,18 +66,18 @@ SplashScreen.preventAutoHideAsync().catch(() => {
   // Handle error silently
 });
 
-// const queryClient = new QueryClient({
-//   defaultOptions: {
-//     queries: {
-//       retry: 1,
-//       refetchOnWindowFocus: false,
-//       staleTime: 1000 * 60 * 5, // 5 minutes
-//     },
-//     mutations: {
-//       retry: 1,
-//     },
-//   },
-// });
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
 
 export default function RootLayout() {
   useEffect(() => {
@@ -94,12 +92,26 @@ export default function RootLayout() {
     return () => clearTimeout(timer);
   }, []);
 
+  const [client] = useState(() => trpc.createClient({
+    links: [
+      trpc.httpBatchLink({
+        url: process.env.EXPO_PUBLIC_RORK_API_BASE_URL ? `${process.env.EXPO_PUBLIC_RORK_API_BASE_URL}/api/trpc` : '/api/trpc',
+      }),
+    ],
+  }));
+
   return (
     <RorkErrorBoundary>
       <SafeAreaProvider>
-        <View style={styles.container}>
-          <RootLayoutNav />
-        </View>
+        <trpc.Provider client={client} queryClient={queryClient}>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <View style={styles.container}>
+                <RootLayoutNav />
+              </View>
+            </AuthProvider>
+          </QueryClientProvider>
+        </trpc.Provider>
       </SafeAreaProvider>
     </RorkErrorBoundary>
   );

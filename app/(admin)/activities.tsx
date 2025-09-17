@@ -210,7 +210,7 @@ export default function AdminActivitiesScreen() {
               </TouchableOpacity>
             </View>
             <Text style={styles.desc}>{a.description}</Text>
-            {!!a.mediaUrl && (
+            {!!a.mediaUrl && a.mediaUrl.trim() && (
               <View style={styles.mediaPreview}>
                 {a.mediaType === 'image' ? (
                   <ExpoImage source={{ uri: a.mediaUrl }} style={styles.image} contentFit="cover" />
