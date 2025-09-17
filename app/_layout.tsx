@@ -1,29 +1,37 @@
 import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { trpc } from '@/lib/trpc';
 import { createTRPCClient, httpBatchLink } from '@trpc/client';
 import superjson from 'superjson';
-import type { AppRouter } from '@/backend/trpc/app-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { AuthProvider } from '@/hooks/auth-store';
 import { Colors } from '@/constants/colors';
+import { trpc } from '@/lib/trpc';
+import type { AppRouter } from '@/backend/trpc/app-router';
+import { AuthProvider } from '@/hooks/auth-store';
 
-// Simple error boundary wrapper
-class RorkErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
-  constructor(props: {children: React.ReactNode}) {
+// Prevent splash screen from auto-hiding
+SplashScreen.preventAutoHideAsync().catch(() => {
+  console.log('Failed to prevent splash screen auto-hide');
+});
+
+// Error boundary component
+class AppErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error?: Error }
+> {
+  constructor(props: { children: React.ReactNode }) {
     super(props);
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
-    console.log('Error caught by boundary:', error, errorInfo);
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('App Error Boundary caught an error:', error, errorInfo);
   }
 
   render() {
@@ -32,7 +40,14 @@ class RorkErrorBoundary extends React.Component<{children: React.ReactNode}, {ha
         <SafeAreaProvider>
           <View style={styles.errorContainer}>
             <Text style={styles.errorTitle}>Something went wrong</Text>
-            <Text style={styles.errorMessage}>Please restart the app</Text>
+            <Text style={styles.errorMessage}>
+              The app encountered an unexpected error. Please restart the app.
+            </Text>
+            {__DEV__ && this.state.error && (
+              <Text style={styles.errorDetails}>
+                {this.state.error.message}
+              </Text>
+            )}
           </View>
         </SafeAreaProvider>
       );
@@ -42,40 +57,97 @@ class RorkErrorBoundary extends React.Component<{children: React.ReactNode}, {ha
   }
 }
 
+// Main navigation stack
 function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="auth" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="(counselor)" options={{ headerShown: false }} />
-      <Stack.Screen name="(admin)" options={{ headerShown: false }} />
-      <Stack.Screen name="(volunteer)" options={{ headerShown: false }} />
-      <Stack.Screen name="booking" options={{ headerShown: true, title: 'Book Appointment' }} />
-      <Stack.Screen name="assessment" options={{ headerShown: true, title: 'Assessment' }} />
-      <Stack.Screen name="assessment-result" options={{ headerShown: true, title: 'Assessment Result' }} />
-      <Stack.Screen name="weekly-report" options={{ headerShown: true, title: 'Weekly Report' }} />
-      <Stack.Screen name="resource-detail" options={{ headerShown: true, title: 'Resource Details' }} />
-      <Stack.Screen name="counselor-application" options={{ headerShown: false }} />
-      <Stack.Screen name="counselor-applications-admin" options={{ headerShown: false }} />
-      <Stack.Screen name="enter-counselor" options={{ headerShown: false }} />
-      <Stack.Screen name="ai-chat" options={{ headerShown: true, title: 'AI Mental Health Support' }} />
-      <Stack.Screen name="test" options={{ headerShown: true, title: 'Test Screen' }} />
+      <Stack.Screen name="index" />
+      <Stack.Screen name="terms" />
+      <Stack.Screen name="auth" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(counselor)" />
+      <Stack.Screen name="(admin)" />
+      <Stack.Screen name="(volunteer)" />
+      <Stack.Screen 
+        name="booking" 
+        options={{ 
+          headerShown: true, 
+          title: 'Book Appointment',
+          presentation: 'modal'
+        }} 
+      />
+      <Stack.Screen 
+        name="assessment" 
+        options={{ 
+          headerShown: true, 
+          title: 'Mental Health Assessment'
+        }} 
+      />
+      <Stack.Screen 
+        name="assessment-result" 
+        options={{ 
+          headerShown: true, 
+          title: 'Assessment Results'
+        }} 
+      />
+      <Stack.Screen 
+        name="weekly-report" 
+        options={{ 
+          headerShown: true, 
+          title: 'Weekly Report'
+        }} 
+      />
+      <Stack.Screen 
+        name="resource-detail" 
+        options={{ 
+          headerShown: true, 
+          title: 'Resource Details'
+        }} 
+      />
+      <Stack.Screen 
+        name="counselor-application" 
+        options={{ 
+          headerShown: true,
+          title: 'Counselor Application'
+        }} 
+      />
+      <Stack.Screen 
+        name="counselor-applications-admin" 
+        options={{ 
+          headerShown: true,
+          title: 'Counselor Applications'
+        }} 
+      />
+      <Stack.Screen name="enter-counselor" />
+      <Stack.Screen 
+        name="ai-chat" 
+        options={{ 
+          headerShown: true, 
+          title: 'AI Mental Health Support'
+        }} 
+      />
+      <Stack.Screen 
+        name="test" 
+        options={{ 
+          headerShown: true, 
+          title: 'Test Screen'
+        }} 
+      />
     </Stack>
   );
 }
 
-// Prevent splash screen from auto-hiding
-SplashScreen.preventAutoHideAsync().catch(() => {
-  // Handle error silently
-});
-
+// Create query client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
+      retry: (failureCount, error) => {
+        if (failureCount < 2) return true;
+        return false;
+      },
       refetchOnWindowFocus: false,
       staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes
     },
     mutations: {
       retry: 1,
@@ -83,32 +155,70 @@ const queryClient = new QueryClient({
   },
 });
 
+// Get API URL based on platform
+function getApiUrl() {
+  if (Platform.OS === 'web') {
+    return '/api/trpc';
+  }
+  
+  const baseUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
+  if (baseUrl) {
+    return `${baseUrl}/api/trpc`;
+  }
+  
+  // Fallback for development
+  return 'http://localhost:3000/api/trpc';
+}
+
 export default function RootLayout() {
+  const [isReady, setIsReady] = useState(false);
+
+  // Create tRPC client
+  const [trpcClient] = useState(() =>
+    createTRPCClient<AppRouter>({
+      links: [
+        httpBatchLink({
+          url: getApiUrl(),
+          transformer: superjson,
+          headers: () => {
+            return {
+              'Content-Type': 'application/json',
+            };
+          },
+        }),
+      ],
+    })
+  );
+
   useEffect(() => {
-    console.log('[RootLayout] App initialized');
-    // Hide splash screen after a short delay
-    const timer = setTimeout(() => {
-      SplashScreen.hideAsync().catch(() => {
-        // Handle error silently
-      });
-    }, 500);
-    
-    return () => clearTimeout(timer);
+    async function prepare() {
+      try {
+        console.log('[RootLayout] Initializing app...');
+        
+        // Add any initialization logic here
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        console.log('[RootLayout] App initialized successfully');
+      } catch (error) {
+        console.error('[RootLayout] Error during initialization:', error);
+      } finally {
+        setIsReady(true);
+        // Hide splash screen
+        await SplashScreen.hideAsync();
+      }
+    }
+
+    prepare();
   }, []);
 
-  const [client] = useState(() => createTRPCClient<AppRouter>({
-    links: [
-      httpBatchLink({
-        url: process.env.EXPO_PUBLIC_RORK_API_BASE_URL ? `${process.env.EXPO_PUBLIC_RORK_API_BASE_URL}/api/trpc` : '/api/trpc',
-        transformer: superjson,
-      }),
-    ],
-  }));
+  if (!isReady) {
+    return null; // Keep splash screen visible
+  }
 
   return (
-    <RorkErrorBoundary>
+    <AppErrorBoundary>
       <SafeAreaProvider>
-        <trpc.Provider client={client} queryClient={queryClient}>
+        <trpc.Provider client={trpcClient} queryClient={queryClient}>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
               <View style={styles.container}>
@@ -118,13 +228,14 @@ export default function RootLayout() {
           </QueryClientProvider>
         </trpc.Provider>
       </SafeAreaProvider>
-    </RorkErrorBoundary>
+    </AppErrorBoundary>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.background,
   },
   errorContainer: {
     flex: 1,
@@ -134,14 +245,26 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   errorTitle: {
-    fontSize: 18,
-    marginBottom: 10,
+    fontSize: 20,
+    fontWeight: '700' as const,
     color: Colors.text.primary,
-    fontWeight: '600' as const,
+    marginBottom: 12,
+    textAlign: 'center' as const,
   },
   errorMessage: {
-    fontSize: 14,
+    fontSize: 16,
     color: Colors.text.secondary,
     textAlign: 'center' as const,
+    lineHeight: 24,
+    marginBottom: 20,
+  },
+  errorDetails: {
+    fontSize: 12,
+    color: Colors.error,
+    textAlign: 'center' as const,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    backgroundColor: Colors.surfaceLight,
+    padding: 10,
+    borderRadius: 8,
   },
 });

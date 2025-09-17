@@ -10,12 +10,12 @@ import {
   Modal 
 } from 'react-native';
 import { Heart, Shield, UserCog, GraduationCap, Handshake } from 'lucide-react-native';
-import { Colors } from '../constants/colors';
-import { useAuth } from '../hooks/auth-store';
+import { Colors } from '@/constants/colors';
+import { useAuth } from '@/hooks/auth-store';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { UserRole } from '../types/user';
-import { trpc, trpcClient } from '../lib/trpc';
+import type { UserRole } from '@/types/user';
+import { trpc, trpcClient } from '@/lib/trpc';
 
 type AuthForm = {
   username: string;

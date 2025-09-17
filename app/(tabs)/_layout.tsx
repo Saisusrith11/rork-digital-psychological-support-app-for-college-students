@@ -18,6 +18,10 @@ export default function TabsLayout() {
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '500' as const,
+          marginTop: 4,
+        },
+        tabBarIconStyle: {
+          marginTop: 4,
         },
       }}
     >
@@ -25,42 +29,54 @@ export default function TabsLayout() {
         name="home"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Home size={size || 24} color={color} strokeWidth={2} />
+          ),
         }}
       />
       <Tabs.Screen
         name="wellness"
         options={{
           title: 'Wellness',
-          tabBarIcon: ({ color, size }) => <Heart size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Heart size={size || 24} color={color} strokeWidth={2} />
+          ),
         }}
       />
       <Tabs.Screen
         name="chat"
         options={{
           title: 'Chat',
-          tabBarIcon: ({ color, size }) => <MessageCircle size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <MessageCircle size={size || 24} color={color} strokeWidth={2} />
+          ),
         }}
       />
       <Tabs.Screen
         name="community"
         options={{
           title: 'Community',
-          tabBarIcon: ({ color, size }) => <Users size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Users size={size || 24} color={color} strokeWidth={2} />
+          ),
         }}
       />
       <Tabs.Screen
         name="resources"
         options={{
           title: 'Resources',
-          tabBarIcon: ({ color, size }) => <BookOpen size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <BookOpen size={size || 24} color={color} strokeWidth={2} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <User size={size || 24} color={color} strokeWidth={2} />
+          ),
         }}
       />
     </Tabs>

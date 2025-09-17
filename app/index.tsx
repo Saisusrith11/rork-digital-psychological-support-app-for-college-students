@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
@@ -13,40 +13,66 @@ export default function IndexScreen() {
   useEffect(() => {
     if (!isLoading) {
       const timer = setTimeout(() => {
-        if (user) {
-          console.log('[IndexScreen] User found, redirecting based on role');
-          if (user.role === 'counselor') {
-            router.replace('/(counselor)/dashboard');
-          } else if (user.role === 'admin') {
-            router.replace('/(admin)/dashboard');
-          } else if (user.role === 'volunteer') {
-            router.replace('/(volunteer)/dashboard');
+        try {
+          if (user) {
+            console.log('[IndexScreen] User authenticated, redirecting based on role:', user.role);
+            
+            switch (user.role) {
+              case 'counselor':
+                router.replace('/(counselor)/dashboard');
+                break;
+              case 'admin':
+                router.replace('/(admin)/dashboard');
+                break;
+              case 'volunteer':
+                router.replace('/(volunteer)/dashboard');
+                break;
+              default:
+                router.replace('/(tabs)/home');
+                break;
+            }
           } else {
-            router.replace('/(tabs)/home');
+            console.log('[IndexScreen] No user found, redirecting to terms');
+            router.replace('/terms');
           }
-        } else {
-          console.log('[IndexScreen] No user found, redirecting to auth');
+        } catch (error) {
+          console.error('[IndexScreen] Navigation error:', error);
           router.replace('/auth');
         }
-      }, 1000);
+      }, 1500);
       
       return () => clearTimeout(timer);
     }
   }, [router, user, isLoading]);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View style={[
+      styles.container, 
+      { 
+        paddingTop: Platform.OS === 'ios' ? insets.top : 0,
+        paddingBottom: Platform.OS === 'ios' ? insets.bottom : 0
+      }
+    ]}>
       <View style={styles.content}>
-        <Text style={styles.title}>Digital Psychological Support</Text>
-        <Text style={styles.subtitle}>For College Students</Text>
-        <ActivityIndicator 
-          size="large" 
-          color={Colors.text.white} 
-          style={styles.loader}
-        />
-        <Text style={styles.loadingText}>
-          {isLoading ? 'Loading...' : 'Initializing...'}
-        </Text>
+        <View style={styles.logoContainer}>
+          <Text style={styles.title}>Digital Psychological Support</Text>
+          <Text style={styles.subtitle}>For College Students</Text>
+        </View>
+        
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator 
+            size="large" 
+            color={Colors.text.white} 
+            style={styles.loader}
+          />
+          <Text style={styles.loadingText}>
+            {isLoading ? 'Authenticating...' : 'Initializing...'}
+          </Text>
+        </View>
+        
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Mental Health Support Platform</Text>
+        </View>
       </View>
     </View>
   );
@@ -59,31 +85,51 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 40,
+  },
+  logoContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
   },
   title: {
     color: Colors.text.white,
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '700' as const,
     textAlign: 'center' as const,
-    marginBottom: 8,
+    marginBottom: 12,
+    lineHeight: 40,
   },
   subtitle: {
     color: Colors.text.white,
     fontSize: 18,
     fontWeight: '400' as const,
     opacity: 0.9,
+    textAlign: 'center' as const,
+  },
+  loadingContainer: {
+    alignItems: 'center',
     marginBottom: 40,
   },
   loader: {
-    marginVertical: 20,
+    marginBottom: 16,
   },
   loadingText: {
     color: Colors.text.white,
+    fontSize: 16,
+    fontWeight: '500' as const,
+    opacity: 0.8,
+  },
+  footer: {
+    alignItems: 'center',
+  },
+  footerText: {
+    color: Colors.text.white,
     fontSize: 14,
     fontWeight: '400' as const,
-    opacity: 0.7,
+    opacity: 0.6,
   },
 });

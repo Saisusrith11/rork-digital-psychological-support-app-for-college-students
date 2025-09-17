@@ -1,117 +1,101 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React from 'react';
 import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Bell } from 'lucide-react-native';
+import { Heart, MessageCircle, BookOpen, Activity } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
-import { useMood } from '@/hooks/mood-store';
-import { useLanguage } from '@/hooks/language-store';
 import { useRouter } from 'expo-router';
-import MoodSelector from '@/components/MoodSelector';
-import CrisisSupport from '@/components/CrisisSupport';
-import QuickActions from '@/components/QuickActions';
-import ResourceCard from '@/components/ResourceCard';
-import AssessmentCard from '@/components/AssessmentCard';
-import { getRandomQuote, Quote } from '@/constants/quotes';
 
 export default function HomeScreen() {
   const { user } = useAuth();
-  const { todaysMood, addMoodEntry, setUserId } = useMood();
-  const { t } = useLanguage();
-  const [dailyQuote, setDailyQuote] = useState<Quote | null>(null);
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  useEffect(() => {
-    setDailyQuote(getRandomQuote());
-  }, []);
-
-  useEffect(() => {
-    if (user?.id) {
-      setUserId(user.id);
-    } else {
-      setUserId(null);
-    }
-  }, [user?.id, setUserId]);
-
-  const handleMoodSelect = useCallback((mood: 'great' | 'good' | 'okay' | 'low' | 'hard') => {
-    if (!mood || typeof mood !== 'string') return;
-    const validMoods = ['great', 'good', 'okay', 'low', 'hard'];
-    if (!validMoods.includes(mood)) return;
-    addMoodEntry(mood);
-  }, [addMoodEntry]);
-
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return t('home.greeting.morning');
-    if (hour < 17) return t('home.greeting.afternoon');
-    return t('home.greeting.evening');
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
   };
 
+  const quickActions = [
+    {
+      title: 'AI Chat Support',
+      subtitle: 'Talk to our AI assistant',
+      icon: MessageCircle,
+      color: Colors.primary,
+      onPress: () => router.push('/ai-chat'),
+    },
+    {
+      title: 'Mental Health Assessment',
+      subtitle: 'Check your wellbeing',
+      icon: Activity,
+      color: '#10B981',
+      onPress: () => router.push('/assessment'),
+    },
+    {
+      title: 'Resources',
+      subtitle: 'Helpful articles and guides',
+      icon: BookOpen,
+      color: '#8B5CF6',
+      onPress: () => router.push('/(tabs)/resources'),
+    },
+    {
+      title: 'Book Appointment',
+      subtitle: 'Schedule with a counselor',
+      icon: Heart,
+      color: '#EF4444',
+      onPress: () => router.push('/booking'),
+    },
+  ];
+
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>{getGreeting()},</Text>
-            <Text style={styles.userName}>{user?.fullName || 'Student'}</Text>
-          </View>
-          <View style={styles.notificationContainer}>
-            <Bell size={24} color={Colors.text.secondary} />
-            <View style={styles.notificationBadge}>
-              <Text style={styles.notificationText}>2</Text>
-            </View>
-          </View>
+    <ScrollView 
+      style={styles.container}
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }
+      ]}
+    >
+      <View style={styles.header}>
+        <Text style={styles.greeting}>{getGreeting()}</Text>
+        <Text style={styles.userName}>
+          {user?.fullName || user?.username || 'Student'}
+        </Text>
+        <Text style={styles.subtitle}>
+          How are you feeling today?
+        </Text>
+      </View>
+
+      <View style={styles.quickActionsContainer}>
+        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <View style={styles.actionsGrid}>
+          {quickActions.map((action, index) => {
+            const IconComponent = action.icon;
+            return (
+              <TouchableOpacity
+                key={`action-${action.title}`}
+                style={styles.actionCard}
+                onPress={action.onPress}
+              >
+                <View style={[styles.actionIcon, { backgroundColor: action.color + '20' }]}>
+                  <IconComponent size={24} color={action.color} />
+                </View>
+                <Text style={styles.actionTitle}>{action.title}</Text>
+                <Text style={styles.actionSubtitle}>{action.subtitle}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
+      </View>
 
-        <MoodSelector 
-          selectedMood={todaysMood?.mood}
-          onMoodSelect={handleMoodSelect}
-        />
-
-        <AssessmentCard />
-
-        <CrisisSupport />
-
-        <QuickActions />
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('home.inspiration.title')}</Text>
-          </View>
-          
-          <View style={styles.quoteCard}>
-            <Text style={styles.quoteText}>
-              &ldquo;{dailyQuote?.text || 'Peace comes from within. Do not seek it without.'}&rdquo;
-            </Text>
-            <Text style={styles.quoteAuthor}>- {dailyQuote?.author || 'Buddha'}</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('home.articles.title')}</Text>
-            <TouchableOpacity onPress={() => router.push('/resources')}>
-              <Text style={styles.viewAll}>{t('common.viewAll')}</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <ResourceCard
-            title="Stress Management Techniques"
-            description="Learn practical ways to manage academic stress"
-            duration="5 min read"
-            onPress={() => router.push('/resource-detail?id=1')}
-          />
-          
-          <ResourceCard
-            title="Better Sleep for Students"
-            description="Improve your sleep quality with evidence-based tips"
-            duration="7 min read"
-            onPress={() => router.push('/resource-detail?id=2')}
-          />
-        </View>
-      </ScrollView>
-    </View>
+      <View style={styles.welcomeCard}>
+        <Text style={styles.welcomeTitle}>Welcome to MindCare</Text>
+        <Text style={styles.welcomeText}>
+          Your digital mental health companion. We&apos;re here to support you on your wellness journey.
+        </Text>
+      </View>
+    </ScrollView>
   );
 }
 
@@ -120,86 +104,91 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  content: {
+    paddingHorizontal: 20,
+  },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 20,
+    marginBottom: 32,
   },
   greeting: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '600' as const,
     color: Colors.text.primary,
+    marginBottom: 4,
   },
   userName: {
+    fontSize: 32,
+    fontWeight: '700' as const,
+    color: Colors.primary,
+    marginBottom: 8,
+  },
+  subtitle: {
     fontSize: 16,
     color: Colors.text.secondary,
-    marginTop: 4,
   },
-  notificationContainer: {
-    position: 'relative',
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    backgroundColor: Colors.error,
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  notificationText: {
-    color: Colors.text.white,
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  section: {
-    marginTop: 24,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 12,
+  quickActionsContainer: {
+    marginBottom: 32,
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     color: Colors.text.primary,
+    marginBottom: 16,
   },
-  viewAll: {
-    fontSize: 14,
-    color: Colors.primary,
-    fontWeight: '500',
+  actionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
-  quoteCard: {
+  actionCard: {
+    width: '48%',
     backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 20,
-    marginHorizontal: 16,
-    marginBottom: 8,
+    marginBottom: 16,
+    alignItems: 'center',
     shadowColor: Colors.shadow.light,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 4,
   },
-  quoteText: {
-    fontSize: 16,
-    fontStyle: 'italic',
+  actionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  actionTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
     color: Colors.text.primary,
-    lineHeight: 24,
-    marginBottom: 8,
-    textAlign: 'center',
+    textAlign: 'center' as const,
+    marginBottom: 4,
   },
-  quoteAuthor: {
+  actionSubtitle: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    textAlign: 'center' as const,
+  },
+  welcomeCard: {
+    backgroundColor: Colors.primary + '10',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: Colors.primary + '20',
+  },
+  welcomeTitle: {
+    fontSize: 18,
+    fontWeight: '600' as const,
+    color: Colors.primary,
+    marginBottom: 8,
+  },
+  welcomeText: {
     fontSize: 14,
     color: Colors.text.secondary,
-    textAlign: 'center',
-    fontWeight: '500',
+    lineHeight: 20,
   },
 });
