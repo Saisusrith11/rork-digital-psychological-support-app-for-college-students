@@ -5,7 +5,7 @@ import { Colors } from '@/constants/colors';
 import { useAuth } from '@/hooks/auth-store';
 import { useMood } from '@/hooks/mood-store';
 import { useLanguage } from '@/hooks/language-store';
-import { router } from 'expo-router';
+import { useRouter } from '../../utils/navigation';
 import { TouchableOpacity } from 'react-native';
 import MoodSelector from '@/components/MoodSelector';
 import CrisisSupport from '@/components/CrisisSupport';
@@ -19,6 +19,7 @@ export default function HomeScreen() {
   const { todaysMood, addMoodEntry, setUserId } = useMood();
   const { t } = useLanguage();
   const [dailyQuote, setDailyQuote] = useState<Quote | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     setDailyQuote(getRandomQuote());
@@ -89,7 +90,7 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{t('home.articles.title')}</Text>
-            <TouchableOpacity onPress={() => router.push('/resources')}>
+            <TouchableOpacity onPress={() => router.navigate('Student')}>
               <Text style={styles.viewAll}>{t('common.viewAll')}</Text>
             </TouchableOpacity>
           </View>
@@ -98,14 +99,14 @@ export default function HomeScreen() {
             title="Stress Management Techniques"
             description="Learn practical ways to manage academic stress"
             duration="5 min read"
-            onPress={() => router.push('/resource-detail?id=1')}
+            onPress={() => router.navigate('ResourceDetail', { resourceId: '1' })}
           />
           
           <ResourceCard
             title="Better Sleep for Students"
             description="Improve your sleep quality with evidence-based tips"
             duration="7 min read"
-            onPress={() => router.push('/resource-detail?id=2')}
+            onPress={() => router.navigate('ResourceDetail', { resourceId: '2' })}
           />
         </View>
       </ScrollView>
