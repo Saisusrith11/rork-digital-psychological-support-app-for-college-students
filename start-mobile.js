@@ -8,7 +8,7 @@
  * Usage: node start-mobile.js
  */
 
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -52,36 +52,59 @@ webCachePaths.forEach(cachePath => {
   }
 });
 
-// Start expo with mobile-only flags
-const args = ['rork', 'start', '-p', '5x33ga8jdiyfyd44xmhzq', '--tunnel'];
-
-// Add platform if specified
-if (process.argv.includes('--android')) {
-  args.push('--android');
-} else if (process.argv.includes('--ios')) {
-  args.push('--ios');
+// Utility to check if a command exists
+function commandExists(cmd) {
+  try {
+    const result = spawnSync('sh', ['-lc', `command -v ${cmd}`], { stdio: 'ignore' });
+    return result.status === 0;
+  } catch (_) {
+    return false;
+  }
 }
 
-console.log('\n📱 Starting Expo in mobile-only mode...');
-console.log(`Command: bunx ${args.join(' ')}\n`);
+// Decide which launcher to use
+const hasBunx = commandExists('bunx');
+const useRork = hasBunx && !process.argv.includes('--no-rork');
 
-const expo = spawn('bunx', args, {
+let command;
+let args = [];
+
+if (useRork) {
+  // Prefer Rork if available
+  command = 'bunx';
+  args = ['rork', 'start', '-p', '5x33ga8jdiyfyd44xmhzq', '--tunnel', '--no-interactive'];
+  if (process.argv.includes('--android')) args.push('--android');
+  if (process.argv.includes('--ios')) args.push('--ios');
+  console.log('\n📱 Starting with Rork (bunx)...');
+  console.log(`Command: ${command} ${args.join(' ')}\n`);
+} else {
+  // Fallback to Expo CLI via npx
+  command = 'npx';
+  args = ['--yes', 'expo', 'start', '--tunnel', '--no-interactive'];
+  if (process.argv.includes('--android')) args.push('--android');
+  if (process.argv.includes('--ios')) args.push('--ios');
+  console.log('\n📱 Starting with Expo CLI (npx)...');
+  console.log(`Command: ${command} ${args.join(' ')}\n`);
+}
+
+const child = spawn(command, args, {
   stdio: 'inherit',
   env: {
     ...process.env,
     EXPO_PLATFORM: 'mobile',
     DISABLE_WEB: 'true',
+    EXPO_NO_INTERACTIVE: '1',
   },
 });
 
-expo.on('error', (error) => {
-  console.error('❌ Failed to start Expo:', error);
+child.on('error', (error) => {
+  console.error('❌ Failed to start development server:', error);
   process.exit(1);
 });
 
-expo.on('exit', (code) => {
+child.on('exit', (code) => {
   if (code !== 0) {
-    console.error(`❌ Expo exited with code ${code}`);
+    console.error(`❌ Development server exited with code ${code}`);
   }
   process.exit(code);
 });

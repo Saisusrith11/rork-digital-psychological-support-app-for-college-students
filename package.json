@@ -1,16 +1,13 @@
 {
   "name": "expo-app",
-  "main": "expo-router/entry",
+  "main": "App.tsx",
   "version": "1.0.0",
   "scripts": {
-    "start": "bunx rork start -p 5x33ga8jdiyfyd44xmhzq --tunnel",
-    "start-web": "bunx rork start -p 5x33ga8jdiyfyd44xmhzq --web --tunnel",
-    "start-web-dev": "DEBUG=expo* bunx rork start -p 5x33ga8jdiyfyd44xmhzq --web --tunnel",
+    "start": "node start-mobile.js",
     "lint": "expo lint"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
-    "@expo/webpack-config": "^19.0.1",
     "@hono/trpc-server": "^0.4.0",
     "@nkzw/create-context-hook": "^1.1.0",
     "@react-native-async-storage/async-storage": "2.1.2",
