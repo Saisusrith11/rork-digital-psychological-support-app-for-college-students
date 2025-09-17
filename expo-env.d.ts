@@ -1,9 +1,3 @@
 /// <reference types="expo/types" />
 
-// Expo Router types
-declare module '*.png';
-declare module '*.jpg';
-declare module '*.jpeg';
-declare module '*.svg';
-
-export {};
+// NOTE: This file should not be edited and should be in your git ignore
