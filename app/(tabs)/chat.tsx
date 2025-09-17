@@ -91,10 +91,10 @@ export default function ChatScreen() {
         }
         break;
       case 'booking':
-        router.navigate('Booking');
+        router.push('/booking');
         break;
       case 'resources':
-        router.navigate('Student');
+        router.push('/(tabs)/resources');
         break;
       case 'coping':
         const strategies = aiService.current.getCopingStrategies(value);
@@ -103,7 +103,7 @@ export default function ChatScreen() {
         }
         break;
       case 'community':
-        router.navigate('Student');
+        router.push('/(tabs)/community');
         break;
       default:
         console.log('Unknown action:', action);
@@ -191,7 +191,7 @@ export default function ChatScreen() {
         actions: [
           { label: 'Try Again', action: () => sendMessage(messageText) },
           { label: 'Call Crisis Line', action: () => console.log('Calling 988') },
-          { label: 'Campus Resources', action: () => router.navigate('Student') }
+          { label: 'Campus Resources', action: () => router.push('/(tabs)/resources') }
         ]
       };
       setMessages(prev => [...prev, errorMessage]);
