@@ -10,14 +10,12 @@ import {
   Modal 
 } from 'react-native';
 import { Heart, Shield, UserCog, GraduationCap, Handshake } from 'lucide-react-native';
-import { Colors } from '@/constants/colors';
-import { useAuth } from '@/hooks/auth-store';
+import { Colors } from '../constants/colors';
+import { useAuth } from '../hooks/auth-store';
 import { useNavigation } from '@react-navigation/native';
-import type { NavigationProp } from '@react-navigation/native';
-import type { RootStackParamList } from '@/utils/navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { UserRole } from '@/types/user';
-import { trpc, trpcClient } from '@/lib/trpc';
+import type { UserRole } from '../types/user';
+import { trpc, trpcClient } from '../lib/trpc';
 
 type AuthForm = {
   username: string;
@@ -99,7 +97,7 @@ function CollegeTypeahead({ value, onChange, email }: { value: string; onChange:
 
 export default function AuthScreen() {
   const { login, register, loginAnonymous } = useAuth();
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const [isLogin, setIsLogin] = useState<boolean>(true);
   const [showErrorModal, setShowErrorModal] = useState<boolean>(false);
