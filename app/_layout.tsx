@@ -10,6 +10,14 @@ import { Colors } from '@/constants/colors';
 import { trpc } from '@/lib/trpc';
 import type { AppRouter } from '@/backend/trpc/app-router';
 import { AuthProvider } from '@/hooks/auth-store';
+import { NotificationProvider } from '@/hooks/notification-store';
+import { LanguageProvider } from '@/hooks/language-store';
+import { ThemeProvider } from '@/hooks/theme-store';
+import { MoodProvider } from '@/hooks/mood-store';
+import { WellnessProvider } from '@/hooks/wellness-store';
+import { AssessmentProvider } from '@/hooks/assessment-store';
+import { FeedbackProvider } from '@/hooks/feedback-store';
+import { OfflineProvider } from '@/hooks/offline-store';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -221,9 +229,25 @@ export default function RootLayout() {
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
-              <View style={styles.container}>
-                <RootLayoutNav />
-              </View>
+              <LanguageProvider>
+                <ThemeProvider>
+                  <OfflineProvider>
+                    <AssessmentProvider>
+                      <MoodProvider>
+                        <WellnessProvider>
+                          <FeedbackProvider>
+                            <NotificationProvider>
+                              <View style={styles.container}>
+                                <RootLayoutNav />
+                              </View>
+                            </NotificationProvider>
+                          </FeedbackProvider>
+                        </WellnessProvider>
+                      </MoodProvider>
+                    </AssessmentProvider>
+                  </OfflineProvider>
+                </ThemeProvider>
+              </LanguageProvider>
             </AuthProvider>
           </QueryClientProvider>
         </trpc.Provider>

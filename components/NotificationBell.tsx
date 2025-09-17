@@ -11,7 +11,7 @@ interface NotificationBellProps {
   onOpenCenter?: () => void;
 }
 
-export const NotificationBell: React.FC<NotificationBellProps> = React.memo(({ onOpenCenter }) => {
+const NotificationBellComponent: React.FC<NotificationBellProps> = ({ onOpenCenter }) => {
   const { unreadCount, addNotification } = useNotifications();
   const { user } = useAuth();
   const { isRTL } = useLanguage();
@@ -25,14 +25,17 @@ export const NotificationBell: React.FC<NotificationBellProps> = React.memo(({ o
     ]).start();
   }, [pulseAnim]);
 
-  trpc.chat.getActiveConversations.useQuery(undefined, {
+  const conversationsQuery = trpc.chat.getActiveConversations.useQuery(undefined, {
     enabled: !!user,
     refetchInterval: 5000,
     refetchOnMount: true,
     refetchOnReconnect: true,
-    onSuccess: (data) => {
+  });
+
+  useEffect(() => {
+    if (conversationsQuery.data && !conversationsQuery.isError) {
       try {
-        const list = data?.conversations ?? [];
+        const list = conversationsQuery.data?.conversations ?? [];
         list.forEach((conv) => {
           const last = conv.lastMessage;
           if (last && last.recipientId === (user?.id ?? '') && !last.isRead) {
@@ -49,13 +52,14 @@ export const NotificationBell: React.FC<NotificationBellProps> = React.memo(({ o
           }
         });
       } catch (e) {
-        console.log('[NotificationBell] poll onSuccess error', e);
+        console.log('[NotificationBell] poll data processing error', e);
       }
-    },
-    onError: (err) => {
-      console.log('[NotificationBell] poll error', err);
-    },
-  });
+    }
+    
+    if (conversationsQuery.isError) {
+      console.log('[NotificationBell] poll error', conversationsQuery.error);
+    }
+  }, [conversationsQuery.data, conversationsQuery.isError, conversationsQuery.error, user?.id, startPulse, addNotification]);
 
   useEffect(() => {
     if (unreadCount === 0) {
@@ -82,7 +86,11 @@ export const NotificationBell: React.FC<NotificationBellProps> = React.memo(({ o
       </TouchableOpacity>
     </Animated.View>
   );
-});
+};
+
+NotificationBellComponent.displayName = 'NotificationBell';
+
+export const NotificationBell = React.memo(NotificationBellComponent);
 
 const styles = StyleSheet.create({
   container: {
