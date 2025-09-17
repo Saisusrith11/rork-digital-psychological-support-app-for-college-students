@@ -1,52 +1,29 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Colors } from '@/constants/colors';
-import { useAuth } from '@/hooks/auth-store';
+// import { Colors } from '@/constants/colors';
+// import { useAuth } from '@/hooks/auth-store';
+
+// Temporary fallback colors
+const Colors = {
+  primary: '#007AFF',
+  white: '#FFFFFF',
+  background: '#F5F5F5',
+};
 
 export default function IndexScreen() {
   const router = useRouter();
-  const authContext = useAuth();
+  // const authContext = useAuth();
   
-  const user = authContext?.user || null;
-  const isAuthenticated = authContext?.isAuthenticated || false;
-  const isLoading = authContext?.isLoading ?? true;
-
+  // Temporary simplified logic
   useEffect(() => {
-    if (!authContext) {
-      console.log('[IndexScreen] Auth context not ready');
-      return;
-    }
-    
-    if (isLoading) {
-      console.log('[IndexScreen] Loading auth state...');
-      return;
-    }
-
     const timer = setTimeout(() => {
-      if (isAuthenticated && user) {
-        console.log('[IndexScreen] User authenticated, role:', user.role);
-        switch (user.role) {
-          case 'counselor':
-            router.replace('/(counselor)/dashboard');
-            break;
-          case 'admin':
-            router.replace('/(admin)/dashboard');
-            break;
-          case 'volunteer':
-            router.replace('/(volunteer)/dashboard');
-            break;
-          default:
-            router.replace('/(tabs)/home');
-        }
-      } else {
-        console.log('[IndexScreen] Redirecting to auth');
-        router.replace('/auth');
-      }
-    }, 100);
+      console.log('[IndexScreen] Redirecting to auth');
+      router.replace('/auth');
+    }, 1000);
     
     return () => clearTimeout(timer);
-  }, [router, isLoading, isAuthenticated, user, authContext]);
+  }, [router]);
 
   return (
     <View style={styles.container}>
@@ -59,7 +36,7 @@ export default function IndexScreen() {
           style={styles.loader}
         />
         <Text style={styles.loadingText}>
-          {isLoading ? 'Initializing...' : 'Redirecting...'}
+          Initializing...
         </Text>
       </View>
     </View>
@@ -69,7 +46,7 @@ export default function IndexScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primary,
+    backgroundColor: '#007AFF',
   },
   content: {
     flex: 1,
