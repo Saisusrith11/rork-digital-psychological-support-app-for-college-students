@@ -2,14 +2,16 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MessageCircle, Calendar, Bot } from 'lucide-react-native';
 import { Colors } from '@/constants/colors';
-import { router } from 'expo-router';
+import { useRouter } from '@/utils/navigation';
 
 export default function QuickActions() {
+  const router = useRouter();
+  
   return (
     <View style={styles.container}>
       <TouchableOpacity 
         style={[styles.actionCard, styles.aiSupportCard]}
-        onPress={() => router.push('/ai-chat')}
+        onPress={() => router.navigate('AiChat')}
         testID="ai-support-button"
       >
         <Bot size={32} color={Colors.text.white} />
@@ -21,7 +23,7 @@ export default function QuickActions() {
 
       <TouchableOpacity 
         style={[styles.actionCard, styles.chatCard]}
-        onPress={() => router.push('/(tabs)/chat')}
+        onPress={() => router.navigate('Student')}
         testID="chat-button"
       >
         <MessageCircle size={32} color={Colors.text.white} />
@@ -33,7 +35,7 @@ export default function QuickActions() {
 
       <TouchableOpacity 
         style={[styles.actionCard, styles.bookingCard]}
-        onPress={() => router.push('/booking')}
+        onPress={() => router.navigate('Booking')}
         testID="book-session-button"
       >
         <Calendar size={32} color={Colors.primary} />
