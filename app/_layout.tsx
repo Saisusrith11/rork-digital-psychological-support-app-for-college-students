@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { trpc } from '@/lib/trpc';
+import { createTRPCClient, httpBatchLink } from '@trpc/client';
+import superjson from 'superjson';
+import type { AppRouter } from '@/backend/trpc/app-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StyleSheet, View, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -92,10 +95,11 @@ export default function RootLayout() {
     return () => clearTimeout(timer);
   }, []);
 
-  const [client] = useState(() => trpc.createClient({
+  const [client] = useState(() => createTRPCClient<AppRouter>({
     links: [
-      trpc.httpBatchLink({
+      httpBatchLink({
         url: process.env.EXPO_PUBLIC_RORK_API_BASE_URL ? `${process.env.EXPO_PUBLIC_RORK_API_BASE_URL}/api/trpc` : '/api/trpc',
+        transformer: superjson,
       }),
     ],
   }));
