@@ -1,82 +1,21 @@
-import { Tabs } from 'expo-router';
 import React from 'react';
-import { 
-  Users, 
-  Calendar, 
-  MessageSquare, 
-  BarChart3,
-  User,
-  Upload
-} from 'lucide-react-native';
-import { Colors } from '@/constants/colors';
+import { Stack } from 'expo-router';
 
-export default function CounselorTabLayout() {
+export default function CounselorLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.text.secondary,
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: Colors.surface,
-          borderTopColor: Colors.surfaceLight,
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="dashboard"
-        options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => (
-            <BarChart3 size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="appointments"
-        options={{
-          title: 'Appointments',
-          tabBarIcon: ({ color, size }) => (
-            <Calendar size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="students"
-        options={{
-          title: 'Students',
-          tabBarIcon: ({ color, size }) => (
-            <Users size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="chat"
-        options={{
-          title: 'Messages',
-          tabBarIcon: ({ color, size }) => (
-            <MessageSquare size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="activities"
-        options={{
-          title: 'Upload Activity',
-          tabBarIcon: ({ color, size }) => (
-            <Upload size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <User size={size} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="dashboard" />
+      <Stack.Screen name="appointments" />
+      <Stack.Screen name="students" />
+      <Stack.Screen name="chat" />
+      <Stack.Screen name="activities" />
+      <Stack.Screen name="profile" />
+      <Stack.Screen name="settings/availability" />
+      <Stack.Screen name="settings/notifications" />
+      <Stack.Screen name="settings/language" />
+      <Stack.Screen name="settings/privacy" />
+      <Stack.Screen name="settings/communications" />
+      <Stack.Screen name="settings/general" />
+    </Stack>
   );
 }

@@ -1,33 +1,30 @@
-import { Tabs } from "expo-router";
-import { Home, MessageCircle, BookOpen, Users, User, Heart } from "lucide-react-native";
-import React from "react";
-import { Colors } from "@/constants/colors";
-import { useLanguage } from "@/hooks/language-store";
+import React from 'react';
+import { Tabs } from 'expo-router';
+import { Colors } from '@/constants/colors';
+import { Home, MessageCircle, Users, BookOpen, Heart } from 'lucide-react-native';
 
-export default function TabLayout() {
-  const { t } = useLanguage();
-  
+export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.text.light,
         headerShown: false,
+        tabBarActiveTintColor: Colors.primary,
+        tabBarInactiveTintColor: Colors.gray,
         tabBarStyle: {
-          backgroundColor: Colors.surface,
+          backgroundColor: Colors.white,
           borderTopWidth: 1,
-          borderTopColor: Colors.surfaceLight,
+          borderTopColor: Colors.lightGray,
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: '500',
+          fontWeight: '500' as const,
         },
       }}
     >
       <Tabs.Screen
         name="home"
         options={{
-          title: t('nav.home'),
+          title: 'Home',
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />
@@ -39,31 +36,31 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="resources"
-        options={{
-          title: t('nav.resources'),
-          tabBarIcon: ({ color, size }) => <BookOpen size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="chat"
         options={{
-          title: t('nav.chat'),
+          title: 'Chat',
           tabBarIcon: ({ color, size }) => <MessageCircle size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="community"
         options={{
-          title: t('nav.community'),
+          title: 'Community',
           tabBarIcon: ({ color, size }) => <Users size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="resources"
+        options={{
+          title: 'Resources',
+          tabBarIcon: ({ color, size }) => <BookOpen size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: t('nav.profile'),
-          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
+          title: 'Profile',
+          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />
     </Tabs>

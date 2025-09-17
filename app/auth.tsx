@@ -12,7 +12,7 @@ import {
 import { Heart, Shield, UserCog, GraduationCap, Handshake } from 'lucide-react-native';
 import { Colors } from '../constants/colors';
 import { useAuth } from '../hooks/auth-store';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { UserRole } from '../types/user';
 import { trpc, trpcClient } from '../lib/trpc';
@@ -97,7 +97,7 @@ function CollegeTypeahead({ value, onChange, email }: { value: string; onChange:
 
 export default function AuthScreen() {
   const { login, register, loginAnonymous } = useAuth();
-  const navigation = useNavigation();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const [isLogin, setIsLogin] = useState<boolean>(true);
   const [showErrorModal, setShowErrorModal] = useState<boolean>(false);
@@ -124,25 +124,13 @@ export default function AuthScreen() {
 
   const navigateAfterAuth = (role?: UserRole) => {
     if (role === 'counselor') {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Counselor' }],
-      });
+      router.replace('/(counselor)/dashboard');
     } else if (role === 'admin') {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Admin' }],
-      });
+      router.replace('/(admin)/dashboard');
     } else if (role === 'volunteer') {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Volunteer' }],
-      });
+      router.replace('/(volunteer)/dashboard');
     } else {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Student' }],
-      });
+      router.replace('/(tabs)/home');
     }
   };
 
@@ -185,7 +173,7 @@ export default function AuthScreen() {
       }
       if (formData.role === 'counselor') {
         console.log('[Auth] Redirecting to counselor application');
-        navigation.navigate('CounselorApplication');
+        router.push('/counselor-application');
         return;
       }
       try {
@@ -368,7 +356,7 @@ export default function AuthScreen() {
               {formData.role === 'counselor' && (
                 <TouchableOpacity 
                   style={styles.counselorApplyButton}
-                  onPress={() => navigation.navigate('CounselorApplication')}
+                  onPress={() => router.push('/counselor-application')}
                   testID="applyCounselorCTA"
                 >
                   <Text style={styles.counselorApplyText}>Apply as Counselor (document submission required)</Text>
