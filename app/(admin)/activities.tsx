@@ -78,7 +78,7 @@ export default function AdminActivitiesScreen() {
         mediaType: form.mediaType,
       };
       
-      (createMutation as any)?.mutate?.(activityData);
+      await createMutation.mutateAsync(activityData);
       
       setForm({ title: '', description: '', points: '', riskLevel: '', category: '', duration: '', mediaUrl: '', mediaType: undefined });
       Alert.alert('Success', 'Activity created');
@@ -91,7 +91,7 @@ export default function AdminActivitiesScreen() {
   const handleDelete = useCallback(async (id: string) => {
     if (!isAllowed) return;
     try {
-      (deleteMutation as any)?.mutate?.({ id });
+      await deleteMutation.mutateAsync({ id });
     } catch (e) {
       console.error('[Activities] Delete error', e);
     }

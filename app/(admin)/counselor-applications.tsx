@@ -179,9 +179,9 @@ export default function CounselorApplicationsAdmin() {
         {
           text: 'Approve',
           onPress: () => {
-            (approveMutation as any)?.mutate?.({
+            approveMutation.mutate({
               applicationId: application.id,
-              feedback: 'Application approved after document review',
+              adminNotes: 'Application approved after document review',
             });
           },
         },
@@ -201,9 +201,10 @@ export default function CounselorApplicationsAdmin() {
       return;
     }
 
-    (rejectMutation as any)?.mutate?.({
+    rejectMutation.mutate({
       applicationId: selectedApplication.id,
-      feedback: rejectionReason.trim(),
+      rejectionReason: rejectionReason.trim(),
+      adminNotes: rejectionReason.trim(),
     });
   }, [selectedApplication, rejectionReason, rejectMutation]);
 
@@ -409,8 +410,8 @@ export default function CounselorApplicationsAdmin() {
                 <FileText size={20} color={Colors.primary} />
                 <Text style={styles.sectionTitle}>Documents ({selectedApplication.documents.length})</Text>
               </View>
-              {selectedApplication.documents.map((doc) => (
-                <View key={doc.id} style={styles.documentRow}>
+              {selectedApplication.documents.map((doc, index) => (
+                <View key={`${doc.type}-${index}`} style={styles.documentRow}>
                   <View style={styles.documentInfo}>
                     <FileText size={16} color={Colors.text.secondary} />
                     <View style={styles.documentDetails}>
@@ -423,7 +424,7 @@ export default function CounselorApplicationsAdmin() {
                   <TouchableOpacity
                     style={styles.downloadButton}
                     onPress={() => handleDownloadDocument(doc)}
-                    testID={`download-${doc.id}`}
+                    testID={`download-${doc.type}-${index}`}
                   >
                     <Download size={16} color={Colors.primary} />
                   </TouchableOpacity>

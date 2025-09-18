@@ -398,15 +398,15 @@ export const api = {
         }
       },
       approve: {
-        useMutation: () => {
+        useMutation: (options?: any) => {
           const queryClient = useQueryClient();
           return useMutation({
-            mutationFn: async (data: { applicationId: string; feedback?: string }) => {
+            mutationFn: async (data: { applicationId: string; adminNotes?: string }) => {
               await delay(500);
               const application = mockApplications.find(a => a.id === data.applicationId);
               if (application) {
                 application.status = 'approved';
-                application.adminNotes = data.feedback || '';
+                application.adminNotes = data.adminNotes || '';
                 application.reviewedBy = 'admin@example.com';
                 application.reviewedAt = new Date().toISOString();
               }
@@ -414,20 +414,22 @@ export const api = {
             },
             onSuccess: () => {
               queryClient.invalidateQueries({ queryKey: ['counselor-applications'] });
-            }
+            },
+            ...options
           });
         }
       },
       reject: {
-        useMutation: () => {
+        useMutation: (options?: any) => {
           const queryClient = useQueryClient();
           return useMutation({
-            mutationFn: async (data: { applicationId: string; feedback?: string }) => {
+            mutationFn: async (data: { applicationId: string; rejectionReason?: string; adminNotes?: string }) => {
               await delay(500);
               const application = mockApplications.find(a => a.id === data.applicationId);
               if (application) {
                 application.status = 'rejected';
-                application.rejectionReason = data.feedback || '';
+                application.rejectionReason = data.rejectionReason || '';
+                application.adminNotes = data.adminNotes || '';
                 application.reviewedBy = 'admin@example.com';
                 application.reviewedAt = new Date().toISOString();
               }
@@ -435,7 +437,8 @@ export const api = {
             },
             onSuccess: () => {
               queryClient.invalidateQueries({ queryKey: ['counselor-applications'] });
-            }
+            },
+            ...options
           });
         }
       },
