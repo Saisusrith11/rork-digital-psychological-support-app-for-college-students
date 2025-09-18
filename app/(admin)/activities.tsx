@@ -34,21 +34,9 @@ export default function AdminActivitiesScreen() {
   });
 
   const { data, isLoading, refetch } = api.activities.getAll.useQuery({ riskLevel: 'all', limit: 100 });
-  const createMutation = api.activities.create.useMutation({
-    onSuccess: async () => {
-      await refetch();
-    },
-  });
-  const updateMutation = api.activities.update.useMutation({
-    onSuccess: async () => {
-      await refetch();
-    },
-  });
-  const deleteMutation = api.activities.delete.useMutation({
-    onSuccess: async () => {
-      await refetch();
-    },
-  });
+  const createMutation = api.activities.create.useMutation();
+  const updateMutation = api.activities.update.useMutation();
+  const deleteMutation = api.activities.delete.useMutation();
 
   const activities = data?.activities ?? [];
 
@@ -62,39 +50,30 @@ export default function AdminActivitiesScreen() {
     );
   }, [form]);
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = useCallback(() => {
     if (!isAllowed) return Alert.alert('Access denied', 'You do not have permission to add activities.');
     if (!canSubmit) return Alert.alert('Missing fields', 'Please fill all required fields.');
 
-    try {
-      const activityData = {
-        title: form.title.trim(),
-        description: form.description.trim(),
-        points: Number(form.points),
-        riskLevel: form.riskLevel as any,
-        category: form.category as any,
-        duration: form.duration ? Number(form.duration) : undefined,
-        mediaUrl: form.mediaUrl?.trim() || undefined,
-        mediaType: form.mediaType,
-      };
-      
-      await createMutation.mutateAsync(activityData);
-      
-      setForm({ title: '', description: '', points: '', riskLevel: '', category: '', duration: '', mediaUrl: '', mediaType: undefined });
-      Alert.alert('Success', 'Activity created');
-    } catch (e) {
-      console.error('[Activities] Create error', e);
-      Alert.alert('Error', 'Failed to create activity');
-    }
+    const activityData = {
+      title: form.title.trim(),
+      description: form.description.trim(),
+      points: Number(form.points),
+      riskLevel: form.riskLevel as any,
+      category: form.category as any,
+      duration: form.duration ? Number(form.duration) : undefined,
+      mediaUrl: form.mediaUrl?.trim() || undefined,
+      mediaType: form.mediaType,
+    };
+    
+    (createMutation as any).mutate(activityData);
+    
+    setForm({ title: '', description: '', points: '', riskLevel: '', category: '', duration: '', mediaUrl: '', mediaType: undefined });
+    Alert.alert('Success', 'Activity created');
   }, [canSubmit, createMutation, form, isAllowed]);
 
-  const handleDelete = useCallback(async (id: string) => {
+  const handleDelete = useCallback((id: string) => {
     if (!isAllowed) return;
-    try {
-      await deleteMutation.mutateAsync({ id });
-    } catch (e) {
-      console.error('[Activities] Delete error', e);
-    }
+    (deleteMutation as any).mutate({ id });
   }, [deleteMutation, isAllowed]);
 
   return (
