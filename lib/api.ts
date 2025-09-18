@@ -1,286 +1,59 @@
-// Local data service using React Query
+// API service with database connectivity
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { db, College, CounselorApplication, Activity, Student, Report, Resource, Conversation, Message, Assessment, Helpline } from './database';
 
-// Mock data for development
-const mockColleges = [
-  { id: '1', name: 'University of California, Berkeley', location: 'Berkeley, CA', studentCount: 45000, isVerified: true },
-  { id: '2', name: 'Stanford University', location: 'Stanford, CA', studentCount: 17000, isVerified: true },
-  { id: '3', name: 'Harvard University', location: 'Cambridge, MA', studentCount: 23000, isVerified: true },
-  { id: '4', name: 'MIT', location: 'Cambridge, MA', studentCount: 11500, isVerified: true },
-  { id: '5', name: 'Community College of Denver', location: 'Denver, CO', studentCount: 8500, isVerified: false },
-];
-
-const mockApplications: Array<{
-  id: string;
-  status: 'pending' | 'approved' | 'rejected';
-  submittedAt: string;
-  personalInfo: {
-    fullName: string;
-    email: string;
-    phone: string;
-    address: string;
-    dateOfBirth: string;
-  };
-  professionalInfo: {
-    specialization: string[];
-    experience: string;
-    languages: string[];
-    currentEmployment?: string;
-  };
-  documents: {
-    type: string;
-    fileName: string;
-    fileUrl: string;
-    fileSize: number;
-    mimeType: string;
-  }[];
-  adminNotes?: string;
-  rejectionReason?: string;
-  reviewedBy?: string;
-  reviewedAt?: string;
-}> = [
-  {
-    id: '1',
-    status: 'pending',
-    submittedAt: new Date('2024-01-15').toISOString(),
-    personalInfo: {
-      fullName: 'Dr. Sarah Johnson',
-      email: 'sarah.johnson@email.com',
-      phone: '+1-555-0123',
-      address: '123 Main St, San Francisco, CA 94102',
-      dateOfBirth: '1985-03-15'
-    },
-    professionalInfo: {
-      specialization: ['Clinical Psychology', 'Anxiety Disorders'],
-      experience: '8 years of clinical practice with focus on anxiety and depression treatment',
-      languages: ['English', 'Spanish'],
-      currentEmployment: 'Private Practice'
-    },
-    documents: [
-      {
-        type: 'license',
-        fileName: 'psychology_license.pdf',
-        fileUrl: 'https://example.com/license.pdf',
-        fileSize: 1024000,
-        mimeType: 'application/pdf'
-      },
-      {
-        type: 'cv',
-        fileName: 'curriculum_vitae.pdf',
-        fileUrl: 'https://example.com/cv.pdf',
-        fileSize: 2048000,
-        mimeType: 'application/pdf'
-      }
-    ],
-    adminNotes: '',
-    rejectionReason: undefined,
-    reviewedBy: undefined,
-    reviewedAt: undefined
-  },
-  {
-    id: '2',
-    status: 'approved',
-    submittedAt: new Date('2024-01-10').toISOString(),
-    personalInfo: {
-      fullName: 'Dr. Michael Chen',
-      email: 'michael.chen@email.com',
-      phone: '+1-555-0124',
-      address: '456 Oak Ave, Los Angeles, CA 90210',
-      dateOfBirth: '1980-07-22'
-    },
-    professionalInfo: {
-      specialization: ['Cognitive Behavioral Therapy', 'PTSD Treatment'],
-      experience: '12 years specializing in trauma therapy and cognitive behavioral interventions',
-      languages: ['English', 'Mandarin'],
-      currentEmployment: 'UCLA Medical Center'
-    },
-    documents: [
-      {
-        type: 'license',
-        fileName: 'clinical_license.pdf',
-        fileUrl: 'https://example.com/license2.pdf',
-        fileSize: 1536000,
-        mimeType: 'application/pdf'
-      },
-      {
-        type: 'cv',
-        fileName: 'resume.pdf',
-        fileUrl: 'https://example.com/cv2.pdf',
-        fileSize: 1792000,
-        mimeType: 'application/pdf'
-      },
-      {
-        type: 'references',
-        fileName: 'professional_references.pdf',
-        fileUrl: 'https://example.com/refs.pdf',
-        fileSize: 512000,
-        mimeType: 'application/pdf'
-      }
-    ],
-    adminNotes: 'Excellent credentials and experience',
-    rejectionReason: undefined,
-    reviewedBy: 'admin@example.com',
-    reviewedAt: new Date('2024-01-12').toISOString()
-  }
-];
-
-const mockStudents = [
-  {
-    id: '1',
-    name: 'Alex Thompson',
-    email: 'alex.t@university.edu',
-    college: 'University of California, Berkeley',
-    riskLevel: 'medium',
-    lastAssessment: new Date('2024-01-20').toISOString(),
-    status: 'active'
-  },
-  {
-    id: '2',
-    name: 'Jamie Rodriguez',
-    email: 'jamie.r@stanford.edu',
-    college: 'Stanford University',
-    riskLevel: 'low',
-    lastAssessment: new Date('2024-01-18').toISOString(),
-    status: 'active'
-  }
-];
-
-const mockActivities = [
-  {
-    id: '1',
-    title: 'Mindfulness Meditation',
-    description: 'A guided meditation session to help reduce stress and anxiety',
-    type: 'wellness',
-    category: 'mindfulness',
-    duration: 15,
-    points: 20,
-    riskLevel: 'all',
-    mediaUrl: '',
-    mediaType: undefined,
-    createdAt: new Date('2024-01-15').toISOString()
-  },
-  {
-    id: '2',
-    title: 'Breathing Exercise',
-    description: 'Simple breathing techniques for immediate stress relief',
-    type: 'exercise',
-    category: 'crisis',
-    duration: 5,
-    points: 15,
-    riskLevel: 'high',
-    mediaUrl: '',
-    mediaType: undefined,
-    createdAt: new Date('2024-01-14').toISOString()
-  }
-];
-
-const mockReports = [
-  {
-    id: '1',
-    studentId: '1',
-    type: 'crisis',
-    content: 'Student reported feeling overwhelmed with coursework',
-    status: 'pending',
-    priority: 'high',
-    submittedAt: new Date('2024-01-20').toISOString()
-  }
-];
-
-const mockResources = [
-  {
-    id: '1',
-    title: 'Mental Health First Aid Guide',
-    description: 'A comprehensive guide for recognizing mental health issues',
-    type: 'document',
-    url: 'https://example.com/guide.pdf',
-    category: 'education',
-    createdAt: new Date('2024-01-15').toISOString()
-  }
-];
-
-const mockVolunteers = [
-  {
-    id: '1',
-    name: 'Emily Davis',
-    email: 'emily.davis@email.com',
-    status: 'active',
-    specialization: 'Peer Support',
-    joinedAt: new Date('2024-01-10').toISOString()
-  }
-];
-
-const mockConversations = [
-  {
-    id: '1',
-    studentId: '1',
-    volunteerId: '1',
-    lastMessage: 'How are you feeling today?',
-    lastMessageAt: new Date('2024-01-20').toISOString(),
-    unreadCount: 2
-  }
-];
-
-const mockMessages = [
-  {
-    id: '1',
-    conversationId: '1',
-    senderId: '1',
-    senderType: 'volunteer',
-    content: 'Hello! How can I help you today?',
-    sentAt: new Date('2024-01-20T10:00:00').toISOString()
-  },
-  {
-    id: '2',
-    conversationId: '1',
-    senderId: '1',
-    senderType: 'student',
-    content: 'I\'ve been feeling really stressed about my exams.',
-    sentAt: new Date('2024-01-20T10:05:00').toISOString()
-  }
-];
+// Initialize database on first import
+db.initialize().catch(console.error);
 
 // Helper function to simulate API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Local data service that mimics tRPC API
+// Database-connected API service
 export const api = {
-  // Students
+  // Students and Colleges
   students: {
     getAllColleges: {
       useQuery: (params: { search?: string; onlyVerified?: boolean; limit?: number; offset?: number }) => {
         return useQuery({
           queryKey: ['colleges', params],
           queryFn: async () => {
-            await delay(500);
-            let colleges = [...mockColleges];
+            await delay(300);
+            let colleges = await db.findMany<College>('colleges');
+            
             if (params.search) {
               colleges = colleges.filter(c => 
                 c.name.toLowerCase().includes(params.search!.toLowerCase()) ||
                 c.location.toLowerCase().includes(params.search!.toLowerCase())
               );
             }
+            
             if (params.onlyVerified) {
               colleges = colleges.filter(c => c.isVerified);
             }
+            
+            if (params.limit) {
+              const offset = params.offset || 0;
+              colleges = colleges.slice(offset, offset + params.limit);
+            }
+            
             return { colleges };
           }
         });
       }
     },
+    
     addCollege: {
       useMutation: () => {
         const queryClient = useQueryClient();
         return useMutation({
           mutationFn: async (data: { name: string; location?: string; isVerified: boolean }) => {
-            await delay(500);
-            const newCollege = {
-              id: Date.now().toString(),
+            await delay(300);
+            const newCollege = await db.create<College>('colleges', {
               name: data.name,
               location: data.location || '',
               studentCount: 0,
               isVerified: data.isVerified
-            };
-            mockColleges.push(newCollege);
+            });
             return newCollege;
           },
           onSuccess: () => {
@@ -289,17 +62,17 @@ export const api = {
         });
       }
     },
+    
     verifyCollege: {
       useMutation: () => {
         const queryClient = useQueryClient();
         return useMutation({
           mutationFn: async (data: { collegeId: string }) => {
-            await delay(500);
-            const college = mockColleges.find(c => c.id === data.collegeId);
-            if (college) {
-              college.isVerified = true;
-            }
-            return college;
+            await delay(300);
+            const updatedCollege = await db.update<College>('colleges', data.collegeId, {
+              isVerified: true
+            });
+            return updatedCollege;
           },
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['colleges'] });
@@ -307,55 +80,101 @@ export const api = {
         });
       }
     },
+    
     getByCollege: {
       useQuery: (params: { collegeId?: string; limit?: number; offset?: number }) => {
         return useQuery({
           queryKey: ['students', 'by-college', params],
           queryFn: async () => {
-            await delay(500);
-            return { students: mockStudents };
+            await delay(300);
+            let students = await db.findMany<Student>('students');
+            
+            if (params.collegeId) {
+              students = students.filter(s => s.college === params.collegeId);
+            }
+            
+            if (params.limit) {
+              const offset = params.offset || 0;
+              students = students.slice(offset, offset + params.limit);
+            }
+            
+            return { students };
           }
         });
       }
     },
+    
     getCollegeStats: {
       useQuery: () => {
         return useQuery({
           queryKey: ['students', 'college-stats'],
           queryFn: async () => {
-            await delay(500);
+            await delay(300);
+            const totalColleges = await db.count('colleges');
+            const verifiedColleges = await db.count('colleges', (c: College) => c.isVerified);
+            const totalStudents = await db.count('students');
+            
             return {
-              totalColleges: mockColleges.length,
-              verifiedColleges: mockColleges.filter(c => c.isVerified).length,
-              totalStudents: mockStudents.length
+              totalColleges,
+              verifiedColleges,
+              totalStudents
             };
           }
         });
       }
     },
+    
     getRiskByColleges: {
       useQuery: (params: { collegeIds?: string[]; collegeNames?: string[]; cacheKey?: string }, options?: any) => {
         return useQuery({
           queryKey: ['students', 'risk-by-colleges', params],
           queryFn: async () => {
-            await delay(500);
+            await delay(300);
+            const students = await db.findMany<Student>('students');
+            
+            let filteredStudents = students;
+            if (params.collegeIds?.length) {
+              filteredStudents = students.filter(s => params.collegeIds!.includes(s.college));
+            }
+            
+            const riskCounts = filteredStudents.reduce((acc, student) => {
+              acc[student.riskLevel] = (acc[student.riskLevel] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>);
+            
             return {
-              high: 5,
-              medium: 12,
-              low: 23
+              high: riskCounts.high || 0,
+              medium: riskCounts.medium || 0,
+              low: riskCounts.low || 0
             };
           },
           ...options
         });
       }
     },
+    
     getStudentsByCollegesAndRiskBucket: {
       useQuery: (params: { collegeIds?: string[]; collegeNames?: string[]; bucket?: string; limit?: number; offset?: number }, options?: any) => {
         return useQuery({
           queryKey: ['students', 'by-colleges-risk', params],
           queryFn: async () => {
-            await delay(500);
-            return { students: mockStudents };
+            await delay(300);
+            let students = await db.findMany<Student>('students');
+            
+            if (params.collegeIds?.length) {
+              students = students.filter(s => params.collegeIds!.includes(s.college));
+            }
+            
+            if (params.bucket && params.bucket !== 'all') {
+              students = students.filter(s => s.riskLevel === params.bucket);
+            }
+            
+            if (params.limit) {
+              const offset = params.offset || 0;
+              students = students.slice(offset, offset + params.limit);
+            }
+            
+            return { students };
           },
           ...options
         });
@@ -367,50 +186,65 @@ export const api = {
   counselor: {
     application: {
       getAll: {
-        useQuery: (params: { status?: string; limit?: number; offset?: number }) => {
+        useQuery: (params: { status?: string; search?: string; limit?: number; offset?: number }) => {
           return useQuery({
             queryKey: ['counselor-applications', params],
             queryFn: async () => {
-              await delay(500);
-              let applications = [...mockApplications];
+              await delay(300);
+              let applications = await db.findMany<CounselorApplication>('counselor-applications');
+              
               if (params.status && params.status !== 'all') {
                 applications = applications.filter(a => a.status === params.status);
               }
+              
+              if (params.search) {
+                applications = applications.filter(a => 
+                  a.personalInfo.fullName.toLowerCase().includes(params.search!.toLowerCase()) ||
+                  a.personalInfo.email.toLowerCase().includes(params.search!.toLowerCase())
+                );
+              }
+              
+              if (params.limit) {
+                const offset = params.offset || 0;
+                applications = applications.slice(offset, offset + params.limit);
+              }
+              
               return { applications };
             }
           });
         }
       },
+      
       getStats: {
         useQuery: () => {
           return useQuery({
             queryKey: ['counselor-applications', 'stats'],
             queryFn: async () => {
-              await delay(500);
-              return {
-                total: mockApplications.length,
-                pending: mockApplications.filter(a => a.status === 'pending').length,
-                approved: mockApplications.filter(a => a.status === 'approved').length,
-                rejected: mockApplications.filter(a => a.status === 'rejected').length
-              };
+              await delay(300);
+              const total = await db.count('counselor-applications');
+              const pending = await db.count('counselor-applications', (a: CounselorApplication) => a.status === 'pending');
+              const approved = await db.count('counselor-applications', (a: CounselorApplication) => a.status === 'approved');
+              const rejected = await db.count('counselor-applications', (a: CounselorApplication) => a.status === 'rejected');
+              
+              return { total, pending, approved, rejected };
             }
           });
         }
       },
+      
       approve: {
         useMutation: (options?: any) => {
           const queryClient = useQueryClient();
           return useMutation({
             mutationFn: async (data: { applicationId: string; adminNotes?: string }) => {
-              await delay(500);
-              const application = mockApplications.find(a => a.id === data.applicationId);
-              if (application) {
-                application.status = 'approved';
-                application.adminNotes = data.adminNotes || '';
-                application.reviewedBy = 'admin@example.com';
-                application.reviewedAt = new Date().toISOString();
-              }
-              return application;
+              await delay(300);
+              const updatedApplication = await db.update<CounselorApplication>('counselor-applications', data.applicationId, {
+                status: 'approved',
+                adminNotes: data.adminNotes || '',
+                reviewedBy: 'admin@example.com',
+                reviewedAt: new Date().toISOString()
+              });
+              return updatedApplication;
             },
             onSuccess: () => {
               queryClient.invalidateQueries({ queryKey: ['counselor-applications'] });
@@ -419,21 +253,21 @@ export const api = {
           });
         }
       },
+      
       reject: {
         useMutation: (options?: any) => {
           const queryClient = useQueryClient();
           return useMutation({
             mutationFn: async (data: { applicationId: string; rejectionReason?: string; adminNotes?: string }) => {
-              await delay(500);
-              const application = mockApplications.find(a => a.id === data.applicationId);
-              if (application) {
-                application.status = 'rejected';
-                application.rejectionReason = data.rejectionReason || '';
-                application.adminNotes = data.adminNotes || '';
-                application.reviewedBy = 'admin@example.com';
-                application.reviewedAt = new Date().toISOString();
-              }
-              return application;
+              await delay(300);
+              const updatedApplication = await db.update<CounselorApplication>('counselor-applications', data.applicationId, {
+                status: 'rejected',
+                rejectionReason: data.rejectionReason || '',
+                adminNotes: data.adminNotes || '',
+                reviewedBy: 'admin@example.com',
+                reviewedAt: new Date().toISOString()
+              });
+              return updatedApplication;
             },
             onSuccess: () => {
               queryClient.invalidateQueries({ queryKey: ['counselor-applications'] });
@@ -442,22 +276,36 @@ export const api = {
           });
         }
       },
+      
       uploadDocument: {
         useMutation: () => {
           return useMutation({
             mutationFn: async (data: { file: any; type: string }) => {
               await delay(1000);
-              return { url: 'https://example.com/document.pdf', id: Date.now().toString() };
+              // Simulate file upload
+              return { 
+                url: `https://example.com/documents/${Date.now()}.pdf`, 
+                id: Date.now().toString() 
+              };
             }
           });
         }
       },
+      
       submit: {
         useMutation: () => {
+          const queryClient = useQueryClient();
           return useMutation({
-            mutationFn: async (data: any) => {
-              await delay(1000);
-              return { success: true, applicationId: Date.now().toString() };
+            mutationFn: async (data: Omit<CounselorApplication, 'id' | 'createdAt' | 'updatedAt'>) => {
+              await delay(500);
+              const newApplication = await db.create<CounselorApplication>('counselor-applications', {
+                ...data,
+                submittedAt: new Date().toISOString()
+              });
+              return { success: true, applicationId: newApplication.id };
+            },
+            onSuccess: () => {
+              queryClient.invalidateQueries({ queryKey: ['counselor-applications'] });
             }
           });
         }
@@ -468,32 +316,38 @@ export const api = {
   // Activities
   activities: {
     getAll: {
-      useQuery: (params: { riskLevel?: string; limit?: number }) => {
+      useQuery: (params: { riskLevel?: string; category?: string; limit?: number }) => {
         return useQuery({
           queryKey: ['activities', params],
           queryFn: async () => {
-            await delay(500);
-            let activities = [...mockActivities];
+            await delay(300);
+            let activities = await db.findMany<Activity>('activities');
+            
             if (params.riskLevel && params.riskLevel !== 'all') {
               activities = activities.filter(a => a.riskLevel === params.riskLevel || a.riskLevel === 'all');
             }
+            
+            if (params.category) {
+              activities = activities.filter(a => a.category === params.category);
+            }
+            
+            if (params.limit) {
+              activities = activities.slice(0, params.limit);
+            }
+            
             return { activities };
           }
         });
       }
     },
+    
     create: {
       useMutation: (options?: any) => {
         const queryClient = useQueryClient();
         return useMutation({
-          mutationFn: async (data: any) => {
-            await delay(500);
-            const newActivity = {
-              id: Date.now().toString(),
-              ...data,
-              createdAt: new Date().toISOString()
-            };
-            mockActivities.push(newActivity);
+          mutationFn: async (data: Omit<Activity, 'id' | 'createdAt' | 'updatedAt'>) => {
+            await delay(300);
+            const newActivity = await db.create<Activity>('activities', data);
             return newActivity;
           },
           onSuccess: () => {
@@ -503,17 +357,16 @@ export const api = {
         });
       }
     },
+    
     update: {
       useMutation: (options?: any) => {
         const queryClient = useQueryClient();
         return useMutation({
           mutationFn: async (data: { id: string; [key: string]: any }) => {
-            await delay(500);
-            const activity = mockActivities.find(a => a.id === data.id);
-            if (activity) {
-              Object.assign(activity, data);
-            }
-            return activity;
+            await delay(300);
+            const { id, ...updateData } = data;
+            const updatedActivity = await db.update<Activity>('activities', id, updateData);
+            return updatedActivity;
           },
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['activities'] });
@@ -522,17 +375,15 @@ export const api = {
         });
       }
     },
+    
     delete: {
       useMutation: (options?: any) => {
         const queryClient = useQueryClient();
         return useMutation({
           mutationFn: async (data: { id: string }) => {
-            await delay(500);
-            const index = mockActivities.findIndex(a => a.id === data.id);
-            if (index > -1) {
-              mockActivities.splice(index, 1);
-            }
-            return { success: true };
+            await delay(300);
+            const success = await db.delete('activities', data.id);
+            return { success };
           },
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['activities'] });
@@ -546,60 +397,107 @@ export const api = {
   // Reports
   reports: {
     getAll: {
-      useQuery: (params: any) => {
+      useQuery: (params: { status?: string; priority?: string; limit?: number; offset?: number }) => {
         return useQuery({
           queryKey: ['reports', params],
           queryFn: async () => {
-            await delay(500);
-            return { reports: mockReports };
+            await delay(300);
+            let reports = await db.findMany<Report>('reports');
+            
+            if (params.status && params.status !== 'all') {
+              reports = reports.filter(r => r.status === params.status);
+            }
+            
+            if (params.priority && params.priority !== 'all') {
+              reports = reports.filter(r => r.priority === params.priority);
+            }
+            
+            if (params.limit) {
+              const offset = params.offset || 0;
+              reports = reports.slice(offset, offset + params.limit);
+            }
+            
+            return { reports };
           }
         });
       }
     },
+    
     getStats: {
       useQuery: () => {
         return useQuery({
           queryKey: ['reports', 'stats'],
           queryFn: async () => {
-            await delay(500);
-            return {
-              total: mockReports.length,
-              pending: mockReports.filter(r => r.status === 'pending').length,
-              resolved: mockReports.filter(r => r.status === 'resolved').length
-            };
+            await delay(300);
+            const total = await db.count('reports');
+            const pending = await db.count('reports', (r: Report) => r.status === 'pending');
+            const resolved = await db.count('reports', (r: Report) => r.status === 'resolved');
+            const inProgress = await db.count('reports', (r: Report) => r.status === 'in-progress');
+            
+            return { total, pending, resolved, inProgress };
           }
         });
       }
     },
+    
     getById: {
       useQuery: (params: { reportId?: string }, options?: any) => {
         return useQuery({
           queryKey: ['reports', params.reportId],
           queryFn: async () => {
-            await delay(500);
-            return mockReports.find(r => r.id === params.reportId);
+            await delay(300);
+            if (!params.reportId) return null;
+            return await db.findById<Report>('reports', params.reportId);
           },
           enabled: !!params.reportId,
           ...options
         });
       }
     },
+    
     review: {
       useMutation: (options?: any) => {
         const queryClient = useQueryClient();
         return useMutation({
           mutationFn: async (data: { reportId: string; action: string; notes?: string }) => {
-            await delay(500);
-            const report = mockReports.find(r => r.id === data.reportId);
-            if (report) {
-              report.status = data.action === 'resolve' ? 'resolved' : 'pending';
+            await delay(300);
+            const status = data.action === 'resolve' ? 'resolved' : 'in-progress';
+            const updateData: Partial<Report> = {
+              status,
+              notes: data.notes,
+              resolvedBy: 'admin@example.com'
+            };
+            
+            if (status === 'resolved') {
+              updateData.resolvedAt = new Date().toISOString();
             }
-            return report;
+            
+            const updatedReport = await db.update<Report>('reports', data.reportId, updateData);
+            return updatedReport;
           },
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['reports'] });
           },
           ...options
+        });
+      }
+    },
+    
+    create: {
+      useMutation: () => {
+        const queryClient = useQueryClient();
+        return useMutation({
+          mutationFn: async (data: Omit<Report, 'id' | 'submittedAt'>) => {
+            await delay(300);
+            const newReport = await db.create<Report>('reports', {
+              ...data,
+              submittedAt: new Date().toISOString()
+            });
+            return newReport;
+          },
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['reports'] });
+          }
         });
       }
     }
@@ -608,38 +506,54 @@ export const api = {
   // Resources
   resources: {
     getAll: {
-      useQuery: (params: { type?: string; limit?: number; offset?: number }) => {
+      useQuery: (params: { type?: string; category?: string; limit?: number; offset?: number }) => {
         return useQuery({
           queryKey: ['resources', params],
           queryFn: async () => {
-            await delay(500);
-            return { resources: mockResources };
+            await delay(300);
+            let resources = await db.findMany<Resource>('resources');
+            
+            if (params.type && params.type !== 'all') {
+              resources = resources.filter(r => r.type === params.type);
+            }
+            
+            if (params.category && params.category !== 'all') {
+              resources = resources.filter(r => r.category === params.category);
+            }
+            
+            if (params.limit) {
+              const offset = params.offset || 0;
+              resources = resources.slice(offset, offset + params.limit);
+            }
+            
+            return { resources };
           }
         });
       }
     },
+    
     uploadFile: {
       useMutation: () => {
         return useMutation({
           mutationFn: async (data: { file: any }) => {
             await delay(1000);
-            return { url: 'https://example.com/uploaded-file.pdf', id: Date.now().toString() };
+            // Simulate file upload
+            return { 
+              url: `https://example.com/resources/${Date.now()}.pdf`, 
+              id: Date.now().toString() 
+            };
           }
         });
       }
     },
+    
     create: {
       useMutation: () => {
         const queryClient = useQueryClient();
         return useMutation({
-          mutationFn: async (data: any) => {
-            await delay(500);
-            const newResource = {
-              id: Date.now().toString(),
-              ...data,
-              createdAt: new Date().toISOString()
-            };
-            mockResources.push(newResource);
+          mutationFn: async (data: Omit<Resource, 'id' | 'createdAt' | 'updatedAt'>) => {
+            await delay(300);
+            const newResource = await db.create<Resource>('resources', data);
             return newResource;
           },
           onSuccess: () => {
@@ -648,17 +562,16 @@ export const api = {
         });
       }
     },
+    
     update: {
       useMutation: () => {
         const queryClient = useQueryClient();
         return useMutation({
           mutationFn: async (data: { id: string; [key: string]: any }) => {
-            await delay(500);
-            const resource = mockResources.find(r => r.id === data.id);
-            if (resource) {
-              Object.assign(resource, data);
-            }
-            return resource;
+            await delay(300);
+            const { id, ...updateData } = data;
+            const updatedResource = await db.update<Resource>('resources', id, updateData);
+            return updatedResource;
           },
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['resources'] });
@@ -666,55 +579,19 @@ export const api = {
         });
       }
     },
+    
     delete: {
       useMutation: () => {
         const queryClient = useQueryClient();
         return useMutation({
           mutationFn: async (data: { id: string }) => {
-            await delay(500);
-            const index = mockResources.findIndex(r => r.id === data.id);
-            if (index > -1) {
-              mockResources.splice(index, 1);
-            }
-            return { success: true };
+            await delay(300);
+            const success = await db.delete('resources', data.id);
+            return { success };
           },
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['resources'] });
           }
-        });
-      }
-    }
-  },
-
-  // Volunteers
-  volunteers: {
-    getAll: {
-      useQuery: () => {
-        return useQuery({
-          queryKey: ['volunteers'],
-          queryFn: async () => {
-            await delay(500);
-            return { volunteers: mockVolunteers };
-          }
-        });
-      }
-    },
-    updateStatus: {
-      useMutation: (options?: any) => {
-        const queryClient = useQueryClient();
-        return useMutation({
-          mutationFn: async (data: { id: string; status: string }) => {
-            await delay(500);
-            const volunteer = mockVolunteers.find(v => v.id === data.id);
-            if (volunteer) {
-              volunteer.status = data.status;
-            }
-            return volunteer;
-          },
-          onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['volunteers'] });
-          },
-          ...options
         });
       }
     }
@@ -723,44 +600,66 @@ export const api = {
   // Chat
   chat: {
     getActiveConversations: {
-      useQuery: (params: any, options?: any) => {
+      useQuery: (params: { userId?: string }, options?: any) => {
         return useQuery({
-          queryKey: ['conversations', 'active'],
+          queryKey: ['conversations', 'active', params],
           queryFn: async () => {
-            await delay(500);
-            return { conversations: mockConversations };
+            await delay(300);
+            let conversations = await db.findMany<Conversation>('conversations', 
+              (c: Conversation) => c.status === 'active'
+            );
+            
+            if (params.userId) {
+              conversations = conversations.filter(c => 
+                c.studentId === params.userId || c.volunteerId === params.userId
+              );
+            }
+            
+            return { conversations };
           },
           ...options
         });
       }
     },
+    
     getMessages: {
       useQuery: (params: { conversationId: string; limit?: number }, options?: any) => {
         return useQuery({
           queryKey: ['messages', params.conversationId],
           queryFn: async () => {
-            await delay(500);
-            return { messages: mockMessages.filter(m => m.conversationId === params.conversationId) };
+            await delay(300);
+            let messages = await db.findMany<Message>('messages', 
+              (m: Message) => m.conversationId === params.conversationId
+            );
+            
+            // Sort by sent time
+            messages.sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
+            
+            if (params.limit) {
+              messages = messages.slice(-params.limit);
+            }
+            
+            return { messages };
           },
           ...options
         });
       }
     },
+    
     startConversation: {
       useMutation: (options?: any) => {
         const queryClient = useQueryClient();
         return useMutation({
-          mutationFn: async (data: { studentId: string }) => {
-            await delay(500);
-            const newConversation = {
-              id: Date.now().toString(),
+          mutationFn: async (data: { studentId: string; volunteerId?: string }) => {
+            await delay(300);
+            const newConversation = await db.create<Conversation>('conversations', {
               studentId: data.studentId,
-              volunteerId: '1',
+              volunteerId: data.volunteerId || '1',
+              status: 'active',
               lastMessage: '',
               lastMessageAt: new Date().toISOString(),
               unreadCount: 0
-            };
-            mockConversations.push(newConversation);
+            });
             return newConversation;
           },
           onSuccess: () => {
@@ -770,24 +669,41 @@ export const api = {
         });
       }
     },
+    
     sendMessage: {
       useMutation: (options?: any) => {
         const queryClient = useQueryClient();
         return useMutation({
-          mutationFn: async (data: { conversationId: string; content: string; senderType: string }) => {
-            await delay(500);
-            const newMessage = {
-              id: Date.now().toString(),
+          mutationFn: async (data: { 
+            conversationId: string; 
+            content: string; 
+            senderId: string;
+            senderType: 'student' | 'volunteer' | 'counselor' | 'admin';
+            messageType?: 'text' | 'image' | 'file';
+          }) => {
+            await delay(300);
+            
+            // Create message
+            const newMessage = await db.create<Message>('messages', {
               conversationId: data.conversationId,
-              senderId: '1',
+              senderId: data.senderId,
               senderType: data.senderType,
               content: data.content,
+              messageType: data.messageType || 'text',
+              isRead: false,
               sentAt: new Date().toISOString()
-            };
-            mockMessages.push(newMessage);
+            });
+            
+            // Update conversation
+            await db.update<Conversation>('conversations', data.conversationId, {
+              lastMessage: data.content,
+              lastMessageAt: new Date().toISOString(),
+              unreadCount: 1
+            });
+            
             return newMessage;
           },
-          onSuccess: (data: any) => {
+          onSuccess: (data: Message) => {
             queryClient.invalidateQueries({ queryKey: ['messages', data.conversationId] });
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
           },
@@ -795,12 +711,33 @@ export const api = {
         });
       }
     },
+    
     markAsRead: {
       useMutation: () => {
+        const queryClient = useQueryClient();
         return useMutation({
           mutationFn: async (data: { conversationId: string }) => {
             await delay(200);
+            
+            // Mark all messages as read
+            const messages = await db.findMany<Message>('messages', 
+              (m: Message) => m.conversationId === data.conversationId && !m.isRead
+            );
+            
+            for (const message of messages) {
+              await db.update<Message>('messages', message.id, { isRead: true });
+            }
+            
+            // Reset unread count
+            await db.update<Conversation>('conversations', data.conversationId, {
+              unreadCount: 0
+            });
+            
             return { success: true };
+          },
+          onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['messages', variables.conversationId] });
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
           }
         });
       }
@@ -810,12 +747,123 @@ export const api = {
   // Assessments
   assessments: {
     getStudentAssessments: {
-      useQuery: (params: { limit?: number }) => {
+      useQuery: (params: { studentId?: string; limit?: number }) => {
         return useQuery({
           queryKey: ['assessments', 'student', params],
           queryFn: async () => {
-            await delay(500);
-            return { assessments: [] };
+            await delay(300);
+            let assessments = await db.findMany<Assessment>('assessments');
+            
+            if (params.studentId) {
+              assessments = assessments.filter(a => a.studentId === params.studentId);
+            }
+            
+            if (params.limit) {
+              assessments = assessments.slice(0, params.limit);
+            }
+            
+            return { assessments };
+          }
+        });
+      }
+    },
+    
+    create: {
+      useMutation: () => {
+        const queryClient = useQueryClient();
+        return useMutation({
+          mutationFn: async (data: Omit<Assessment, 'id' | 'completedAt'>) => {
+            await delay(300);
+            const newAssessment = await db.create<Assessment>('assessments', {
+              ...data,
+              completedAt: new Date().toISOString()
+            });
+            return newAssessment;
+          },
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['assessments'] });
+          }
+        });
+      }
+    },
+    
+    sync: {
+      mutate: async (data: any) => {
+        await delay(300);
+        // Sync assessment data
+        return { success: true };
+      }
+    }
+  },
+
+  // Helplines
+  helplines: {
+    getAll: {
+      useQuery: (params: { category?: string; isActive?: boolean } = {}) => {
+        return useQuery({
+          queryKey: ['helplines', params],
+          queryFn: async () => {
+            await delay(300);
+            let helplines = await db.findMany<Helpline>('helplines');
+            
+            if (params.category) {
+              helplines = helplines.filter(h => h.category === params.category);
+            }
+            
+            if (params.isActive !== undefined) {
+              helplines = helplines.filter(h => h.isActive === params.isActive);
+            }
+            
+            return { helplines };
+          }
+        });
+      }
+    },
+    
+    create: {
+      useMutation: () => {
+        const queryClient = useQueryClient();
+        return useMutation({
+          mutationFn: async (data: Omit<Helpline, 'id' | 'createdAt' | 'updatedAt'>) => {
+            await delay(300);
+            const newHelpline = await db.create<Helpline>('helplines', data);
+            return newHelpline;
+          },
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['helplines'] });
+          }
+        });
+      }
+    },
+    
+    update: {
+      useMutation: () => {
+        const queryClient = useQueryClient();
+        return useMutation({
+          mutationFn: async (data: { id: string; [key: string]: any }) => {
+            await delay(300);
+            const { id, ...updateData } = data;
+            const updatedHelpline = await db.update<Helpline>('helplines', id, updateData);
+            return updatedHelpline;
+          },
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['helplines'] });
+          }
+        });
+      }
+    },
+    
+    delete: {
+      useMutation: () => {
+        const queryClient = useQueryClient();
+        return useMutation({
+          mutationFn: async (data: { id: string }) => {
+            await delay(300);
+            const success = await db.delete('helplines', data.id);
+            return { success };
+          },
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['helplines'] });
           }
         });
       }
@@ -829,8 +877,9 @@ export const api = {
         return useQuery({
           queryKey: ['consent', 'assessments'],
           queryFn: async () => {
-            await delay(500);
-            return { assessments: [] };
+            await delay(300);
+            const assessments = await db.findMany<Assessment>('assessments');
+            return { assessments };
           },
           ...options
         });
@@ -852,15 +901,16 @@ export const apiClient = {
   consent: {
     getConsentedAssessments: {
       query: async (params: any) => {
-        await delay(500);
-        return { assessments: [] };
+        await delay(300);
+        const assessments = await db.findMany<Assessment>('assessments');
+        return { assessments };
       }
     }
   },
   assessments: {
     sync: {
       mutate: async (data: any) => {
-        await delay(500);
+        await delay(300);
         return { success: true };
       }
     }
@@ -868,8 +918,9 @@ export const apiClient = {
   helplines: {
     getAll: {
       query: async () => {
-        await delay(500);
-        return { helplines: [] };
+        await delay(300);
+        const helplines = await db.findMany<Helpline>('helplines');
+        return { helplines };
       }
     }
   }

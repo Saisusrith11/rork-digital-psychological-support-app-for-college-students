@@ -8,6 +8,7 @@ import { Colors } from '@/constants/colors';
 import { AuthProvider } from '@/hooks/auth-store';
 import { ThemeProvider } from '@/hooks/theme-store';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { db } from '@/lib/database';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync().catch(() => {

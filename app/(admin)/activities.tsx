@@ -1,17 +1,18 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { api } from '@/lib/api';
 import { Colors } from '@/constants/colors';
 import { Image as ExpoImage } from 'expo-image';
 import { Upload, PlayCircle, Trash2 } from 'lucide-react-native';
 import { useAuth } from '@/hooks/auth-store';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface FormState {
   title: string;
   description: string;
   points: string;
-  riskLevel: 'minimal' | 'mild' | 'moderate' | 'severe' | '';
+  riskLevel: 'low' | 'medium' | 'high' | 'all' | '';
   category: 'mood' | 'mindfulness' | 'social' | 'education' | 'crisis' | 'goal' | '';
   duration?: string;
   mediaUrl?: string;
@@ -33,10 +34,23 @@ export default function AdminActivitiesScreen() {
     mediaType: undefined,
   });
 
-  const { data, isLoading, refetch } = api.activities.getAll.useQuery({ riskLevel: 'all', limit: 100 });
-  const createMutation = api.activities.create.useMutation();
-  const updateMutation = api.activities.update.useMutation();
-  const deleteMutation = api.activities.delete.useMutation();
+  const { data, isLoading } = api.activities.getAll.useQuery({ riskLevel: 'all', limit: 100 });
+  const createMutation = api.activities.create.useMutation({
+    onSuccess: () => {
+      console.log('Activity created successfully');
+    },
+    onError: (error: any) => {
+      console.error('Error creating activity:', error);
+    }
+  });
+  const deleteMutation = api.activities.delete.useMutation({
+    onSuccess: () => {
+      console.log('Activity deleted successfully');
+    },
+    onError: (error: any) => {
+      console.error('Error deleting activity:', error);
+    }
+  });
 
   const activities = data?.activities ?? [];
 
@@ -50,30 +64,46 @@ export default function AdminActivitiesScreen() {
     );
   }, [form]);
 
-  const handleSubmit = useCallback(() => {
-    if (!isAllowed) return Alert.alert('Access denied', 'You do not have permission to add activities.');
-    if (!canSubmit) return Alert.alert('Missing fields', 'Please fill all required fields.');
+  const handleSubmit = useCallback(async () => {
+    if (!isAllowed) {
+      console.log('Access denied: You do not have permission to add activities.');
+      return;
+    }
+    if (!canSubmit) {
+      console.log('Missing fields: Please fill all required fields.');
+      return;
+    }
 
-    const activityData = {
-      title: form.title.trim(),
-      description: form.description.trim(),
-      points: Number(form.points),
-      riskLevel: form.riskLevel as any,
-      category: form.category as any,
-      duration: form.duration ? Number(form.duration) : undefined,
-      mediaUrl: form.mediaUrl?.trim() || undefined,
-      mediaType: form.mediaType,
-    };
-    
-    (createMutation as any).mutate(activityData);
-    
-    setForm({ title: '', description: '', points: '', riskLevel: '', category: '', duration: '', mediaUrl: '', mediaType: undefined });
-    Alert.alert('Success', 'Activity created');
+    try {
+      const activityData = {
+        title: form.title.trim(),
+        description: form.description.trim(),
+        type: 'wellness' as const,
+        category: form.category as string,
+        points: Number(form.points),
+        riskLevel: form.riskLevel as 'low' | 'medium' | 'high' | 'all',
+        duration: form.duration ? Number(form.duration) : 0,
+        mediaUrl: form.mediaUrl?.trim() || undefined,
+        mediaType: form.mediaType,
+      };
+      
+      createMutation.mutate(activityData);
+      
+      setForm({ title: '', description: '', points: '', riskLevel: '', category: '', duration: '', mediaUrl: '', mediaType: undefined });
+      console.log('Success: Activity created');
+    } catch (error) {
+      console.error('Error creating activity:', error);
+    }
   }, [canSubmit, createMutation, form, isAllowed]);
 
-  const handleDelete = useCallback((id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     if (!isAllowed) return;
-    (deleteMutation as any).mutate({ id });
+    try {
+      deleteMutation.mutate({ id });
+      console.log('Activity deleted successfully');
+    } catch (error) {
+      console.error('Error deleting activity:', error);
+    }
   }, [deleteMutation, isAllowed]);
 
   return (
@@ -135,7 +165,7 @@ export default function AdminActivitiesScreen() {
             <View style={styles.col}>
               <Text style={styles.label}>Risk Level *</Text>
               <View style={styles.pills}>
-                {(['minimal','mild','moderate','severe'] as const).map((r) => (
+                {(['low','medium','high','all'] as const).map((r) => (
                   <TouchableOpacity key={r} style={[styles.pill, form.riskLevel === r && styles.pillActive]} onPress={() => setForm((f) => ({ ...f, riskLevel: r }))}>
                     <Text style={[styles.pillText, form.riskLevel === r && styles.pillTextActive]}>{r}</Text>
                   </TouchableOpacity>
