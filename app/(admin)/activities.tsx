@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Platform, SafeAreaView } from 'react-native';
 import { Stack } from 'expo-router';
 import { api } from '@/lib/api';
 import { Colors } from '@/constants/colors';
@@ -7,6 +7,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { Upload, PlayCircle, Trash2 } from 'lucide-react-native';
 import { useAuth } from '@/hooks/auth-store';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 
 interface FormState {
   title: string;
@@ -35,14 +36,17 @@ export default function AdminActivitiesScreen() {
   });
 
   const { data, isLoading } = api.activities.getAll.useQuery({ riskLevel: 'all', limit: 100 });
+  
   const createMutation = api.activities.create.useMutation({
     onSuccess: () => {
       console.log('Activity created successfully');
+      setForm({ title: '', description: '', points: '', riskLevel: '', category: '', duration: '', mediaUrl: '', mediaType: undefined });
     },
     onError: (error: any) => {
       console.error('Error creating activity:', error);
     }
   });
+  
   const deleteMutation = api.activities.delete.useMutation({
     onSuccess: () => {
       console.log('Activity deleted successfully');
@@ -74,6 +78,11 @@ export default function AdminActivitiesScreen() {
       return;
     }
 
+    if (!form.category || !form.riskLevel) {
+      console.log('Missing required fields: category and risk level are required.');
+      return;
+    }
+
     try {
       const activityData = {
         title: form.title.trim(),
@@ -87,10 +96,7 @@ export default function AdminActivitiesScreen() {
         mediaType: form.mediaType,
       };
       
-      createMutation.mutate(activityData);
-      
-      setForm({ title: '', description: '', points: '', riskLevel: '', category: '', duration: '', mediaUrl: '', mediaType: undefined });
-      console.log('Success: Activity created');
+      (createMutation as any).mutate(activityData);
     } catch (error) {
       console.error('Error creating activity:', error);
     }
@@ -99,15 +105,16 @@ export default function AdminActivitiesScreen() {
   const handleDelete = useCallback(async (id: string) => {
     if (!isAllowed) return;
     try {
-      deleteMutation.mutate({ id });
-      console.log('Activity deleted successfully');
+      (deleteMutation as any).mutate({ id });
     } catch (error) {
       console.error('Error deleting activity:', error);
     }
   }, [deleteMutation, isAllowed]);
 
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
       <Stack.Screen options={{ title: 'Activities', headerStyle: { backgroundColor: Colors.surface } }} />
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.heading}>Upload Wellness Activity</Text>
@@ -235,7 +242,7 @@ export default function AdminActivitiesScreen() {
           </View>
         ))}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
