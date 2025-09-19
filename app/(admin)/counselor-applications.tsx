@@ -179,7 +179,7 @@ export default function CounselorApplicationsAdmin() {
         {
           text: 'Approve',
           onPress: () => {
-            (approveMutation as any).mutate({
+            approveMutation.mutate({
               applicationId: application.id,
               adminNotes: 'Application approved after document review',
             });
@@ -201,7 +201,7 @@ export default function CounselorApplicationsAdmin() {
       return;
     }
 
-    (rejectMutation as any).mutate({
+    rejectMutation.mutate({
       applicationId: selectedApplication.id,
       rejectionReason: rejectionReason.trim(),
       adminNotes: rejectionReason.trim(),

@@ -96,7 +96,7 @@ export default function AdminActivitiesScreen() {
         mediaType: form.mediaType,
       };
       
-      (createMutation as any).mutate(activityData);
+      createMutation.mutate(activityData);
     } catch (error) {
       console.error('Error creating activity:', error);
     }
@@ -105,7 +105,7 @@ export default function AdminActivitiesScreen() {
   const handleDelete = useCallback(async (id: string) => {
     if (!isAllowed) return;
     try {
-      (deleteMutation as any).mutate({ id });
+      deleteMutation.mutate({ id });
     } catch (error) {
       console.error('Error deleting activity:', error);
     }

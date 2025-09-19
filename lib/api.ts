@@ -1,5 +1,5 @@
 // API service with database connectivity
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, UseMutationResult } from '@tanstack/react-query';
 import { db, College, CounselorApplication, Activity, Student, Report, Resource, Conversation, Message, Assessment, Helpline } from './database';
 
 // Initialize database on first import
