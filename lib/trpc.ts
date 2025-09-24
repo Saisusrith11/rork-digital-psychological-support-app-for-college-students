@@ -16,13 +16,13 @@ export const trpc = {
   
   // Counselor
   counselor: {
-    application: {
-      getAll: api.counselor.application.getAll,
-      getStats: api.counselor.application.getStats,
-      approve: api.counselor.application.approve,
-      reject: api.counselor.application.reject,
-      uploadDocument: api.counselor.application.uploadDocument,
-      submit: api.counselor.application.submit
+    applications: {
+      getAll: api.counselor.applications.getAll,
+      getStats: api.counselor.applications.getStats,
+      approve: api.counselor.applications.approve,
+      reject: api.counselor.applications.reject,
+      uploadDocument: api.counselor.applications.uploadDocument,
+      submit: api.counselor.applications.submit
     }
   },
   

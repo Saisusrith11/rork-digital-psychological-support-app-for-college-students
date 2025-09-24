@@ -169,8 +169,8 @@ export default function CounselorApplicationForm() {
     }[];
   }>({ visible: false, title: '', message: '', type: 'info', buttons: [] });
 
-  const uploadDocumentMutation = trpc.counselor.application.uploadDocument.useMutation();
-  const submitApplicationMutation = trpc.counselor.application.submit.useMutation();
+  const uploadDocumentMutation = trpc.counselor.applications.uploadDocument.useMutation();
+  const submitApplicationMutation = trpc.counselor.applications.submit.useMutation();
 
   const handleDocumentUpload = useCallback(async (documentType: CounselorDocument['type']) => {
     try {
@@ -215,7 +215,12 @@ export default function CounselorApplicationForm() {
               if (result.success) {
                 setDocuments(prev => prev.map(doc => 
                   doc.type === sanitizedType 
-                    ? { ...doc, uploaded: result.document }
+                    ? { ...doc, uploaded: { 
+                        ...result.document, 
+                        id: Date.now().toString(), 
+                        uploadedAt: new Date().toISOString(),
+                        type: sanitizedType as CounselorDocument['type']
+                      } }
                     : doc
                 ));
                 setAlertModal({
@@ -280,7 +285,12 @@ export default function CounselorApplicationForm() {
               if (uploadResult.success) {
                 setDocuments(prev => prev.map(doc => 
                   doc.type === sanitizedType 
-                    ? { ...doc, uploaded: uploadResult.document }
+                    ? { ...doc, uploaded: { 
+                        ...uploadResult.document, 
+                        id: Date.now().toString(), 
+                        uploadedAt: new Date().toISOString(),
+                        type: sanitizedType as CounselorDocument['type']
+                      } }
                     : doc
                 ));
                 setAlertModal({
@@ -461,6 +471,7 @@ export default function CounselorApplicationForm() {
       }
 
       const result = await submitApplicationMutation.mutateAsync({
+        counselorId: 'temp-' + Date.now(),
         personalInfo: sanitizedPersonal,
         professionalInfo: sanitizedProfessional,
         documents: uploadedDocuments,
@@ -472,7 +483,7 @@ export default function CounselorApplicationForm() {
         setAlertModal({
           visible: true,
           title: 'Application Submitted',
-          message: result.message,
+          message: 'Your application has been submitted successfully and is under review.',
           type: 'success',
           buttons: [{
             text: 'OK',
@@ -487,14 +498,16 @@ export default function CounselorApplicationForm() {
       try {
         const jsonMatch = rawMessage.match(/\[.*\]/s);
         const toParse = jsonMatch ? jsonMatch[0] : rawMessage;
-        const parsed = JSON.parse(toParse) as Array<{ path?: unknown[]; message?: string; code?: string; minimum?: number }>;
+        const parsed = JSON.parse(toParse) as { path?: unknown[]; message?: string; code?: string; minimum?: number }[];
         const expErr = parsed.find(item => Array.isArray(item.path) && item.path.join('.') === 'professionalInfo.experience');
         if (expErr?.message || (expErr?.code === 'too_small' && (expErr as any).minimum === 10)) {
           friendly = 'Experience must be at least 10 characters (e.g., "3 years in school counseling").';
         } else if (parsed[0]?.message) {
           friendly = parsed[0].message ?? friendly;
         }
-      } catch (_) {}
+      } catch (parseError) {
+        console.log('Parse error:', parseError);
+      }
       if (rawMessage.toLowerCase().includes('experience') && (rawMessage.includes('Too small') || rawMessage.includes('minimum') || rawMessage.includes('too_small'))) {
         friendly = 'Experience must be at least 10 characters (e.g., "3 years in school counseling").';
       }

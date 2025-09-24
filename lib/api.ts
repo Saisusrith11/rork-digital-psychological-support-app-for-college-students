@@ -199,7 +199,7 @@ export const api = {
 
   // Counselor Applications
   counselor: {
-    application: {
+    applications: {
       getAll: {
         useQuery: (params: { status?: string; limit?: number; offset?: number }) => {
           return useQuery({
