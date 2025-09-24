@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as SplashScreen from 'expo-splash-screen';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
 import { AuthProvider } from '@/hooks/auth-store';
@@ -65,12 +65,15 @@ export default function RootLayout() {
     async function prepare() {
       try {
         console.log('[RootLayout] Initializing app...');
+        console.log('[RootLayout] Platform:', Platform.OS);
         
-        // Add any initialization logic here
+        // Simplified initialization
         await new Promise((resolve) => {
-          if (typeof resolve === 'function') {
-            setTimeout(resolve, 500);
-          }
+          setTimeout(() => {
+            if (typeof resolve === 'function') {
+              resolve(undefined);
+            }
+          }, 300);
         });
         
         console.log('[RootLayout] App initialized successfully');
@@ -81,16 +84,14 @@ export default function RootLayout() {
         setIsReady(true);
         
         // Hide splash screen after a small delay to ensure state is updated
-        const timeoutId = setTimeout(async () => {
+        setTimeout(async () => {
           try {
             await SplashScreen.hideAsync();
+            console.log('[RootLayout] Splash screen hidden');
           } catch (error) {
-            console.log('Splash screen already hidden or error hiding:', error);
+            console.log('[RootLayout] Splash screen already hidden or error hiding:', error);
           }
         }, 100);
-        
-        // Cleanup timeout if component unmounts
-        return () => clearTimeout(timeoutId);
       }
     }
 

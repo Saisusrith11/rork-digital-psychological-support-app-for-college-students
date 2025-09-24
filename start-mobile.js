@@ -24,12 +24,9 @@ if (fs.existsSync(packagePath)) {
   process.exit(1);
 }
 
-// Set environment variables
-process.env.EXPO_NO_INTERACTIVE = '1';
-
-// Start with expo
-const command = 'npx';
-const args = ['expo', 'start'];
+// Start with expo directly
+const command = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+const args = ['expo', 'start', '--clear'];
 
 // Add platform flags if specified
 if (process.argv.includes('--android')) args.push('--android');
@@ -41,14 +38,16 @@ console.log(`\n📱 Starting with command: ${command} ${args.join(' ')}\n`);
 
 const child = spawn(command, args, {
   stdio: 'inherit',
+  shell: true,
   env: {
     ...process.env,
-    EXPO_NO_INTERACTIVE: '1',
+    NODE_ENV: 'development',
   },
 });
 
 child.on('error', (error) => {
   console.error('❌ Failed to start development server:', error);
+  console.log('\n💡 Try running: npx expo start --clear');
   process.exit(1);
 });
 
