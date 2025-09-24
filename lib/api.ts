@@ -1,6 +1,6 @@
 // API service with database connectivity
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { db, College, Student, Report, Resource, Conversation, Message, Assessment, Helpline, CounselorApplication } from './database';
+import { db, College, Student, Report, Resource, Conversation, Message, Assessment, Helpline } from './database';
 
 // Initialize database on first import
 let dbInitialized = false;
@@ -43,7 +43,7 @@ export const api = {
             }
             
             if (params.onlyVerified) {
-              colleges = colleges.filter(c => c.isVerified);
+              colleges = colleges.filter(c => c.is_verified);
             }
             
             if (params.limit) {
@@ -61,13 +61,13 @@ export const api = {
       useMutation: () => {
         const queryClient = useQueryClient();
         return useMutation({
-          mutationFn: async (data: { name: string; location?: string; isVerified: boolean }) => {
+          mutationFn: async (data: { name: string; location?: string; is_verified: boolean }) => {
             await delay(300);
             const newCollege = await db.create<College>('colleges', {
               name: data.name,
               location: data.location || '',
-              studentCount: 0,
-              isVerified: data.isVerified
+              student_count: 0,
+              is_verified: data.is_verified
             });
             return newCollege;
           },
@@ -85,7 +85,7 @@ export const api = {
           mutationFn: async (data: { collegeId: string }) => {
             await delay(300);
             const updatedCollege = await db.update<College>('colleges', data.collegeId, {
-              isVerified: true
+              is_verified: true
             });
             return updatedCollege;
           },
@@ -126,7 +126,7 @@ export const api = {
           queryFn: async () => {
             await delay(300);
             const totalColleges = await db.count('colleges');
-            const verifiedColleges = await db.count('colleges', (c: College) => c.isVerified);
+            const verifiedColleges = await db.count('colleges', (c: College) => c.is_verified);
             const totalStudents = await db.count('students');
             
             return {
@@ -153,7 +153,7 @@ export const api = {
             }
             
             const riskCounts = filteredStudents.reduce((acc, student) => {
-              acc[student.riskLevel] = (acc[student.riskLevel] || 0) + 1;
+              acc[student.risk_level] = (acc[student.risk_level] || 0) + 1;
               return acc;
             }, {} as Record<string, number>);
             
@@ -181,7 +181,7 @@ export const api = {
             }
             
             if (params.bucket && params.bucket !== 'all') {
-              students = students.filter(s => s.riskLevel === params.bucket);
+              students = students.filter(s => s.risk_level === params.bucket);
             }
             
             if (params.limit) {
@@ -197,132 +197,7 @@ export const api = {
     }
   },
 
-  // Counselor Applications
-  counselor: {
-    applications: {
-      getAll: {
-        useQuery: (params: { status?: string; limit?: number; offset?: number }) => {
-          return useQuery({
-            queryKey: ['counselor-applications', params],
-            queryFn: async () => {
-              await delay(300);
-              let applications = await db.findMany<CounselorApplication>('counselor-applications');
-              
-              if (params.status && params.status !== 'all') {
-                applications = applications.filter(a => a.status === params.status);
-              }
-              
-              if (params.limit) {
-                const offset = params.offset || 0;
-                applications = applications.slice(offset, offset + params.limit);
-              }
-              
-              return { applications };
-            }
-          });
-        }
-      },
-      
-      getStats: {
-        useQuery: () => {
-          return useQuery({
-            queryKey: ['counselor-applications', 'stats'],
-            queryFn: async () => {
-              await delay(300);
-              const total = await db.count('counselor-applications');
-              const pending = await db.count('counselor-applications', (a: CounselorApplication) => a.status === 'pending');
-              const approved = await db.count('counselor-applications', (a: CounselorApplication) => a.status === 'approved');
-              const rejected = await db.count('counselor-applications', (a: CounselorApplication) => a.status === 'rejected');
-              
-              return { total, pending, approved, rejected };
-            }
-          });
-        }
-      },
-      
-      approve: {
-        useMutation: () => {
-          const queryClient = useQueryClient();
-          return useMutation({
-            mutationFn: async (data: { applicationId: string; adminNotes: string }) => {
-              await delay(300);
-              const updatedApplication = await db.update<CounselorApplication>('counselor-applications', data.applicationId, {
-                status: 'approved',
-                adminNotes: data.adminNotes,
-                reviewedBy: 'admin@example.com',
-                reviewedAt: new Date().toISOString()
-              });
-              return updatedApplication;
-            },
-            onSuccess: () => {
-              queryClient.invalidateQueries({ queryKey: ['counselor-applications'] });
-            }
-          });
-        }
-      },
-      
-      reject: {
-        useMutation: () => {
-          const queryClient = useQueryClient();
-          return useMutation({
-            mutationFn: async (data: { applicationId: string; rejectionReason: string; adminNotes: string }) => {
-              await delay(300);
-              const updatedApplication = await db.update<CounselorApplication>('counselor-applications', data.applicationId, {
-                status: 'rejected',
-                rejectionReason: data.rejectionReason,
-                adminNotes: data.adminNotes,
-                reviewedBy: 'admin@example.com',
-                reviewedAt: new Date().toISOString()
-              });
-              return updatedApplication;
-            },
-            onSuccess: () => {
-              queryClient.invalidateQueries({ queryKey: ['counselor-applications'] });
-            }
-          });
-        }
-      },
-      
-      uploadDocument: {
-        useMutation: () => {
-          return useMutation({
-            mutationFn: async (data: { type: string; fileName: string; fileData: string; mimeType: string }) => {
-              await delay(500);
-              // Simulate document upload
-              const document = {
-                type: data.type,
-                fileName: data.fileName,
-                fileUrl: `https://example.com/documents/${Date.now()}-${data.fileName}`,
-                fileSize: data.fileData.length,
-                mimeType: data.mimeType
-              };
-              return { success: true, document };
-            }
-          });
-        }
-      },
-      
-      submit: {
-        useMutation: () => {
-          const queryClient = useQueryClient();
-          return useMutation({
-            mutationFn: async (data: Omit<CounselorApplication, 'id' | 'submittedAt' | 'status'>) => {
-              await delay(500);
-              const newApplication = await db.create<CounselorApplication>('counselor-applications', {
-                ...data,
-                status: 'pending',
-                submittedAt: new Date().toISOString()
-              });
-              return { success: true, application: newApplication };
-            },
-            onSuccess: () => {
-              queryClient.invalidateQueries({ queryKey: ['counselor-applications'] });
-            }
-          });
-        }
-      }
-    }
-  },
+
 
   // Reports
   reports: {
@@ -395,11 +270,11 @@ export const api = {
             const updateData: Partial<Report> = {
               status,
               notes: data.notes,
-              resolvedBy: 'admin@example.com'
+              resolved_by: 'admin@example.com'
             };
             
             if (status === 'resolved') {
-              updateData.resolvedAt = new Date().toISOString();
+              updateData.resolved_at = new Date().toISOString();
             }
             
             const updatedReport = await db.update<Report>('reports', data.reportId, updateData);
@@ -417,11 +292,11 @@ export const api = {
       useMutation: () => {
         const queryClient = useQueryClient();
         return useMutation({
-          mutationFn: async (data: Omit<Report, 'id' | 'submittedAt'>) => {
+          mutationFn: async (data: Omit<Report, 'id' | 'submitted_at'>) => {
             await delay(300);
             const newReport = await db.create<Report>('reports', {
               ...data,
-              submittedAt: new Date().toISOString()
+              submitted_at: new Date().toISOString()
             });
             return newReport;
           },
@@ -481,7 +356,7 @@ export const api = {
       useMutation: () => {
         const queryClient = useQueryClient();
         return useMutation({
-          mutationFn: async (data: Omit<Resource, 'id' | 'createdAt' | 'updatedAt'>) => {
+          mutationFn: async (data: Omit<Resource, 'id' | 'created_at' | 'updated_at'>) => {
             await delay(300);
             const newResource = await db.create<Resource>('resources', data);
             return newResource;
@@ -541,7 +416,7 @@ export const api = {
             
             if (params.userId) {
               conversations = conversations.filter(c => 
-                c.studentId === params.userId || c.volunteerId === params.userId
+                c.student_id === params.userId || c.volunteer_id === params.userId
               );
             }
             
@@ -559,11 +434,11 @@ export const api = {
           queryFn: async () => {
             await delay(300);
             let messages = await db.findMany<Message>('messages', 
-              (m: Message) => m.conversationId === params.conversationId
+              (m: Message) => m.conversation_id === params.conversationId
             );
             
             // Sort by sent time
-            messages.sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
+            messages.sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime());
             
             if (params.limit) {
               messages = messages.slice(-params.limit);
@@ -583,12 +458,12 @@ export const api = {
           mutationFn: async (data: { studentId: string; volunteerId?: string }) => {
             await delay(300);
             const newConversation = await db.create<Conversation>('conversations', {
-              studentId: data.studentId,
-              volunteerId: data.volunteerId || '1',
+              student_id: data.studentId,
+              volunteer_id: data.volunteerId || '1',
               status: 'active',
-              lastMessage: '',
-              lastMessageAt: new Date().toISOString(),
-              unreadCount: 0
+              last_message: '',
+              last_message_at: new Date().toISOString(),
+              unread_count: 0
             });
             return newConversation;
           },
@@ -615,26 +490,26 @@ export const api = {
             
             // Create message
             const newMessage = await db.create<Message>('messages', {
-              conversationId: data.conversationId,
-              senderId: data.senderId,
-              senderType: data.senderType,
+              conversation_id: data.conversationId,
+              sender_id: data.senderId,
+              sender_type: data.senderType,
               content: data.content,
-              messageType: data.messageType || 'text',
-              isRead: false,
-              sentAt: new Date().toISOString()
+              message_type: data.messageType || 'text',
+              is_read: false,
+              sent_at: new Date().toISOString()
             });
             
             // Update conversation
             await db.update<Conversation>('conversations', data.conversationId, {
-              lastMessage: data.content,
-              lastMessageAt: new Date().toISOString(),
-              unreadCount: 1
+              last_message: data.content,
+              last_message_at: new Date().toISOString(),
+              unread_count: 1
             });
             
             return newMessage;
           },
           onSuccess: (data: Message) => {
-            queryClient.invalidateQueries({ queryKey: ['messages', data.conversationId] });
+            queryClient.invalidateQueries({ queryKey: ['messages', data.conversation_id] });
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
           },
           ...options
@@ -651,16 +526,16 @@ export const api = {
             
             // Mark all messages as read
             const messages = await db.findMany<Message>('messages', 
-              (m: Message) => m.conversationId === data.conversationId && !m.isRead
+              (m: Message) => m.conversation_id === data.conversationId && !m.is_read
             );
             
             for (const message of messages) {
-              await db.update<Message>('messages', message.id, { isRead: true });
+              await db.update<Message>('messages', message.id, { is_read: true });
             }
             
             // Reset unread count
             await db.update<Conversation>('conversations', data.conversationId, {
-              unreadCount: 0
+              unread_count: 0
             });
             
             return { success: true };
@@ -685,7 +560,7 @@ export const api = {
             let assessments = await db.findMany<Assessment>('assessments');
             
             if (params.studentId) {
-              assessments = assessments.filter(a => a.studentId === params.studentId);
+              assessments = assessments.filter(a => a.student_id === params.studentId);
             }
             
             if (params.limit) {
@@ -702,11 +577,11 @@ export const api = {
       useMutation: () => {
         const queryClient = useQueryClient();
         return useMutation({
-          mutationFn: async (data: Omit<Assessment, 'id' | 'completedAt'>) => {
+          mutationFn: async (data: Omit<Assessment, 'id' | 'completed_at'>) => {
             await delay(300);
             const newAssessment = await db.create<Assessment>('assessments', {
               ...data,
-              completedAt: new Date().toISOString()
+              completed_at: new Date().toISOString()
             });
             return newAssessment;
           },
@@ -741,7 +616,7 @@ export const api = {
             }
             
             if (params.isActive !== undefined) {
-              helplines = helplines.filter(h => h.isActive === params.isActive);
+              helplines = helplines.filter(h => h.is_active === params.isActive);
             }
             
             return { helplines };
@@ -754,7 +629,7 @@ export const api = {
       useMutation: () => {
         const queryClient = useQueryClient();
         return useMutation({
-          mutationFn: async (data: Omit<Helpline, 'id' | 'createdAt' | 'updatedAt'>) => {
+          mutationFn: async (data: Omit<Helpline, 'id' | 'created_at' | 'updated_at'>) => {
             await delay(300);
             const newHelpline = await db.create<Helpline>('helplines', data);
             return newHelpline;
