@@ -1,6 +1,6 @@
 // API service with database connectivity
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { db, College, Student, Report, Resource, Conversation, Message, Assessment, Helpline } from './database';
+import { db, College, Student, Report, Resource, Conversation, Message, Assessment, Helpline, CounselorApplication } from './database';
 
 // Initialize database on first import
 db.initialize().catch(console.error);
@@ -182,9 +182,132 @@ export const api = {
     }
   },
 
-
-
-
+  // Counselor Applications
+  counselor: {
+    application: {
+      getAll: {
+        useQuery: (params: { status?: string; limit?: number; offset?: number }) => {
+          return useQuery({
+            queryKey: ['counselor-applications', params],
+            queryFn: async () => {
+              await delay(300);
+              let applications = await db.findMany<CounselorApplication>('counselor-applications');
+              
+              if (params.status && params.status !== 'all') {
+                applications = applications.filter(a => a.status === params.status);
+              }
+              
+              if (params.limit) {
+                const offset = params.offset || 0;
+                applications = applications.slice(offset, offset + params.limit);
+              }
+              
+              return { applications };
+            }
+          });
+        }
+      },
+      
+      getStats: {
+        useQuery: () => {
+          return useQuery({
+            queryKey: ['counselor-applications', 'stats'],
+            queryFn: async () => {
+              await delay(300);
+              const total = await db.count('counselor-applications');
+              const pending = await db.count('counselor-applications', (a: CounselorApplication) => a.status === 'pending');
+              const approved = await db.count('counselor-applications', (a: CounselorApplication) => a.status === 'approved');
+              const rejected = await db.count('counselor-applications', (a: CounselorApplication) => a.status === 'rejected');
+              
+              return { total, pending, approved, rejected };
+            }
+          });
+        }
+      },
+      
+      approve: {
+        useMutation: () => {
+          const queryClient = useQueryClient();
+          return useMutation({
+            mutationFn: async (data: { applicationId: string; adminNotes: string }) => {
+              await delay(300);
+              const updatedApplication = await db.update<CounselorApplication>('counselor-applications', data.applicationId, {
+                status: 'approved',
+                adminNotes: data.adminNotes,
+                reviewedBy: 'admin@example.com',
+                reviewedAt: new Date().toISOString()
+              });
+              return updatedApplication;
+            },
+            onSuccess: () => {
+              queryClient.invalidateQueries({ queryKey: ['counselor-applications'] });
+            }
+          });
+        }
+      },
+      
+      reject: {
+        useMutation: () => {
+          const queryClient = useQueryClient();
+          return useMutation({
+            mutationFn: async (data: { applicationId: string; rejectionReason: string; adminNotes: string }) => {
+              await delay(300);
+              const updatedApplication = await db.update<CounselorApplication>('counselor-applications', data.applicationId, {
+                status: 'rejected',
+                rejectionReason: data.rejectionReason,
+                adminNotes: data.adminNotes,
+                reviewedBy: 'admin@example.com',
+                reviewedAt: new Date().toISOString()
+              });
+              return updatedApplication;
+            },
+            onSuccess: () => {
+              queryClient.invalidateQueries({ queryKey: ['counselor-applications'] });
+            }
+          });
+        }
+      },
+      
+      uploadDocument: {
+        useMutation: () => {
+          return useMutation({
+            mutationFn: async (data: { type: string; fileName: string; fileData: string; mimeType: string }) => {
+              await delay(500);
+              // Simulate document upload
+              const document = {
+                type: data.type,
+                fileName: data.fileName,
+                fileUrl: `https://example.com/documents/${Date.now()}-${data.fileName}`,
+                fileSize: data.fileData.length,
+                mimeType: data.mimeType
+              };
+              return { success: true, document };
+            }
+          });
+        }
+      },
+      
+      submit: {
+        useMutation: () => {
+          const queryClient = useQueryClient();
+          return useMutation({
+            mutationFn: async (data: Omit<CounselorApplication, 'id' | 'submittedAt' | 'status'>) => {
+              await delay(500);
+              const newApplication = await db.create<CounselorApplication>('counselor-applications', {
+                ...data,
+                status: 'pending',
+                submittedAt: new Date().toISOString()
+              });
+              return { success: true, application: newApplication };
+            },
+            onSuccess: () => {
+              queryClient.invalidateQueries({ queryKey: ['counselor-applications'] });
+            }
+          });
+        }
+      }
+    }
+  },
 
   // Reports
   reports: {
