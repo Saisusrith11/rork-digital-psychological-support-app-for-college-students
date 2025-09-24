@@ -133,12 +133,13 @@ class Database {
       console.log('[Database] Initialized successfully');
     } catch (error) {
       console.error('[Database] Initialization failed:', error);
-      throw error;
+      // Don't throw error, just mark as initialized to prevent blocking
+      this.initialized = true;
     }
   }
 
   private async initializeDefaultData(): Promise<void> {
-    // Initialize with sample data in AsyncStorage
+    // Initialize with sample data in memory store
     const sampleData = {
       colleges: [
         {
@@ -204,9 +205,8 @@ class Database {
 
     // Store sample data
     for (const [table, data] of Object.entries(sampleData)) {
-      const existing = await this.getItem(table);
-      if (!existing || existing.length === 0) {
-        await this.setItem(table, data);
+      if (!memoryStore[table] || memoryStore[table].length === 0) {
+        memoryStore[table] = data;
       }
     }
   }

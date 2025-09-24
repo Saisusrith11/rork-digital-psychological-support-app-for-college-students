@@ -1,35 +1,25 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Platform, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
-import { useAuth } from '@/hooks/auth-store';
 
 export default function IndexScreen() {
   const router = useRouter();
-  const { user, isLoading } = useAuth();
   const insets = useSafeAreaInsets();
   
   useEffect(() => {
-    if (!isLoading) {
-      const timer = setTimeout(() => {
-        try {
-          if (user) {
-            console.log('[IndexScreen] User authenticated, redirecting to home');
-            router.replace('/(tabs)/home');
-          } else {
-            console.log('[IndexScreen] No user found, redirecting to terms');
-            router.replace('/terms');
-          }
-        } catch (error) {
-          console.error('[IndexScreen] Navigation error:', error);
-          router.replace('/auth');
-        }
-      }, 1500);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [router, user, isLoading]);
+    const timer = setTimeout(() => {
+      try {
+        console.log('[IndexScreen] Redirecting to terms');
+        router.replace('/terms');
+      } catch (error) {
+        console.error('[IndexScreen] Navigation error:', error);
+      }
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, [router]);
 
   return (
     <View style={[
@@ -51,10 +41,15 @@ export default function IndexScreen() {
             color={Colors.text.white} 
             style={styles.loader}
           />
-          <Text style={styles.loadingText}>
-            {isLoading ? 'Authenticating...' : 'Initializing...'}
-          </Text>
+          <Text style={styles.loadingText}>Initializing...</Text>
         </View>
+        
+        <TouchableOpacity 
+          style={styles.skipButton}
+          onPress={() => router.replace('/terms')}
+        >
+          <Text style={styles.skipText}>Skip to App</Text>
+        </TouchableOpacity>
         
         <View style={styles.footer}>
           <Text style={styles.footerText}>Mental Health Support Platform</Text>
@@ -117,5 +112,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '400' as const,
     opacity: 0.6,
+  },
+  skipButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginTop: 20,
+  },
+  skipText: {
+    color: Colors.text.white,
+    fontSize: 14,
+    fontWeight: '500' as const,
   },
 });

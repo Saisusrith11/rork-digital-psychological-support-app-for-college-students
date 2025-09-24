@@ -29,7 +29,7 @@ process.env.EXPO_NO_INTERACTIVE = '1';
 
 // Start with expo
 const command = 'npx';
-const args = ['expo', 'start'];
+const args = ['expo', 'start', '--clear'];
 
 // Add platform flags if specified
 if (process.argv.includes('--android')) args.push('--android');
