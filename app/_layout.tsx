@@ -8,7 +8,7 @@ import { Colors } from '@/constants/colors';
 import { AuthProvider } from '@/hooks/auth-store';
 import { ThemeProvider } from '@/hooks/theme-store';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { db } from '@/lib/database';
+
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -30,7 +30,7 @@ function RootLayoutNav() {
       <Stack.Screen name="assessment-result" />
       <Stack.Screen name="ai-chat" />
       <Stack.Screen name="booking" />
-      <Stack.Screen name="counselor-application" />
+
       <Stack.Screen name="resource-detail" />
       <Stack.Screen name="weekly-report" />
       <Stack.Screen name="+not-found" />
