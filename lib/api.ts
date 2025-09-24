@@ -3,7 +3,22 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { db, College, Student, Report, Resource, Conversation, Message, Assessment, Helpline, CounselorApplication } from './database';
 
 // Initialize database on first import
-db.initialize().catch(console.error);
+let dbInitialized = false;
+const initializeDatabase = async () => {
+  if (!dbInitialized) {
+    try {
+      await db.initialize();
+      dbInitialized = true;
+      console.log('[API] Database initialized successfully');
+    } catch (error) {
+      console.error('[API] Database initialization failed:', error);
+      throw error;
+    }
+  }
+};
+
+// Initialize immediately
+initializeDatabase().catch(console.error);
 
 // Helper function to simulate API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));

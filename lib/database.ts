@@ -93,6 +93,13 @@ export interface Report {
   resolvedAt?: string;
   resolvedBy?: string;
   notes?: string;
+  title: string;
+  category: string;
+  submittedBy: string;
+  adminComments?: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  attachments?: any[];
 }
 
 export interface Resource {
@@ -278,6 +285,53 @@ class Database {
         }
       ];
       await this.setItem('activities', defaultActivities);
+    }
+
+    // Initialize reports
+    const existingReports = await this.getItem<Report[]>('reports');
+    if (!existingReports || existingReports.length === 0) {
+      const defaultReports: Report[] = [
+        {
+          id: '1',
+          studentId: '1',
+          type: 'feedback',
+          content: 'The counseling session was very helpful. I would like to request more sessions.',
+          status: 'pending',
+          priority: 'medium',
+          submittedAt: new Date().toISOString(),
+          title: 'Request for Additional Counseling Sessions',
+          category: 'feedback',
+          submittedBy: 'Student User'
+        },
+        {
+          id: '2',
+          studentId: '2',
+          type: 'crisis',
+          content: 'I am experiencing severe anxiety and need immediate support.',
+          status: 'pending',
+          priority: 'high',
+          submittedAt: new Date(Date.now() - 86400000).toISOString(),
+          title: 'Urgent: Severe Anxiety Support Needed',
+          category: 'crisis',
+          submittedBy: 'Anonymous Student'
+        },
+        {
+          id: '3',
+          studentId: '3',
+          type: 'concern',
+          content: 'The app crashes when I try to access the wellness activities section.',
+          status: 'resolved',
+          priority: 'low',
+          submittedAt: new Date(Date.now() - 172800000).toISOString(),
+          resolvedAt: new Date(Date.now() - 86400000).toISOString(),
+          resolvedBy: 'admin@example.com',
+          notes: 'Fixed in latest update',
+          title: 'App Crash in Wellness Section',
+          category: 'bug',
+          submittedBy: 'Test Student'
+        }
+      ];
+      await this.setItem('reports', defaultReports);
     }
   }
 

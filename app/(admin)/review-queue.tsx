@@ -51,7 +51,7 @@ export default function AdminReviewQueue() {
   const reportsQuery = trpc.reports.getAll.useQuery({ ...filters });
   const reportStatsQuery = trpc.reports.getStats.useQuery();
   const selectedReportQuery = trpc.reports.getById.useQuery({
-    id: selectedReport!,
+    reportId: selectedReport!,
   }, {
     enabled: !!selectedReport
   });
@@ -65,13 +65,13 @@ export default function AdminReviewQueue() {
       reportsQuery.refetch();
       reportStatsQuery.refetch();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Review error:', error.message);
     }
   });
 
   const pendingReports = useMemo(() => {
-    return reportsQuery.data?.filter(report => report.status === 'pending') || [];
+    return reportsQuery.data?.reports?.filter((report: any) => report.status === 'pending') || [];
   }, [reportsQuery.data]);
 
   const getCategoryIcon = (category: string) => {
@@ -97,10 +97,10 @@ export default function AdminReviewQueue() {
   const handleReview = () => {
     if (!selectedReport || !reviewAction) return;
     
-    reviewMutation.mutate({
-      id: selectedReport,
+    (reviewMutation.mutate as any)({
+      reportId: selectedReport,
       action: reviewAction,
-      adminComments: adminComments.trim() || undefined
+      notes: adminComments.trim() || undefined
     });
   };
 
@@ -171,7 +171,7 @@ export default function AdminReviewQueue() {
               <AlertTriangle size={20} color={Colors.warning} />
               <Text style={styles.sectionTitle}>Priority Queue ({pendingReports.length})</Text>
             </View>
-            {pendingReports.map((report) => (
+            {pendingReports.map((report: any) => (
               <View key={report.id} style={[styles.reportCard, styles.pendingCard]}>
                 <View style={styles.reportHeader}>
                   <View style={styles.reportMeta}>
@@ -229,7 +229,7 @@ export default function AdminReviewQueue() {
         {/* All Reports */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>All Reports</Text>
-          {reportsQuery.data?.map((report) => (
+          {reportsQuery.data?.reports?.map((report: any) => (
             <TouchableOpacity
               key={report.id}
               style={[
@@ -249,8 +249,16 @@ export default function AdminReviewQueue() {
                       {report.priority}
                     </Text>
                   </View>
-                  <View style={[styles.statusBadge, styles[`${report.status}StatusBadge`]]}>
-                    <Text style={[styles.statusText, styles[`${report.status}StatusText`]]}>
+                  <View style={[styles.statusBadge, 
+                    report.status === 'pending' ? styles.pendingStatusBadge :
+                    report.status === 'approved' ? styles.approvedStatusBadge :
+                    styles.rejectedStatusBadge
+                  ]}>
+                    <Text style={[styles.statusText,
+                      report.status === 'pending' ? styles.pendingStatusText :
+                      report.status === 'approved' ? styles.approvedStatusText :
+                      styles.rejectedStatusText
+                    ]}>
                       {report.status}
                     </Text>
                   </View>
@@ -270,7 +278,7 @@ export default function AdminReviewQueue() {
           ))}
         </View>
 
-        {reportsQuery.data?.length === 0 && (
+        {reportsQuery.data?.reports?.length === 0 && (
           <View style={styles.emptyState}>
             <FileText size={48} color={Colors.text.light} />
             <Text style={styles.emptyStateText}>No reports found</Text>
@@ -297,21 +305,21 @@ export default function AdminReviewQueue() {
               </TouchableOpacity>
             </View>
             
-            {selectedReportQuery.data && (
+            {selectedReportQuery.data && (selectedReportQuery.data as any) && (
               <ScrollView style={styles.modalBody}>
                 <View style={styles.detailSection}>
                   <Text style={styles.detailLabel}>Title</Text>
-                  <Text style={styles.detailValue}>{selectedReportQuery.data.title}</Text>
+                  <Text style={styles.detailValue}>{(selectedReportQuery.data as any).title}</Text>
                 </View>
                 
                 <View style={styles.detailSection}>
                   <Text style={styles.detailLabel}>Category & Priority</Text>
                   <View style={styles.detailMeta}>
-                    {getCategoryIcon(selectedReportQuery.data.category)}
-                    <Text style={styles.detailMetaText}>{selectedReportQuery.data.category}</Text>
-                    <View style={[styles.priorityBadge, { backgroundColor: getPriorityColor(selectedReportQuery.data.priority) + '20' }]}>
-                      <Text style={[styles.priorityText, { color: getPriorityColor(selectedReportQuery.data.priority) }]}>
-                        {selectedReportQuery.data.priority}
+                    {getCategoryIcon((selectedReportQuery.data as any).category)}
+                    <Text style={styles.detailMetaText}>{(selectedReportQuery.data as any).category}</Text>
+                    <View style={[styles.priorityBadge, { backgroundColor: getPriorityColor((selectedReportQuery.data as any).priority) + '20' }]}>
+                      <Text style={[styles.priorityText, { color: getPriorityColor((selectedReportQuery.data as any).priority) }]}>
+                        {(selectedReportQuery.data as any).priority}
                       </Text>
                     </View>
                   </View>
@@ -319,56 +327,56 @@ export default function AdminReviewQueue() {
                 
                 <View style={styles.detailSection}>
                   <Text style={styles.detailLabel}>Content</Text>
-                  <Text style={styles.detailValue}>{selectedReportQuery.data.content}</Text>
+                  <Text style={styles.detailValue}>{(selectedReportQuery.data as any).content}</Text>
                 </View>
                 
                 <View style={styles.detailSection}>
                   <Text style={styles.detailLabel}>Submitted By</Text>
-                  <Text style={styles.detailValue}>{selectedReportQuery.data.submittedBy}</Text>
+                  <Text style={styles.detailValue}>{(selectedReportQuery.data as any).submittedBy}</Text>
                 </View>
                 
                 <View style={styles.detailSection}>
                   <Text style={styles.detailLabel}>Submitted At</Text>
                   <Text style={styles.detailValue}>
-                    {new Date(selectedReportQuery.data.submittedAt).toLocaleString()}
+                    {new Date((selectedReportQuery.data as any).submittedAt).toLocaleString()}
                   </Text>
                 </View>
                 
-                {selectedReportQuery.data.reviewedAt && (
+                {(selectedReportQuery.data as any).reviewedAt && (
                   <>
                     <View style={styles.detailSection}>
                       <Text style={styles.detailLabel}>Reviewed By</Text>
-                      <Text style={styles.detailValue}>{selectedReportQuery.data.reviewedBy}</Text>
+                      <Text style={styles.detailValue}>{(selectedReportQuery.data as any).reviewedBy}</Text>
                     </View>
                     
                     <View style={styles.detailSection}>
                       <Text style={styles.detailLabel}>Reviewed At</Text>
                       <Text style={styles.detailValue}>
-                        {new Date(selectedReportQuery.data.reviewedAt).toLocaleString()}
+                        {new Date((selectedReportQuery.data as any).reviewedAt).toLocaleString()}
                       </Text>
                     </View>
                     
-                    {selectedReportQuery.data.adminComments && (
+                    {(selectedReportQuery.data as any).adminComments && (
                       <View style={styles.detailSection}>
                         <Text style={styles.detailLabel}>Admin Comments</Text>
-                        <Text style={styles.detailValue}>{selectedReportQuery.data.adminComments}</Text>
+                        <Text style={styles.detailValue}>{(selectedReportQuery.data as any).adminComments}</Text>
                       </View>
                     )}
                   </>
                 )}
                 
-                {selectedReportQuery.data.status === 'pending' && (
+                {(selectedReportQuery.data as any).status === 'pending' && (
                   <View style={styles.modalActions}>
                     <TouchableOpacity
                       style={[styles.modalActionButton, styles.rejectButton]}
-                      onPress={() => openReviewModal(selectedReportQuery.data!.id, 'reject')}
+                      onPress={() => openReviewModal((selectedReportQuery.data as any)!.id, 'reject')}
                     >
                       <XCircle size={20} color={Colors.error} />
                       <Text style={[styles.modalActionText, { color: Colors.error }]}>Reject</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.modalActionButton, styles.approveButton]}
-                      onPress={() => openReviewModal(selectedReportQuery.data!.id, 'approve')}
+                      onPress={() => openReviewModal((selectedReportQuery.data as any)!.id, 'approve')}
                     >
                       <CheckCircle size={20} color={Colors.success} />
                       <Text style={[styles.modalActionText, { color: Colors.success }]}>Approve</Text>

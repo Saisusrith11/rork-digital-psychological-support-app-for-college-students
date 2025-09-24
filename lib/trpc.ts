@@ -26,13 +26,7 @@ export const trpc = {
     }
   },
   
-  // Activities
-  activities: {
-    getAll: api.activities.getAll,
-    create: api.activities.create,
-    update: api.activities.update,
-    delete: api.activities.delete
-  },
+
   
   // Reports
   reports: {
@@ -82,7 +76,18 @@ export const trpc = {
   },
   
   // Utils
-  useUtils: api.useUtils
+  useUtils: api.useUtils,
+  
+  // Volunteers (mock for compatibility)
+  volunteers: {
+    getAll: {
+      useQuery: () => ({
+        data: { volunteers: [] },
+        isLoading: false,
+        error: null
+      })
+    }
+  }
 };
 
 // Export client for backward compatibility
