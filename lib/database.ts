@@ -133,6 +133,8 @@ class Database {
       console.log('[Database] Initialized successfully');
     } catch (error) {
       console.error('[Database] Initialization failed:', error);
+      // Clear any corrupted data and start fresh
+      Object.keys(memoryStore).forEach(key => delete memoryStore[key]);
       // Don't throw error, just mark as initialized to prevent blocking
       this.initialized = true;
     }

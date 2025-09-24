@@ -112,7 +112,20 @@ class AnalyticsService {
   async logMoodEvent(userId: string, mood: MoodType): Promise<void> {
     try {
       const raw = await AsyncStorage.getItem(MOOD_EVENTS_KEY);
-      const list: MoodEvent[] = raw ? JSON.parse(raw) : [];
+      let list: MoodEvent[] = [];
+      
+      if (raw && raw.trim()) {
+        try {
+          list = JSON.parse(raw);
+          if (!Array.isArray(list)) {
+            list = [];
+          }
+        } catch (parseError) {
+          console.warn('Failed to parse mood events, starting fresh:', parseError);
+          list = [];
+        }
+      }
+      
       const event: MoodEvent = {
         id: `mood_${Date.now()}`,
         userId,
@@ -133,7 +146,20 @@ class AnalyticsService {
     const cacheKey = `mood_analytics_${userId}_${range}`;
     return this.getCachedOrFetch(cacheKey, async () => {
       const raw = await AsyncStorage.getItem(MOOD_EVENTS_KEY);
-      const list: MoodEvent[] = raw ? JSON.parse(raw) : [];
+      let list: MoodEvent[] = [];
+      
+      if (raw && raw.trim()) {
+        try {
+          list = JSON.parse(raw);
+          if (!Array.isArray(list)) {
+            list = [];
+          }
+        } catch (parseError) {
+          console.warn('Failed to parse mood events for analytics:', parseError);
+          list = [];
+        }
+      }
+      
       const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
       const now = new Date();
       const start = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);

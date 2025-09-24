@@ -14,20 +14,6 @@ export const trpc = {
     getStudentsByCollegesAndRiskBucket: api.students.getStudentsByCollegesAndRiskBucket
   },
   
-  // Counselor
-  counselor: {
-    applications: {
-      getAll: api.counselor.applications.getAll,
-      getStats: api.counselor.applications.getStats,
-      approve: api.counselor.applications.approve,
-      reject: api.counselor.applications.reject,
-      uploadDocument: api.counselor.applications.uploadDocument,
-      submit: api.counselor.applications.submit
-    }
-  },
-  
-
-  
   // Reports
   reports: {
     getAll: api.reports.getAll,
@@ -76,18 +62,7 @@ export const trpc = {
   },
   
   // Utils
-  useUtils: api.useUtils,
-  
-  // Volunteers (mock for compatibility)
-  volunteers: {
-    getAll: {
-      useQuery: () => ({
-        data: { volunteers: [] },
-        isLoading: false,
-        error: null
-      })
-    }
-  }
+  useUtils: api.useUtils
 };
 
 // Export client for backward compatibility

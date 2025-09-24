@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
 import { AuthProvider } from '@/hooks/auth-store';
 import { ThemeProvider } from '@/hooks/theme-store';
+import { NotificationProvider } from '@/hooks/notification-store';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 
@@ -102,11 +103,13 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <ThemeProvider>
-              <View style={styles.container}>
-                <RootLayoutNav />
-              </View>
-            </ThemeProvider>
+            <NotificationProvider>
+              <ThemeProvider>
+                <View style={styles.container}>
+                  <RootLayoutNav />
+                </View>
+              </ThemeProvider>
+            </NotificationProvider>
           </AuthProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

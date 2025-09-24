@@ -12,7 +12,8 @@ const ensureDbInitialized = async () => {
       console.log('[API] Database initialized successfully');
     } catch (error) {
       console.error('[API] Database initialization failed:', error);
-      // Don't throw, just log the error
+      // Mark as initialized to prevent infinite retry loops
+      dbInitialized = true;
     }
   }
 };
@@ -29,6 +30,7 @@ export const api = {
         return useQuery({
           queryKey: ['colleges', params],
           queryFn: async () => {
+            await ensureDbInitialized();
             await delay(300);
             let colleges = await db.findMany<College>('colleges');
             
@@ -59,6 +61,7 @@ export const api = {
         const queryClient = useQueryClient();
         return useMutation({
           mutationFn: async (data: { name: string; location?: string; is_verified: boolean }) => {
+            await ensureDbInitialized();
             await delay(300);
             const newCollege = await db.create<College>('colleges', {
               name: data.name,
@@ -203,6 +206,7 @@ export const api = {
         return useQuery({
           queryKey: ['reports', params],
           queryFn: async () => {
+            await ensureDbInitialized();
             await delay(300);
             let reports = await db.findMany<Report>('reports');
             
@@ -312,6 +316,7 @@ export const api = {
         return useQuery({
           queryKey: ['resources', params],
           queryFn: async () => {
+            await ensureDbInitialized();
             await delay(300);
             let resources = await db.findMany<Resource>('resources');
             
@@ -605,6 +610,7 @@ export const api = {
         return useQuery({
           queryKey: ['helplines', params],
           queryFn: async () => {
+            await ensureDbInitialized();
             await delay(300);
             let helplines = await db.findMany<Helpline>('helplines');
             
@@ -679,6 +685,7 @@ export const api = {
         return useQuery({
           queryKey: ['consent', 'assessments'],
           queryFn: async () => {
+            await ensureDbInitialized();
             await delay(300);
             const assessments = await db.findMany<Assessment>('assessments');
             return { assessments };
@@ -703,6 +710,7 @@ export const apiClient = {
   consent: {
     getConsentedAssessments: {
       query: async (params: any) => {
+        await ensureDbInitialized();
         await delay(300);
         const assessments = await db.findMany<Assessment>('assessments');
         return { assessments };
@@ -712,6 +720,7 @@ export const apiClient = {
   assessments: {
     sync: {
       mutate: async (data: any) => {
+        await ensureDbInitialized();
         await delay(300);
         return { success: true };
       }
@@ -720,6 +729,7 @@ export const apiClient = {
   helplines: {
     getAll: {
       query: async () => {
+        await ensureDbInitialized();
         await delay(300);
         const helplines = await db.findMany<Helpline>('helplines');
         return { helplines };
