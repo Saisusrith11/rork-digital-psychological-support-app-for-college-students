@@ -22,7 +22,38 @@ export interface College {
   updatedAt: string;
 }
 
-
+export interface CounselorApplication {
+  id: string;
+  counselorId: string;
+  personalInfo: {
+    fullName: string;
+    email: string;
+    phone: string;
+    address: string;
+    dateOfBirth: string;
+  };
+  professionalInfo: {
+    specialization: string[];
+    experience: string;
+    languages: string[];
+    currentEmployment?: string;
+  };
+  documents: {
+    type: string;
+    fileName: string;
+    fileUrl: string;
+    fileSize: number;
+    mimeType: string;
+  }[];
+  status: 'pending' | 'approved' | 'rejected';
+  adminNotes?: string;
+  rejectionReason?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  submittedAt: string;
+  termsAccepted: boolean;
+  privacyAccepted: boolean;
+}
 
 export interface Activity {
   id: string;

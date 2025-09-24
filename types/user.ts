@@ -43,7 +43,33 @@ export interface CounselorDocument {
   mimeType: string;
 }
 
-
+export interface CounselorApplication {
+  id: string;
+  counselorId: string;
+  personalInfo: {
+    fullName: string;
+    email: string;
+    phone: string;
+    address: string;
+    dateOfBirth: string;
+  };
+  professionalInfo: {
+    specialization: string[];
+    experience: string;
+    languages: string[];
+    currentEmployment?: string;
+  };
+  documents: CounselorDocument[];
+  termsAccepted: boolean;
+  privacyAccepted: boolean;
+  status: 'pending' | 'approved' | 'rejected';
+  submittedAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  adminNotes?: string;
+  rejectionReason?: string;
+  documentDeletionScheduled?: string;
+}
 
 export interface Admin extends User {
   role: 'admin';
