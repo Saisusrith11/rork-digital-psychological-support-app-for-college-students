@@ -75,7 +75,6 @@ export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const { feedbacks, pendingCount } = useFeedback();
   const reportStatsQuery = api.reports.getStats.useQuery();
-  const applicationStatsQuery = api.counselor.application.getStats.useQuery();
   const { notifications, unreadCount, addNotification, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
   const insets = useSafeAreaInsets();
   const [showLogoutModal, setShowLogoutModal] = useState<boolean>(false);
@@ -555,19 +554,6 @@ export default function AdminDashboard() {
             <Text style={styles.sectionTitle}>Quick Actions</Text>
             <View style={styles.quickActions}>
               <TouchableOpacity 
-                style={[styles.actionButton, { position: 'relative' }]}
-                testID="qa-counselor-apps"
-                onPress={() => router.push('/(admin)/counselor-applications')}
-              >
-                <FileText size={24} color={Colors.primary} />
-                <Text style={styles.actionButtonText}>Counselor Applications</Text>
-                {(applicationStatsQuery.data?.pending || 0) > 0 && (
-                  <View style={styles.pendingBadge}>
-                    <Text style={styles.pendingBadgeText}>{applicationStatsQuery.data?.pending}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity 
                 style={styles.actionButton} 
                 testID="qa-students"
                 onPress={() => router.push('/(admin)/students')}
@@ -587,6 +573,14 @@ export default function AdminDashboard() {
                     <Text style={styles.pendingBadgeText}>{reportStatsQuery.data?.pending}</Text>
                   </View>
                 )}
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.actionButton} 
+                testID="qa-resources"
+                onPress={() => router.push('/(admin)/resources')}
+              >
+                <FileText size={24} color={Colors.primary} />
+                <Text style={styles.actionButtonText}>Manage Resources</Text>
               </TouchableOpacity>
             </View>
             <Text style={styles.privacyNote}>Admin view shows only anonymized aggregates. No individual identities or notes are visible.</Text>

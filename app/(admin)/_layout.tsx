@@ -8,9 +8,7 @@ export default function AdminLayout() {
       <Stack.Screen name="feedback" />
       <Stack.Screen name="resources" />
       <Stack.Screen name="students" />
-      <Stack.Screen name="activities" />
       <Stack.Screen name="review-queue" />
-      <Stack.Screen name="counselor-applications" />
       <Stack.Screen name="settings/index" />
       <Stack.Screen name="settings/helplines" />
       <Stack.Screen name="settings/student-review" />

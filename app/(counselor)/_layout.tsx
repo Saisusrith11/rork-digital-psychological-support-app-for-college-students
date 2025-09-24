@@ -8,7 +8,7 @@ export default function CounselorLayout() {
       <Stack.Screen name="appointments" />
       <Stack.Screen name="students" />
       <Stack.Screen name="chat" />
-      <Stack.Screen name="activities" />
+
       <Stack.Screen name="profile" />
       <Stack.Screen name="settings/availability" />
       <Stack.Screen name="settings/notifications" />
