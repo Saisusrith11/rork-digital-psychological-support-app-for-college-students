@@ -233,7 +233,7 @@ export const api = {
       },
       
       approve: {
-        useMutation: (options?: any) => {
+        useMutation: (options?: any): UseMutationResult<CounselorApplication, Error, { applicationId: string; adminNotes?: string }, unknown> => {
           const queryClient = useQueryClient();
           return useMutation({
             mutationFn: async (data: { applicationId: string; adminNotes?: string }) => {
@@ -255,7 +255,7 @@ export const api = {
       },
       
       reject: {
-        useMutation: (options?: any) => {
+        useMutation: (options?: any): UseMutationResult<CounselorApplication, Error, { applicationId: string; rejectionReason?: string; adminNotes?: string }, unknown> => {
           const queryClient = useQueryClient();
           return useMutation({
             mutationFn: async (data: { applicationId: string; rejectionReason?: string; adminNotes?: string }) => {
@@ -342,7 +342,7 @@ export const api = {
     },
     
     create: {
-      useMutation: (options?: any) => {
+      useMutation: (options?: any): UseMutationResult<Activity, Error, Omit<Activity, 'id' | 'createdAt' | 'updatedAt'>, unknown> => {
         const queryClient = useQueryClient();
         return useMutation({
           mutationFn: async (data: Omit<Activity, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -377,7 +377,7 @@ export const api = {
     },
     
     delete: {
-      useMutation: (options?: any) => {
+      useMutation: (options?: any): UseMutationResult<{ success: boolean }, Error, { id: string }, unknown> => {
         const queryClient = useQueryClient();
         return useMutation({
           mutationFn: async (data: { id: string }) => {
@@ -625,7 +625,7 @@ export const api = {
     getMessages: {
       useQuery: (params: { conversationId: string; limit?: number }, options?: any) => {
         return useQuery({
-          queryKey: ['messages', params.conversationId],
+          queryKey: ['messages', params.conversationId, params.limit],
           queryFn: async () => {
             await delay(300);
             let messages = await db.findMany<Message>('messages', 
